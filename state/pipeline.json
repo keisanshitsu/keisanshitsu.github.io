@@ -1,8 +1,11 @@
 {
   "meta": {
     "created": "2026-08-05",
-    "last_run": "2026-08-09",
-    "last_run_type": "週次レビュー（同日の日次ループとは別）。打ち手は打たず評価のみ。結論: (1) 公開0ページ・流入null・収益0円が5日continuing。(2) スコアリングの項目2（勝てる競合か）と項目4（収益導線）に負の相関があり、合計点方式ではそれを表現できていない。(3) 意思決定ルールは自動実行4回で参照回数0＝機能を判定できる段階に無い。(4) CLAUDE.md がドメイン取得の時期について自己矛盾していた。decisions.md 2026-08-09 週次レビュー参照",
+    "last_run": "2026-09-05",
+    "last_run_type": "日次ループ。前提ゲート4行目（計測基盤が未接続）に該当したが、その指示（SETUP_HUMAN.md への再掲）は3日ルールが禁じる空回りにあたるため実行せず、詰まりの前提を1つ実測した。結果: 『URLに名前を入れないためには課金（独自ドメイン）が要る』は誤りで、GitHub Organization サイトが同じ要件を費用ゼロ・作業1分で満たすことを一次情報で確認した。B案を削除しD案に差し替え。副次的に、日次ループが27日間で2回しか起動していない事実と、9/04 の認証切れを検出した。decisions.md 2026-09-05 参照",
+    "previous_run": "2026-08-09",
+    "gap_days_2026-09-05": 27,
+    "gap_note": "8/10〜9/03 の25日分は実行記録が存在しない。logs/ に1件も無く、リポジトリの pushed_at も 2026-08-09 のまま。タスクは LogonType=Interactive のためユーザーがログインしている間しか動かない。9/04 の実行は OAuth 期限切れで exit 1。よって27日間で成立した日次ループは 9/05 の1回だけである",
     "goal_jpy_monthly": 100000,
     "model": "niche-web-tool-portfolio"
   },
@@ -18,7 +21,9 @@
     "kpi_ladder": {
       "L0": { "goal": "公開＋Search Console登録", "deadline": "2026-08-12", "done": false,
               "deadline_basis": "CLAUDE.md『公開経路の接続から3日』。git remote 接続日 2026-08-09 + 3日。ドメイン決定期限（STEP1-B）と同日である",
-              "on_miss": "人間タスクを再掲・催促。ただし週次レビュー(2026-08-09)の結論により、催促ではなく『名前入りURLで先に公開する』案の提示を行う" },
+              "overdue_days_2026-09-05": 24,
+              "overdue_note": "期限を24日超過。ただしこの24日のうち25日分は日次ループ自体が起動していない（meta.gap_note）。つまり『打ち手を打ったが効かなかった』のではなく『打ち手を打つ機会が無かった』。両者を混同すると、効いていない施策を効いたと誤認する",
+              "on_miss": "人間タスクを再掲・催促。ただし週次レビュー(2026-08-09)の結論により催促は行わない。2026-09-05 に前提そのものを実測した結果、『公開には課金が要る』が誤りと判明したため、催促ではなく費用ゼロの代替経路（STEP1-E 組織サイト）の提示に切り替えた" },
       "L1": { "goal": "検索表示回数 > 0", "deadline": null, "done": false },
       "L2": { "goal": "月1,000セッション", "deadline": null, "done": false,
               "on_miss": "増産停止。ニッチ選定の見直しへ" },
@@ -38,9 +43,11 @@
 
   "site": {
     "published_url": null,
-    "published_url_planned": "https://<STEP1-B で取得する独自ドメイン>/",
-    "published_url_fallback": "https://hori0827.github.io/kurashi-keisan/",
-    "published_url_fallback_note": "ドメインを取らない判断になった場合のみ。この場合 gsc_property は末尾の /kurashi-keisan/ を必ず含める（ホスト直下にすると HG Analytics の数字が混入し流入の帰属が判別不能になる）",
+    "published_url_planned": "STEP1-E なら https://<組織名>.github.io/ ／ STEP1-B なら https://<独自ドメイン>/。どちらを選んでも要件（URLに名前・数字を入れない）を満たす",
+    "published_url_option_org": "https://<組織名>.github.io/",
+    "published_url_option_org_note": "2026-09-05 追加。組織サイトは無料で、URLに個人名も数字も含まれない。gsc_property は URLプレフィックス型で https://<組織名>.github.io/ を使う（自前のホストなので HG Analytics の数字は混入しない）。robots.txt も自分のホスト直下に置けるため sitemap の手動送信は必須でなくなる",
+    "published_url_fallback_removed_on": "2026-09-05",
+    "published_url_fallback_removed_reason": "旧B案 https://hori0827.github.io/kurashi-keisan/ を削除した。組織サイト（STEP1-E）と費用も手間も同じでありながら、アカウント名がURLに出る・HG Analytics とホストを共有する・robots.txt が他プロジェクトの管理下という3点で劣るため、選択肢として残す意味が無い",
     "gsc_property": null,
     "gsc_property_planned": "ドメイン型プロパティ（取得した独自ドメイン。DNSのTXTレコードで確認）",
     "custom_domain": null,
@@ -68,8 +75,12 @@
     "repo_change_reason": "そのリポジトリ名は既に埋まっていた。ユーザーが同一アカウントで運用中の別本番サイト『HG Analytics』（AI株価スクリーニング。2026-05-09開設・102コミット・Pages稼働中）が使用している。2026-08-06 の設計は空きを確認せずに決めており、初回pushは毎朝失敗し続けていた",
     "source": "main ブランチの /docs フォルダ",
     "how": "main に push すればそれだけで反映される。ビルドも外部サービスも不要",
-    "human_steps_remaining": 2,
+    "human_steps_remaining": 1,
+    "human_steps_remaining_note": "2026-09-05 に 2 → 1 へ。D案（組織サイト）を選べば人間の作業は1-Eの1つだけで、費用ゼロ・1分・DNS作業なし。A案（独自ドメイン）を選ぶ場合は従来どおり 1-B と 1-D の2つ",
     "human_steps": [
+      "1-E【推奨・費用ゼロ】: GitHub の組織を1つ作る（約1分・0円）。https://github.com/account/organizations/new で Free プランを選び、組織名に keisanshitsu 等を入力する。REST API に組織作成エンドポイントが無いため人間専任"
+    ],
+    "human_steps_alternative_A": [
       "1-B: 独自ドメインを取得する（約10分・年1,000〜2,000円）。金銭の支払いを伴うため人間専任",
       "1-D: 取得先の管理画面でDNSレコード（A×4・AAAA×4・CNAME(www)・確認用TXT）を登録する（約3分）。レジストラのアカウント操作のため人間専任"
     ],
@@ -132,14 +143,39 @@
 
   "blocked_on_human": [
     {
+      "id": "STEP1-E",
+      "what": "GitHub の組織（Organization）を1つ作る。Freeプラン・推奨名 keisanshitsu",
+      "added_on": "2026-09-05",
+      "why_blocking": "公開URLをこれにすれば https://keisanshitsu.github.io/ となり、名前も数字も出ない。STEP1-B（課金）の代替であり、こちらのほうが速く安い",
+      "why_human_only": "GitHub の REST API に組織の作成エンドポイントが存在しない（docs.github.com/en/rest/orgs/orgs で確認。get/update/delete のみ）。加えてアカウント新規作成にあたるためドクトリン上も人間専任",
+      "blocks": "公開そのもの・Search Console 登録（STEP1.5）",
+      "status": "pending",
+      "human_minutes": 1,
+      "cost_jpy": 0,
+      "url": "https://github.com/account/organizations/new",
+      "is_now_the_recommended_unblock": true,
+      "recommended_note": "推奨順は A > D > C（独自ドメインのほうがURLを持ち運べるため長期的には上位）。ただし A案（STEP1-B）は27日間動いていない。D案は費用ゼロ・1分で同じ要件を満たすため、待ち続けるより確実に前進する。D案で公開した後に A案へ移ることもでき、移行コストは0ページ・0インデックスの現時点が最小",
+      "name_candidates_available_on_2026-09-05": ["keisanshitsu", "shirabeshitsu", "kurashinokeisan", "kurashi-keisan", "keisan-shitsu", "kurashikeisan"],
+      "availability_method": "GET https://api.github.com/users/<name> が 404（ユーザー名と組織名は同一の名前空間）",
+      "weakness": "URLが GitHub に固定される。将来 Pages を離れるとURLごと失う（独自ドメインは持ち運べる）。ただし現時点の公開ページは0枚なので失うものが無い",
+      "after_human_step": "組織作成後は私が自動で行う: <組織名>.github.io リポジトリの作成 → verify.mjs → push → Pages 有効化（Source=main //docs）。ただし下の2点は未検証であり、失敗したら人間に1クリック依頼する",
+      "unverified": [
+        "組織配下のリポジトリ作成を保存済みトークンで代行できるか（新規組織は OAuth App のアクセス制限が既定で有効な場合がある）",
+        "ユーザー／組織サイトで発行元に /docs を選べるか"
+      ]
+    },
+    {
       "id": "STEP1-B",
       "what": "独自ドメインを取得する（推奨 keisanshitsu.com）。年1,000〜2,000円",
       "why_blocking": "公開URLをこれにすると決めたため、公開の引き金（1-C）がこれを待つ",
       "blocks": "公開そのもの・Search Console 登録（STEP1.5）",
       "status": "pending",
       "human_minutes": 10,
-      "is_now_the_only_blocker": true,
-      "is_now_the_only_blocker_note": "2026-08-09 時点で、公開までに残る作業はこれ（と付随する1-D）だけになった。リポジトリ作成・push・Pages設定はすべて自動化済み。ドメインが決まった瞬間に公開できる状態にある",
+      "is_now_the_only_blocker": false,
+      "is_now_the_only_blocker_note": "2026-08-09 時点では『公開までに残る唯一の作業』だったが、2026-09-05 にこれは誤りだったと判明した。STEP1-E（組織サイト・無料）が同じ要件を満たすため、これは公開の必須条件ではない。長期的にはこちら（URLを持ち運べる）が上位だが、公開を止めてまで待つ理由は無い",
+      "downgraded_on": "2026-09-05",
+      "downgrade_reason": "『URLに名前や数字を入れない』要件を満たす手段がこれ1つだと、一度も確認せずに決めていた。27日間これを唯一のボトルネックとして人間キューに積み続けた。capability_discoveries 2026-09-05 参照",
+      "unanswered_days": 27,
       "availability_reverified_on": "2026-08-08",
       "availability_method": "RDAP（TLDごとの正しいレジストリ endpoint）と DNS の NXDOMAIN の2系統で照合",
       "available_candidates": ["keisanshitsu.com", "shirabeshitsu.com", "kurashinokeisan.com", "kurashi-keisan.net"],
@@ -208,6 +244,29 @@
       "how_to_use": "scripts/connect_github.ps1 の Get-StoredGitHubToken。トークンの値は表示・記録しない（daily_run.ps1 が出力を logs/ に流すため）",
       "gotcha": "Windows PowerShell 5.1 から git credential fill へ stdin を渡すのは素直ではない。パイプも ProcessStartInfo も 'refusing to work with credential missing protocol field' で失敗する。ASCII+LF の一時ファイルを cmd のリダイレクトで渡す方法だけが通った（一時ファイルに書くのは要求だけで、秘密は書かない）",
       "lesson": "『できない』と決めた外部依存も、実際に叩いて確かめる。4日間の停止の原因は、確認を1回もしなかったこと"
+    },
+    {
+      "date": "2026-09-05",
+      "what": "『URLに名前や数字を入れない』という要件は、課金なしで満たせる。GitHub の Organization サイトが https://<組織名>.github.io/ を無料で配信する",
+      "measured": "一次情報4件で確認。(1) docs.github.com『What is GitHub Pages』: <owner>.github.io という名前のリポジトリは http(s)://<owner>.github.io で配信され、<owner> は personal or organization account name。(2) docs.github.com『Creating a GitHub Pages site』: 'If the account that owns the repository uses GitHub Free or GitHub Free for organizations, the repository must be public'（当リポジトリは既に public）。(3) docs.github.com REST API / Orgs: 組織の作成エンドポイントが存在しない（get/update/delete のみ）→ 組織作成は人間専任で確定。(4) publicsuffix.org: github.io が GitHub, Inc. 提出で登録済み → <組織>.github.io は hori0827.github.io と別のサイト境界",
+      "name_availability_checked": "GET api.github.com/users/<name> で6件すべて404（空き）: keisanshitsu / shirabeshitsu / kurashinokeisan / kurashi-keisan / keisan-shitsu / kurashikeisan",
+      "consequence": "27日間ボトルネックだった STEP1-B（ドメイン購入・金銭）が、公開の必須条件ではなくなった。人間の作業は『年1,000〜2,000円＋13分＋DNS登録』から『0円＋1分＋DNS不要』に変わる。独自ドメインが解決するはずだった3制約（ホスト共有・robots.txt・パス設計）もすべて同時に解消される",
+      "superseded": "B案（hori0827.github.io/kurashi-keisan/ での公開）を削除した。D案と費用も手間も同じで劣る点しか無いため",
+      "weakness_recorded": "D案のURLは GitHub に固定され、Pages を離れるとURLごと失う。持ち運べる点で A案（独自ドメイン）は今も上位であり、推奨順は A > D > C のまま",
+      "unverified": [
+        "組織配下のリポジトリ作成を保存済みトークン（scope: gist, repo, workflow）で代行できるか。新規組織は OAuth App のアクセス制限が既定で有効な場合がある",
+        "ユーザー／組織サイトで発行元に /docs を選べるか"
+      ],
+      "unverified_note": "どちらも組織が存在しないと試せない。組織作成後の初回実行で確認する。通ったことにしない（2026-08-08・08-09 の同種の記録と同じ扱い）",
+      "lesson": "要件（URLに名前を入れたくない）を、それを実現する特定の手段（独自ドメインを買う）と同一視しない。要件は制約だが手段は仮説である。人間タスクが2週間動かなかったら、疑うべきは人間の意思ではなく自分の立てた手段のほう。8/09 の教訓（自分の能力の限界を確認していなかった）と同型の失敗を、それを書いた当人が27日間繰り返した"
+    },
+    {
+      "date": "2026-09-05",
+      "what": "『日次ループ』は日次で動いていない。27日間で起動2回",
+      "measured": "logs/ に 8/10〜9/03 の25日分が1件も存在しない。タスク設定は LogonType=Interactive / StartWhenAvailable=True / WakeToRun=False / NumberOfMissedRuns=0。9/04 の起動時刻が予定の9:17ではなく10:54だったのは復帰後の追いつき実行の痕跡で、Daily と Weekly が同時刻に走っていることとも整合する",
+      "consequence": "Interactive はユーザーがログインしている間しか動かない。PCの電源が入っていない期間を埋める方法は無く、これは構造的限界として認める。追いつき実行が1回走るため NumberOfMissedRuns は 0 のままになり、欠測が数字に現れない点が特に危険",
+      "rule_added": "起動したら meta.last_run と実日付の差を必ず確認する。経過日数を『前回＋1日』と仮定しない",
+      "related_failure": "2026-09-04 の実行は 'Failed to authenticate: OAuth session expired and could not be refreshed' で exit 1。この失敗は logs/ にしか出力されず人間が気づく経路が無いため、SETUP_HUMAN.md STEP 0 に復旧手順を記載した"
     }
   ],
 
@@ -352,6 +411,14 @@
       "sessions": null,
       "impressions": null,
       "note": "GSC未接続のため未計測（null）。ゼロではない。公開ページ数は依然0（Pages未有効化）だが、本日リポジトリ作成と初回pushが完了し git remote が接続された。流入が発生しうる状態になるのはドメイン確定→Pages有効化の後"
+    },
+    {
+      "date": "2026-09-05",
+      "source": "scripts/fetch_metrics.py",
+      "status": "not_configured",
+      "sessions": null,
+      "impressions": null,
+      "note": "GSC未接続のため未計測（null）。ゼロではない。公開ページ数は0のまま31日目（GET /repos/hori0827/kurashi-keisan → has_pages=false / GET /pages → 404 / pushed_at=2026-08-09T01:38:19Z で27日間コミットなし）。前回計測から27日空いているが、これは流入の変化ではなく日次ループが起動していなかったことを意味する（meta.gap_note 参照）"
     }
   ],
 

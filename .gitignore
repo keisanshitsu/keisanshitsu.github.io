@@ -9,6 +9,9 @@ secrets/
 # 実行ログ
 logs/
 
+# notify_human.ps1 が自動生成する人間向けの掲示（内容は SETUP_HUMAN.md の要約）
+いま必要な作業.txt
+
 # OS / エディタ
 Thumbs.db
 desktop.ini

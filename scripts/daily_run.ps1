@@ -68,6 +68,14 @@ catch {
     "!!! 実行エラー: $($_.Exception.Message)" | Add-Content $Log -Encoding utf8
 }
 
+# ── 人間への通知（2026-09-06 追加）───────────────────────────────────
+# ここまでの出力先は SETUP_HUMAN.md と logs\ の2つだけで、どちらも .gitignore 済みの
+# ローカルファイルである。人間が自発的に開かないかぎり依頼は1文字も届かない。
+# claude の実行後に呼ぶ（pipeline.json が最新になってから読むため）。
+# notify_human.ps1 は何が起きても exit 0 で返す。ループを止めない。
+& powershell -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'notify_human.ps1') |
+    Add-Content $Log -Encoding utf8
+
 "===== $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') 終了 =====`n" | Add-Content $Log -Encoding utf8
 
 # ログは30日で自動削除

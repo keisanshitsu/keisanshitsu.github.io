@@ -1,10 +1,17 @@
 {
   "meta": {
     "created": "2026-08-05",
-    "last_run": "2026-09-06",
-    "last_run_type": "週次レビュー。打ち手は打っていない（例外1件は後述）。中心的な発見は2つ。(1) 32日間、私の出力先は SETUP_HUMAN.md と logs/ の2つだけで、どちらも .gitignore 済みのローカルファイルだった。人間に届く経路が設計上存在しなかったにもかかわらず、私は依頼のコストを 30分→15分→13分→1分 と削り続けていた。安くしても届かなければ実行されない。例外として scripts/notify_human.ps1 を追加（トースト通知＋プロジェクト直下の掲示。exit 0 固定でループを止めない）。(2) 9/05 に『組織を作れば、あとは全部私がやります』と書いたが、その約束は同じ文書内で自分が『未検証』と書いた事項に依存していた。しかもその未検証事項は組織が無くても公式ドキュメント1ページで答えが出て、答えは不都合なほうだった（新規組織は OAuth App アクセス制限が既定で有効＝私のトークンは弾かれる見込み）。教訓3として CLAUDE.md に追記。decisions.md 2026-09-06 参照",
-    "previous_run": "2026-09-05",
+    "last_run": "2026-09-08",
+    "last_run_type": "日次ループ。前提ゲート1行目（同じゲート行に3日連続で該当）に該当し、3日ルールが発動した。該当行は4行目『計測基盤が未接続』で、9/05・9/07・本日の3回連続である。よって施策は打たず、詰まりの根拠になっている前提を1つ実測した。選んだ前提は『掲示が読まれたかは NTFS の最終アクセス時刻で判定できる』——9/07 に私自身が作り『もう人間には聞かない、観測値である』と宣言した判定器の土台である。実測の結果、判定器は『読まれた』の側で壊れていた: デスクトップ31項目のうち23項目が完全に同一の秒（2026-09-08T09:01:13）にアクセス時刻を更新されており、これは人間ではなく OneDrive 同期等の一括掃引である。9/07 版は『アクセス時刻 > baseline』の一行しか見ておらず、掃引が掲示ファイルを含んだ日に『人間が読んだ』と誤記録する。しかも誤りの向きが悪く、『読まれた』は経路が生きている証拠として使われるため私は催促をやめる側に倒れる。対策として Test-BulkSweep を追加（兄弟項目の同時刻アクセスで裏を取る）。境界テスト4ケースを書いたところ全ケースで cohort が1多く、原因は自分のコードだった（$env:TEMP が 8.3 短縮名を返すため文字列比較による自己除外が効かず、掲示ファイル自身を数えていた。しきい値3が実質2に低下）。パス正規化で修正し 8/8 PASS。副次的に通知センターの未消化トーストが10件たまっていたことを実測し、Tag/Group を付けて置き換わるようにした。経路側の欠陥は本日すべて否定された（HideIcons=0・デスクトップパス一致・通知ストア到達=True・Setting=Enabled・PCは9/05から連続稼働）ため、34日間の無回答は経路ではなく人間の選択であると判定し、催促を強めずに待つと結論した。併せて 9/07 の作業がセッション上限（run_2026-09-07.log に 'You've hit your session limit'）でコミットもpushもされずに残っていたことを検出し、本日まとめてコミット＆pushした。decisions.md 2026-09-08 参照",
+    "previous_run_2026-09-07_type": "日次ループ。前提ゲート4行目（計測基盤が未接続）に該当したが、その指示（SETUP_HUMAN.md に手順を具体化して積む）は STEP1.5 に全手順が既に書かれており、再掲は3日ルールが名指しで禁じている行為である。よって前日の週次レビューが自ら定めた次の一手『記入欄に答えが無ければ通知方式を変える』を実行した。ただし変える前に測った結果、変える根拠が無いことが分かった: トーストは通知ストアに到達しており（Setting=Enabled、Show() 前後の WAL 更新を対照実験で確認）方式は壊れていない。壊れていたのは置き場所で、9/06 に置いた掲示は作成後23時間、一度も開かれていなかった（最終アクセス時刻。Get-Item は観測しても汚染しないことを対照実験で確認）。よって (1) 掲示をデスクトップ直下にも置く (2) トーストを scenario=reminder にして自動で消えないようにする (3) 到達判定を毎回 state/notify_receipt.json に記録し、次回起動時に人間へ聞かずに読む、の3点に変更した。副次的に、2026-09-06 のコミットが push されていなかったこと（日次ループ手順7が『push は認証設定後』のまま1ヶ月古かったこと）を検出し修正した。decisions.md 2026-09-07 参照",
+    "previous_run_2026-09-06_type": "週次レビュー。打ち手は打っていない（例外1件は後述）。中心的な発見は2つ。(1) 32日間、私の出力先は SETUP_HUMAN.md と logs/ の2つだけで、どちらも .gitignore 済みのローカルファイルだった。人間に届く経路が設計上存在しなかったにもかかわらず、私は依頼のコストを 30分→15分→13分→1分 と削り続けていた。安くしても届かなければ実行されない。例外として scripts/notify_human.ps1 を追加（トースト通知＋プロジェクト直下の掲示。exit 0 固定でループを止めない）。(2) 9/05 に『組織を作れば、あとは全部私がやります』と書いたが、その約束は同じ文書内で自分が『未検証』と書いた事項に依存していた。しかもその未検証事項は組織が無くても公式ドキュメント1ページで答えが出て、答えは不都合なほうだった（新規組織は OAuth App アクセス制限が既定で有効＝私のトークンは弾かれる見込み）。教訓3として CLAUDE.md に追記。decisions.md 2026-09-06 参照",
+    "previous_run": "2026-09-07",
     "previous_run_type": "日次ループ",
+    "gap_days_2026-09-08": 1,
+    "gap_note_2026-09-08": "前回実行 2026-09-07 → 本日 2026-09-08。差は1日で欠測なし。ただし『実行された』と『完走した』は別である: 9/07 の定期実行はセッション上限で exit 1 になり、手順6（記録）と手順7（コミット＆push）に到達していなかった。last_run に日付が入っていることは完走の証明にならない。次に起動したときは last_run の日付だけでなく、git のワークツリーが clean か・origin/main が HEAD に追いついているかも確認すること",
+    "uncommitted_work_detected_on_2026-09-08": "起動時 HEAD=faee0c2（9/06分）／origin/main=27f0452（9/05分）で、9/07 の変更3ファイルが未コミットのまま作業ツリーに残っていた。9/07 に手順7を『push は認証設定後』から『コミット＆push』へ直した当の修正が、コミットされないまま失われかけていた。本日まとめてコミットし push まで実行。これが修正後の手順7の初回実行にあたる",
+    "gap_days_2026-09-07": 1,
+    "gap_note_2026-09-07": "前回実行 2026-09-06 → 本日 2026-09-07。差は1日で欠測なし。CLAUDE.md 環境メモの規則どおり last_run と実日付の差を確認した（経過日数を『前回＋1日』と仮定してはならない）",
     "gap_days_2026-09-05": 27,
     "gap_note": "8/10〜9/03 の25日分は実行記録が存在しない。logs/ に1件も無く、リポジトリの pushed_at も 2026-08-09 のまま。タスクは LogonType=Interactive のためユーザーがログインしている間しか動かない。9/04 の実行は OAuth 期限切れで exit 1。よって27日間で成立した日次ループは 9/05 の1回だけである",
     "goal_jpy_monthly": 100000,
@@ -24,6 +31,7 @@
               "deadline_basis": "CLAUDE.md『公開経路の接続から3日』。git remote 接続日 2026-08-09 + 3日。ドメイン決定期限（STEP1-B）と同日である",
               "overdue_days_2026-09-05": 24,
               "overdue_days_2026-09-06": 25,
+              "overdue_days_2026-09-08": 27,
               "overdue_note": "期限を24日超過。ただしこの24日のうち25日分は日次ループ自体が起動していない（meta.gap_note）。つまり『打ち手を打ったが効かなかった』のではなく『打ち手を打つ機会が無かった』。両者を混同すると、効いていない施策を効いたと誤認する",
               "on_miss": "人間タスクを再掲・催促。ただし週次レビュー(2026-08-09)の結論により催促は行わない。2026-09-05 に前提そのものを実測した結果、『公開には課金が要る』が誤りと判明したため、催促ではなく費用ゼロの代替経路（STEP1-E 組織サイト）の提示に切り替えた" },
       "L1": { "goal": "検索表示回数 > 0", "deadline": null, "done": false },
@@ -451,6 +459,26 @@
       "sessions": null,
       "impressions": null,
       "note": "GSC未接続のため未計測（null）。ゼロではない。公開ページ数は0のまま32日目。本日の実測: GET /repos/hori0827/kurashi-keisan → has_pages=false / GET /pages → 404 / pushed_at=2026-09-05T00:28:42Z（＝9/05のコミットは push 済み。push経路は生きている）。組織は未作成（GET /users/hori0827/orgs → 0件、候補6件はいずれも404で空きのまま）。SETUP_HUMAN.md の記入欄は空欄。ホスト直下 robots.txt は Allow: / のまま変化なし"
+    },
+    {
+      "date": "2026-09-07",
+      "source": "scripts/fetch_metrics.py",
+      "status": "not_configured",
+      "sessions": null,
+      "impressions": null,
+      "note": "GSC未接続のため未計測（null）。ゼロではない。公開ページ数は0のまま33日目。本日の実測: AUTH ok（scopes: gist, repo, workflow）/ GET /user/orgs → 0件（組織は未作成）/ GET /repos/hori0827/kurashi-keisan → has_pages=false, visibility=public / GET /pages → 404 / 組織名候補4件（keisanshitsu・shirabeshitsu・kurashinokeisan・keisan-shitsu）はいずれも404で空きのまま。SETUP_HUMAN.md の記入欄は依然空欄（通算33日）",
+      "note_push_defect_resolved_on": "2026-09-08",
+      "note_push_defect_resolved_note": "9/07 はこの欠陥を検出し CLAUDE.md 手順7 を直したが、その実行自体がセッション上限で落ちたため push は行われなかった。実際に解消したのは 9/08 である",
+      "note_push_defect": "⚠ pushed_at=2026-09-05T00:28:42Z のまま。git rev-parse で確認したところ 2026-09-06 の週次レビューのコミット faee0c2 が origin/main に無く、未 push だった。したがって 9/06 に追加した notify_human.ps1 は本日までPCの外に1つもコピーが無かった。原因は CLAUDE.md 日次ループ手順7 が『（push は認証設定後）』のままだったこと。認証は 2026-08-09 に通っており、この但し書きは1ヶ月間ただの古い記述だった。本日 手順7 を『コミット＆push』に修正した"
+    },
+    {
+      "date": "2026-09-08",
+      "source": "scripts/fetch_metrics.py",
+      "status": "not_configured",
+      "sessions": null,
+      "impressions": null,
+      "note": "GSC未接続のため未計測（null）。ゼロではない。公開ページ数は0のまま34日目。公開前ゲート verify.mjs は exit 0（HTML5枚・ツール2本・96アサーション・WARN 0）。人間の回答は依然なし（SETUP_HUMAN.md 記入欄・通算34日）",
+      "note_delivery_channel": "本日の主眼は流入ではなく通知経路の実測である。デスクトップ31項目のうち23項目が同一秒（2026-09-08T09:01:13）にアクセス時刻を更新されており、これは一括掃引（31項目中30がOneDriveのリパースポイント）。掲示ファイルは 2026-09-07T09:28:54 の作成時から動いておらず、2日連続で『読まれていない』を確定した（掃引の裏取り込み）。経路側の欠陥は本日すべて否定: HideIcons=0（アイコンは表示）／GetFolderPath と User Shell Folders のデスクトップパスが一致／通知ストア到達=True・Setting=Enabled／last_boot=2026-09-05・explorer は 2026-09-06 から常駐（PCは使われている）。したがって無回答は経路ではなく人間の選択である"
     }
   ],
 
@@ -656,7 +684,64 @@
     "safety": "全体を try/catch で包み、常に exit 0 を返す。通知の失敗で日次ループを落とさない。UTF-8 BOM付きで保存し、Parser::ParseFile で構文0エラー・実際の実行まで確認済み（2026-08-06 の教訓『書いて終わりにしない』を適用）",
     "verified": "スクリプトの実行は成功（『通知を出した: [STEP1-E] …（経過 32 日）』を出力し exit 0）。いま必要な作業.txt も生成された",
     "not_verified": "⚠ トーストが実際に画面へ表示されたかは確認できない。Show() が例外を投げないことと表示されることは別で、集中モード等で抑制されうる。SETUP_HUMAN.md の記入欄に『通知は見えたか』を追加してユーザーに確認を依頼した。表示されていなければ方式を変える",
-    "gitignored": "いま必要な作業.txt は .gitignore に追加した（SETUP_HUMAN.md の要約であり、記入内容が入りうるため）"
+    "not_verified_resolved_on": "2026-09-07",
+    "not_verified_resolved_note": "⚠ 上の not_verified は誤りだった。『確認できない』は未検証の前提であり、実際には私の側で機械的に測れた（所要10分）。しかもこの誤りは、確認のコストを人間に押しつけて未解決の質問を1つ増やすという、32日間の失敗と同じ形をしていた",
+    "gitignored": "いま必要な作業.txt は .gitignore に追加した（SETUP_HUMAN.md の要約であり、記入内容が入りうるため）",
+
+    "revised_on": "2026-09-07",
+    "revised_why": "9/06 の週次レビューは『次回、記入欄に答えが無ければ通知方式を変える』を次の一手に定めていた。記入欄は空欄だったが、方式を変える前に実測したところ、変えるべきは方式ではなかった",
+    "measurements_2026-09-07": {
+      "toast_reached_notification_store": true,
+      "toast_evidence": "Show() の前後で %LOCALAPPDATA%\\Microsoft\\Windows\\Notifications\\wpndatabase.db-wal の LastWriteTime を比較。before=2026-09-07T08:04:24 → after=09:20:42 で更新された。対照実験として『Show() すれば WAL が動く』ことを先に確認してから判定している",
+      "notifier_setting": "Enabled（CreateToastNotifier(appId).Setting）",
+      "toast_appid_registered_at": "2026-09-06 10:28:17（レジストリ Notifications\\Settings\\{1AC14E77-...}\\WindowsPowerShell\\v1.0\\powershell.exe の最終書き込み時刻＝9/06 に notify_human.ps1 が動いた秒と一致）",
+      "notice_file_opened_by_human": false,
+      "notice_file_evidence": "いま必要な作業.txt の LastAccessTime が 2026-09-06 10:28:21（＝自身の作成4秒後、スクリプト自身のアクセス）のまま23時間動いていなかった。fsutil behavior query disablelastaccess → DisableLastAccess=2（更新ON）。対照実験で ReadAllText するとアクセス時刻が動くことを確認済みなので、動いていない＝誰も開いていない",
+      "get_item_does_not_contaminate": "Get-Item はメタデータのみを読むため、観測しても LastAccessTime を更新しない（2回連続の Get-Item で変化なしを確認）。ReadAllText は更新する。よって毎回の観測が測定対象を壊すことはない",
+      "conclusion": "方式（トースト）は壊れていない。壊れていたのは置き場所と持続性である。掲示はプロジェクトフォルダの中にあり、フォルダを開かなければ目に入らない。トーストは届いていたが既定の5秒で消える",
+      "caveat": "⚠ 『通知ストアに到達した』は『画面に出た』の証明ではない。集中モード下でも到達はしうる。到達までしか測れていないことを区別して書く。ただし『まったく確認できない』は誤りだった"
+    },
+    "changes_2026-09-07": [
+      "掲示をデスクトップ直下にも置く（[Environment]::GetFolderPath('Desktop') → C:\\Users\\horik_vle3kvw\\OneDrive\\Desktop）。ファイル名は『★くらし計算室 いま必要な作業.txt』。フォルダを開く操作なしで目に入る。pending が0件になると両方とも自動削除する",
+      "トーストを scenario=\"reminder\" にした。既定の5秒で消えず、ユーザーが閉じるまで残る。Show() が例外なく通ることを実測で確認済み",
+      "到達判定を state/notify_receipt.json に毎回記録する。次回起動時、baseline_access と現在の LastAccessTime を比べて『読まれたか』を判定し history に積む。人間に聞かない",
+      "SETUP_HUMAN.md の記入欄から『通知は見えたか』を削除した。自分で測れる質問を人に聞かない"
+    ],
+    "regression_test_2026-09-07": "検出が両方向に効くことを実地で確認した。(1) 誰も開いていない状態で実行 → 『⚠ 前回の掲示は読まれていない』。(2) ReadAllText で開封を模擬してから実行 → 『前回の掲示は読まれた』。history にも any_opened=False / True の2件が正しく積まれた。その後 receipt を削除して再実行し、テストで汚れた履歴を消して history=0 の状態から本番計測を始めている（自分の模擬開封を人間の行動と読み違えないため）",
+    "revised_on_2026-09-08": "判定器そのものが誤検知する構造だったため修正した。9/07 の判定は『アクセス時刻 > baseline なら人間が読んだ』の一行で、掃引と人間の操作を区別していなかった",
+    "defect_found_2026-09-08": {
+      "what": "最終アクセス時刻の更新を無条件に『人間が開いた』と解釈していた",
+      "evidence": "デスクトップ31項目（ファイル11・フォルダ20、うち30がOneDriveのリパースポイント）のうち23項目が完全に同一の秒 2026-09-08T09:01:13 にアクセス時刻を更新されていた。人間が1秒で23個を開くことはない",
+      "why_dangerous": "誤りの向きが悪い。『読まれた』は経路が生きている証拠として使われ、私は催促をやめて『あとは人間の選択』と結論する側に倒れる。届いていないのに届いたことにするのが、この設計で最悪の失敗である",
+      "not_triggered_this_time": "今回はたまたま掃引が掲示ファイルを外していたため、9/07 と 9/08 の『読まれていない』という結論自体は生き残った。壊れていたのは結論ではなく結論の根拠のほう",
+      "fix": "Test-BulkSweep を追加。アクセス時刻が動いたら同じフォルダの兄弟項目を見て裏を取る。同一秒±2秒に3項目以上が動いていれば掃引、1つだけなら人間の操作とみなす。Get-ChildItem は列挙のみでファイル本体を読まないため観測を汚染しない",
+      "bug_found_by_own_test": "境界テスト4ケースで全ケース cohort が期待値より1多かった。原因は自分のコードで、除外条件を $_.FullName -ne $Path という文字列比較で書いていたが $env:TEMP が 8.3 短縮名（C:\\Users\\HORIK_~1\\...）を返すため一致せず、掲示ファイル自身を兄弟として数えていた。しきい値3が実質2に低下し、兄弟2件でも掃引と誤判定していた（CASE C）。Get-Item でパスを正規化し OrdinalIgnoreCase で比較して修正",
+      "regression_test": "4ケース8アサーションで 8/8 PASS。A=兄弟6件→掃引 / B=兄弟0件→人間 / C=兄弟2件（しきい値未満）→人間 / D=兄弟3件（しきい値ちょうど）→掃引。実ファイルではなく一時ディレクトリで行い、本番の掲示ファイルのアクセス時刻を汚染していない",
+      "known_false_negative": "人間が開いた瞬間に掃引が重なると人間の操作を掃引として見落とす。その場合こちらは催促を続ける側に倒れるため被害は『しつこい』で済む。安全な向きに倒してある"
+    },
+    "toast_dedup_2026-09-08": {
+      "measured": "ToastNotificationManager.History.GetHistory(appId) → 未消化のトーストが10件、すべて Tag/Group 空",
+      "why_it_matters": "同じ依頼が10個並ぶ通知は情報ではなく雑音であり、まとめて無視される側に回る",
+      "fix": "ToastNotification に Tag='kurashi-keisan-human-task' / Group='kurashi-keisan' を設定した。同一 Tag/Group は Windows が置き換えるため1件に保たれる。実行後にタグ付き1件を確認",
+      "not_done_and_why": "既存の10件は消していない。借用している AppId は PowerShell 共通であり、History.Clear は他のツールが出した通知まで巻き添えにするため触らないほうが安全と判断した"
+    },
+    "channel_health_2026-09-08": {
+      "desktop_icons_hidden": false,
+      "desktop_icons_evidence": "HKCU:\\...\\Explorer\\Advanced の HideIcons = 0",
+      "desktop_path_correct": true,
+      "desktop_path_evidence": "[Environment]::GetFolderPath('Desktop') と User Shell Folders の Desktop がともに C:\\Users\\horik_vle3kvw\\OneDrive\\Desktop で一致",
+      "toast_reached_store": true,
+      "notifier_setting": "Enabled",
+      "machine_in_use": true,
+      "machine_evidence": "last_boot=2026-09-05T13:10:30 / explorer.exe は 2026-09-06T09:39:05 から常駐。PCは連続して使われている",
+      "notice_opened": false,
+      "notice_opened_evidence": "2日連続で LastAccessTime が作成時から動いていない（掃引の裏取り込み）",
+      "verdict": "経路側に欠陥は見つからなかった。掲示はデスクトップに見える形で置かれ、通知は届き、PCは毎日使われている。そのうえで34日間、記入欄は空欄である。したがって『依頼が届いていない』という 9/06 以来の仮説は支持されない。これは経路の問題ではなく人間の選択である",
+      "action": "催促を強めない。3日ルールの趣旨がそれであり、かつ『やらない（C案）』も SETUP_HUMAN.md に明記済みの有効な選択肢である。本日は打ち手が無い。待ちである"
+    },
+    "lesson_2026-09-08": "測定器を作ったら、次はその測定器を疑う。特にその出力が『もう心配しなくてよい』という方向の結論を支えるときは必ず疑う。8/09『できないと決めつけた』→ 9/05『手段が1つだと決めつけた』→ 9/07『測れないと決めつけた』→ 9/08『測れたと決めつけた』。前3回は調べれば分かることを調べなかった失敗だが、今回は調べた上でその道具を検証しなかった失敗である",
+    "receipt_file": "state/notify_receipt.json（.gitignore 済み。ローカル絶対パスを含み、かつ実行時状態でプロジェクトの知見ではないため。リポジトリは public）",
+    "exit_code_note": "Parser::ParseFile で構文0エラー、UTF-8 BOM付きで保存、実際の実行で exit 0 を確認済み。なお検証中に exit 255 が出たのは、テスト側で `| Select-Object -First 2` を挟んで子プロセスのパイプラインを打ち切ったためで、スクリプトの欠陥ではない（打ち切りなしでの再実行は exit 0）"
   },
 
   "decision_log_ref": "state/decisions.md"

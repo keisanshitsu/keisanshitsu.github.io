@@ -12,6 +12,11 @@ logs/
 # notify_human.ps1 が自動生成する人間向けの掲示（内容は SETUP_HUMAN.md の要約）
 いま必要な作業.txt
 
+# 通知の到達記録（2026-09-07 追加）。ローカルの絶対パス（Windowsのアカウント名）を
+# 含み、かつこのPCの実行時状態であってプロジェクトの知見ではない。
+# リポジトリは public なので入れない。判定結果の要約は decisions.md 側に残す。
+state/notify_receipt.json
+
 # OS / エディタ
 Thumbs.db
 desktop.ini

@@ -87,6 +87,21 @@ catch {
     exit 4
 }
 
+# ── 2.9. 既に接続済みか ───────────────────────────────────────────────
+# 接続後にこのスクリプトを再実行できるようにしておく。
+# 3〜5（リポジトリ作成・ゲート・push）は初回だけの手順で、2回目以降は
+# 「既にコミットがある」に引っかかって中止になってしまう。
+# 一方 6〜7（Pages の設定確認と修復）は **何度でも流せることに価値がある**。
+# 実際 2026-09-09 に Pages が path='/' で作られる事故が起きており、
+# それを直すために再実行できる必要があった。
+$AlreadyConnected = (@(git remote) -contains 'origin') -and
+                    ((git config --get remote.origin.url) -eq "$RepoUrl.git")
+if ($AlreadyConnected) {
+    Say "[skip] origin は既に $RepoUrl を指しています。Pages の確認だけ行います" 'DarkGray'
+}
+
+if (-not $AlreadyConnected) {
+
 # ── 3. 安全装置: push 先が空であることを確認する ──────────────────────
 $RepoExists = $true
 try {
@@ -174,22 +189,83 @@ if ($LASTEXITCODE -ne 0) {
 }
 Say "[ok] push しました" 'Green'
 
+} # /if (-not $AlreadyConnected)
+
 # ── 6. Pages を有効化する（ここが「公開」の引き金） ───────────────────
-$pagesBody = @{ source = @{ branch = 'main'; path = '/docs' } } | ConvertTo-Json
+# ⚠ 2026-09-09 実測: このAPIは素直ではない。3点とも実際に踏んだ。
+#   (1) POST が HTTP 500 を返しながら **実際には作成されていた**。しかも
+#       body で指定した path='/docs' は無視され、既定の path='/' になっていた。
+#       → 500 を「失敗」と扱って諦めると、ルート配信のまま放置される。
+#          その状態では CLAUDE.md や state/ が配信され、サイト本体は 404 になる
+#   (2) PUT で source を直しても **再ビルドは起きない**。CDN は古いビルドを返し続ける
+#   (3) したがって POST → GET で実状態を確認 → 必要なら PUT → **POST /pages/builds**
+#       の順で、最後に必ずビルドを要求する
+# 一般則: 応答コードだけで成否を決めない。**GET して実際の状態を見る。**
+$PagesApi = "https://api.github.com/repos/$Org/$RepoName/pages"
+$pagesBody = '{"build_type":"legacy","source":{"branch":"main","path":"/docs"}}'
+
 try {
-    Invoke-RestMethod -Uri "https://api.github.com/repos/$Org/$RepoName/pages" -Headers $H `
-        -Method Post -Body $pagesBody -ContentType 'application/json' -ErrorAction Stop | Out-Null
-    Say "[ok] GitHub Pages を有効化しました（main / docs）" 'Green'
+    Invoke-RestMethod -Uri $PagesApi -Headers $H -Method Post -Body $pagesBody `
+        -ContentType 'application/json' -ErrorAction Stop | Out-Null
+    Say "[ok] GitHub Pages を有効化しました" 'Green'
 }
 catch {
     $code = $_.Exception.Response.StatusCode.value__
     if ($code -eq 409) { Say "[ok] Pages は既に有効です" 'Green' }
-    else {
-        Say "[warn] Pages の自動有効化に失敗 (HTTP $code)" 'Yellow'
-        Say "       手動: $RepoUrl/settings/pages → Source=main / フォルダ=/docs" 'Yellow'
+    else { Say "[info] POST が HTTP $code を返しました。実状態を GET で確認します" 'DarkGray' }
+}
+
+# 応答に関わらず、実際にどうなっているかを見る
+$pages = $null
+try { $pages = Invoke-RestMethod -Uri $PagesApi -Headers $H -Method Get -ErrorAction Stop } catch {}
+
+if (-not $pages) {
+    Say "[error] Pages が作成されていません。" 'Red'
+    Say "        手動: $RepoUrl/settings/pages → Source=main / フォルダ=/docs" 'Yellow'
+    exit 10
+}
+
+if ($pages.source.path -ne '/docs' -or $pages.source.branch -ne 'main') {
+    Say "[fix] 発行元が $($pages.source.branch)$($pages.source.path) になっています。/docs へ直します" 'Yellow'
+    try {
+        Invoke-RestMethod -Uri $PagesApi -Headers $H -Method Put `
+            -Body '{"source":{"branch":"main","path":"/docs"}}' `
+            -ContentType 'application/json' -ErrorAction Stop | Out-Null
+        Say "[ok] 発行元を main /docs に変更しました" 'Green'
+    }
+    catch {
+        Say "[error] 発行元を変更できませんでした (HTTP $($_.Exception.Response.StatusCode.value__))" 'Red'
+        Say "        手動: $RepoUrl/settings/pages → Source=main / フォルダ=/docs" 'Yellow'
+        exit 11
     }
 }
 
+# PUT だけでは再ビルドされない。必ずビルドを要求する
+try {
+    Invoke-RestMethod -Uri "$PagesApi/builds" -Headers $H -Method Post -ErrorAction Stop | Out-Null
+    Say "[ok] ビルドを要求しました" 'Green'
+}
+catch { Say "[warn] ビルド要求に失敗 (HTTP $($_.Exception.Response.StatusCode.value__))" 'Yellow' }
+
+# ── 7. 実際に配信されるまで待って確かめる ────────────────────────────
+# 「有効化した」と「見えている」は別である。GET して確かめるまで完了扱いにしない。
+Say "配信を待っています（最大4分）..."
+$deadline = (Get-Date).AddMinutes(4)
+$live = $false
+while ((Get-Date) -lt $deadline) {
+    Start-Sleep -Seconds 15
+    try {
+        $resp = Invoke-WebRequest -Uri $PagesUrl -UseBasicParsing -TimeoutSec 15 -ErrorAction Stop
+        if ($resp.StatusCode -eq 200 -and $resp.Content -match '<title>') { $live = $true; break }
+    }
+    catch { }
+}
+
 Say ''
-Say "公開URL（反映まで1〜2分）: $PagesUrl" 'Green'
+if ($live) {
+    Say "[完了] 公開されました: $PagesUrl" 'Green'
+    exit 0
+}
+Say "[warn] まだ配信が確認できません: $PagesUrl" 'Yellow'
+Say "       数分後にもう一度開いてください。状態: $RepoUrl/settings/pages" 'Yellow'
 exit 0

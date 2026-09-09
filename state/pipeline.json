@@ -2,7 +2,7 @@
   "meta": {
     "created": "2026-08-05",
     "last_run": "2026-09-09",
-    "last_run_type": "日次ループ。前提ゲート1行目（同じゲート行に3日連続で該当）に該当し、3日ルールが発動した。該当行は4行目『計測基盤が未接続』で、9/05・9/07・9/08・本日の4回連続である。よって施策は打たず、詰まりの根拠になっている前提を1つ実測した。選んだ前提は『計測基盤は、人間が STEP1.5 を終えさえすれば機能する』——35日間ずっと握っていながら一度も確かめていない前提である。結果、繋いでも機能しない状態だった。(1) 一次情報（developers.google.com/webmaster-tools/v1/searchanalytics/query）で Search Console の返す指標が clicks/impressions/ctr/position の4つのみで sessions が存在しないことを確認した。north_star.metric は monthly_sessions であり、KPIラダー L2〜L4 もセッション定義なので、唯一つなぐ予定の計測基盤は北極星指標を原理的に測れない。測れるのは L1（表示回数>0）まで。(2) fetch_metrics.py の成功経路（71〜124行目）は gsc_property 未設定のため35日間一度も実行されておらず、標準ライブラリだけのテスト（scripts/fetch_metrics.test.py・google 系を sys.modules に偽装）を書いて素通ししたところ 16/21 PASS。欠陥は『成功時の出力に sessions キーが無い』こと。失敗時は全経路が sessions:null を出すため、下流から見て「取得成功」と「未計測」が同形になる。意思決定ルール #1 は『計測値が null なら計測を通す』なので、人間が STEP1.5 を終えた翌日も私は未計測と判断し、#4〜#7 に永久に到達しない。35日待った解除が届いた日に効かない状態だった。(3) 修正として全経路の基底に measured(true/false) と sessions(常にnull) を置き、成功時に sessions_note（出典つき）と sessions_proxy_candidate(clicks・未採用) を出すようにして 21/21 PASS。(4) 書いただけのテストは腐るので verify.mjs に『3.5 インフラのテスト』を追加し毎回実行するようにした（失敗は ERROR で exit 1、Python 不在は WARN 止まり）。(5) その検出器を疑って欠陥を再注入したところ一度目は素通りした。原因は自分のテストで、A4 を『measured というキーがあるか』で書いていたが基底に measured:False を置いた時点でキーは常に存在するため、成功経路から True を消しても通る。値を見るよう直して両方向（欠陥→ERROR/exit1、復元→exit0）を実測した。失敗時に要約行が『スキップ』と表示される嘘も直した。残る構造問題（GSCではL2〜L4を判定できない。clicks で読み替えるか GA4 を足すか）は方針判断のため週次レビューへ送り、解決済みとして扱わない。decisions.md 2026-09-09 参照",
+    "last_run_type": "ユーザーが組織 keisanshitsu を作成 → 組織サイトで公開を完了。L0の前半（公開）達成",
     "previous_run_2026-09-08_type": "日次ループ。前提ゲート1行目（同じゲート行に3日連続で該当）に該当し、3日ルールが発動した。該当行は4行目『計測基盤が未接続』で、9/05・9/07・本日の3回連続である。よって施策は打たず、詰まりの根拠になっている前提を1つ実測した。選んだ前提は『掲示が読まれたかは NTFS の最終アクセス時刻で判定できる』——9/07 に私自身が作り『もう人間には聞かない、観測値である』と宣言した判定器の土台である。実測の結果、判定器は『読まれた』の側で壊れていた: デスクトップ31項目のうち23項目が完全に同一の秒（2026-09-08T09:01:13）にアクセス時刻を更新されており、これは人間ではなく OneDrive 同期等の一括掃引である。9/07 版は『アクセス時刻 > baseline』の一行しか見ておらず、掃引が掲示ファイルを含んだ日に『人間が読んだ』と誤記録する。しかも誤りの向きが悪く、『読まれた』は経路が生きている証拠として使われるため私は催促をやめる側に倒れる。対策として Test-BulkSweep を追加（兄弟項目の同時刻アクセスで裏を取る）。境界テスト4ケースを書いたところ全ケースで cohort が1多く、原因は自分のコードだった（$env:TEMP が 8.3 短縮名を返すため文字列比較による自己除外が効かず、掲示ファイル自身を数えていた。しきい値3が実質2に低下）。パス正規化で修正し 8/8 PASS。副次的に通知センターの未消化トーストが10件たまっていたことを実測し、Tag/Group を付けて置き換わるようにした。経路側の欠陥は本日すべて否定された（HideIcons=0・デスクトップパス一致・通知ストア到達=True・Setting=Enabled・PCは9/05から連続稼働）ため、34日間の無回答は経路ではなく人間の選択であると判定し、催促を強めずに待つと結論した。併せて 9/07 の作業がセッション上限（run_2026-09-07.log に 'You've hit your session limit'）でコミットもpushもされずに残っていたことを検出し、本日まとめてコミット＆pushした。decisions.md 2026-09-08 参照",
     "previous_run_2026-09-07_type": "日次ループ。前提ゲート4行目（計測基盤が未接続）に該当したが、その指示（SETUP_HUMAN.md に手順を具体化して積む）は STEP1.5 に全手順が既に書かれており、再掲は3日ルールが名指しで禁じている行為である。よって前日の週次レビューが自ら定めた次の一手『記入欄に答えが無ければ通知方式を変える』を実行した。ただし変える前に測った結果、変える根拠が無いことが分かった: トーストは通知ストアに到達しており（Setting=Enabled、Show() 前後の WAL 更新を対照実験で確認）方式は壊れていない。壊れていたのは置き場所で、9/06 に置いた掲示は作成後23時間、一度も開かれていなかった（最終アクセス時刻。Get-Item は観測しても汚染しないことを対照実験で確認）。よって (1) 掲示をデスクトップ直下にも置く (2) トーストを scenario=reminder にして自動で消えないようにする (3) 到達判定を毎回 state/notify_receipt.json に記録し、次回起動時に人間へ聞かずに読む、の3点に変更した。副次的に、2026-09-06 のコミットが push されていなかったこと（日次ループ手順7が『push は認証設定後』のまま1ヶ月古かったこと）を検出し修正した。decisions.md 2026-09-07 参照",
     "previous_run_2026-09-06_type": "週次レビュー。打ち手は打っていない（例外1件は後述）。中心的な発見は2つ。(1) 32日間、私の出力先は SETUP_HUMAN.md と logs/ の2つだけで、どちらも .gitignore 済みのローカルファイルだった。人間に届く経路が設計上存在しなかったにもかかわらず、私は依頼のコストを 30分→15分→13分→1分 と削り続けていた。安くしても届かなければ実行されない。例外として scripts/notify_human.ps1 を追加（トースト通知＋プロジェクト直下の掲示。exit 0 固定でループを止めない）。(2) 9/05 に『組織を作れば、あとは全部私がやります』と書いたが、その約束は同じ文書内で自分が『未検証』と書いた事項に依存していた。しかもその未検証事項は組織が無くても公式ドキュメント1ページで答えが出て、答えは不都合なほうだった（新規組織は OAuth App アクセス制限が既定で有効＝私のトークンは弾かれる見込み）。教訓3として CLAUDE.md に追記。decisions.md 2026-09-06 参照",
@@ -44,40 +44,39 @@
     "kpi_ladder": {
       "L0": {
         "goal": "公開＋Search Console登録",
-        "deadline": "2026-08-12",
+        "deadline": "2026-09-12",
         "done": false,
-        "deadline_basis": "CLAUDE.md『公開経路の接続から3日』。git remote 接続日 2026-08-09 + 3日。ドメイン決定期限（STEP1-B）と同日である",
-        "overdue_days_2026-09-05": 24,
-        "overdue_days_2026-09-06": 25,
-        "overdue_days_2026-09-08": 27,
-        "overdue_note": "期限を24日超過。ただしこの24日のうち25日分は日次ループ自体が起動していない（meta.gap_note）。つまり『打ち手を打ったが効かなかった』のではなく『打ち手を打つ機会が無かった』。両者を混同すると、効いていない施策を効いたと誤認する",
-        "on_miss": "人間タスクを再掲・催促。ただし週次レビュー(2026-08-09)の結論により催促は行わない。2026-09-05 に前提そのものを実測した結果、『公開には課金が要る』が誤りと判明したため、催促ではなく費用ゼロの代替経路（STEP1-E 組織サイト）の提示に切り替えた"
+        "progress": "公開は 2026-09-09 に完了。Search Console 登録が未了（STEP1.5）"
       },
       "L1": {
-        "goal": "検索表示回数 > 0",
-        "deadline": null,
-        "done": false
+        "goal": "検索表示回数 > 0（impressions）",
+        "deadline": "2026-10-07",
+        "done": false,
+        "note": "公開から4週。GSC の impressions で判定できる（clicks/impressions は取得可能）"
       },
       "L2": {
         "goal": "月1,000セッション",
         "deadline": null,
         "done": false,
-        "on_miss": "増産停止。ニッチ選定の見直しへ"
+        "on_miss": "増産停止。ニッチ選定の見直しへ",
+        "blocked_by_measurement": "GSC は sessions を返さない。判定基準の決定は週次レビュー待ち"
       },
       "L3": {
         "goal": "月10,000セッション／初収益",
         "deadline": null,
-        "done": false
+        "done": false,
+        "blocked_by_measurement": "GSC は sessions を返さない。判定基準の決定は週次レビュー待ち"
       },
       "L4": {
         "goal": "月50,000セッション／月10万円",
         "deadline": null,
-        "done": false
+        "done": false,
+        "blocked_by_measurement": "GSC は sessions を返さない。判定基準の決定は週次レビュー待ち"
       }
     },
     "note": "deadline は L0 到達日（＝公開日）が決まった時点で日次ループが埋める"
   },
-  "phase": "bootstrap",
+  "phase": "launch",
   "phase_definition": {
     "bootstrap": "公開経路が未接続。サイトの器とツールを作り、接続を待つ",
     "launch": "公開済み。ツールを3本まで増やし流入を待つ",
@@ -103,49 +102,27 @@
     "url_kind": "GitHub Organization site (D案)。ユーザー名も数字も含まない"
   },
   "publication": {
-    "connected": false,
-    "connected_note": "false は『まだ1枚も公開されていない』の意味。push経路（リポジトリ・remote・認証・公開前ゲート）は 2026-08-09 に本番で通っており、残るは Pages の有効化のみ。有効化は custom_domain 待ちで意図的に保留している",
-    "repo_created_on": "2026-08-09",
-    "repo_created_by": "connect_github.ps1 モードC（Windows資格情報のトークンをAPIに使用）。人間の作業ゼロ",
-    "first_push_on": "2026-08-09",
-    "push_path_verified": "リポジトリ作成→公開前ゲート(verify.mjs exit 0)→remote設定→push まで実地で成功。再実行は冪等（origin 設定済みなら skip・exit 0）で確認済み",
-    "remote_state_verified": "2026-08-09 に認証付きAPIで確認: private=false / visibility=public / default_branch=main / has_pages=false / GET /pages は404（＝未公開）",
-    "host": "GitHub Pages",
-    "host_changed_from": "Cloudflare Pages",
-    "host_change_reason": "Cloudflareは別アカウントの新規作成が必要で、人間にしか行えなかった。GitHub Pages ならリポジトリと同じアカウントで完結し、人間の作業が1つ丸ごと消える",
-    "repo": "hori0827/kurashi-keisan",
-    "repo_kind": "project site（https://hori0827.github.io/kurashi-keisan/）",
-    "repo_changed_on": "2026-08-07",
-    "repo_changed_from": "hori0827/hori0827.github.io",
-    "repo_change_reason": "そのリポジトリ名は既に埋まっていた。ユーザーが同一アカウントで運用中の別本番サイト『HG Analytics』（AI株価スクリーニング。2026-05-09開設・102コミット・Pages稼働中）が使用している。2026-08-06 の設計は空きを確認せずに決めており、初回pushは毎朝失敗し続けていた",
-    "source": "main ブランチの /docs フォルダ",
-    "how": "main に push すればそれだけで反映される。ビルドも外部サービスも不要",
-    "human_steps_remaining": 1,
-    "human_steps_remaining_note": "2026-09-05 に 2 → 1 へ。D案（組織サイト）を選べば人間の作業は1-Eの1つだけで、費用ゼロ・1分・DNS作業なし。A案（独自ドメイン）を選ぶ場合は従来どおり 1-B と 1-D の2つ",
-    "human_steps": [
-      "1-E【推奨・費用ゼロ】: GitHub の組織を1つ作る（約1分・0円）。https://github.com/account/organizations/new で Free プランを選び、組織名に keisanshitsu 等を入力する。REST API に組織作成エンドポイントが無いため人間専任"
+    "connected": true,
+    "host": "GitHub Pages（組織サイト / D案）",
+    "repo": "keisanshitsu/keisanshitsu.github.io",
+    "source": "main ブランチの /docs",
+    "published_url": "https://keisanshitsu.github.io/",
+    "published_on": "2026-09-09",
+    "org_created_at": "2026-09-09T13:07:08Z",
+    "verified_live": [
+      "/ 200",
+      "/tools/wallpaper-quantity/ 200",
+      "/tools/paint-quantity/ 200",
+      "/privacy.html 200",
+      "/contact.html 200",
+      "/robots.txt 200",
+      "/sitemap.xml 200",
+      "docs の外（CLAUDE.md・state/・scripts/）は 404 で非配信であることを確認"
     ],
-    "human_steps_alternative_A": [
-      "1-B: 独自ドメインを取得する（約10分・年1,000〜2,000円）。金銭の支払いを伴うため人間専任",
-      "1-D: 取得先の管理画面でDNSレコード（A×4・AAAA×4・CNAME(www)・確認用TXT）を登録する（約3分）。レジストラのアカウント操作のため人間専任"
-    ],
-    "human_steps_reduced_on": "2026-08-09",
-    "human_steps_reduced_note": "1-A（リポジトリ作成）と1-C（Pages＋カスタムドメイン設定）を自動化した。どちらも『トークンファイルが無いからAPIは使えない』という思い込みで人間の作業に振り分けていたが、Windows資格情報に保存済みのトークンが repo スコープを持っていた（2026-08-09 実測）。1-A は実行済み、1-C は custom_domain が入り次第 connect_github.ps1 が自動で行う",
-    "human_steps_serialization_fixed_on": "2026-08-08",
-    "human_steps_serialization_note": "2026-08-07 は 1-A が 1-B の後ろに並べられており、40秒の無料作業が10分の有料作業に足止めされていた。push しても Pages を設定するまで公開されない事実を公式ドキュメントで確認し、1-A を先頭へ戻した",
-    "pages_enable_gated_on_domain": true,
-    "pages_enable_gate_reason": "custom_domain が未設定のうちに Pages を有効化すると、名前入りURLで公開が始まり『URLに名前や数字を入れたくない』という要件に反する。connect_github.ps1 が exit 0 で保留する",
-    "human_steps_note": "トークン発行は不要。Windows資格情報に保存済みのGitHubログインを git が内部で使うため、push は自動で通る。secrets/github_token.txt を置けば上の2つも自動化される",
-    "reduced_on": "2026-08-06",
-    "reduced_from": "GitHubリポジトリ作成・トークン発行・remote設定・Cloudflareアカウント作成・Pages接続（約30分）",
-    "safety_invariants": [
-      "hori0827/hori0827.github.io には push しない。ユーザーの別本番サイトである",
-      "git push --force を使わない。push 拒否に --force を足すことは 102コミットの本番サイトの破壊にあたる",
-      "push 先に既存コミットがあれば connect_github.ps1 が exit 8 で中止する。この安全装置を外さない",
-      "ユーザーの他プロジェクトのファイル・リポジトリに触れない"
-    ],
-    "safety_verified_on": "2026-08-07",
-    "safety_verification_evidence": "connect_github.ps1 -RepoName hori0827.github.io を実際に実行し、exit 8 で中止・remote未設定・API読み取りのみであることを確認した"
+    "human_steps_remaining": 0,
+    "days_blocked": 33,
+    "blocked_from": "2026-08-07",
+    "why_it_took_33_days": "要件（URLに名前を出さない）を、それを満たす特定の手段（独自ドメインの購入）と同一視していた。9/05 に組織サイトで費用ゼロ・1分で同じ要件を満たせると判明。CLAUDE.md「教訓2 — 要件は制約だが、手段は仮説である」"
   },
   "subdirectory_constraints": {
     "why": "プロジェクトサイトはサイトのルートがドメインのルートと一致しない",
@@ -202,95 +179,23 @@
   },
   "blocked_on_human": [
     {
-      "id": "STEP1-E",
-      "what": "GitHub の組織（Organization）を1つ作る。Freeプラン・推奨名 keisanshitsu",
-      "added_on": "2026-09-05",
-      "why_blocking": "公開URLをこれにすれば https://keisanshitsu.github.io/ となり、名前も数字も出ない。STEP1-B（課金）の代替であり、こちらのほうが速く安い",
-      "why_human_only": "GitHub の REST API に組織の作成エンドポイントが存在しない（docs.github.com/en/rest/orgs/orgs で確認。get/update/delete のみ）。加えてアカウント新規作成にあたるためドクトリン上も人間専任",
-      "blocks": "公開そのもの・Search Console 登録（STEP1.5）",
-      "status": "pending",
-      "human_minutes": 2,
-      "human_minutes_revised_on": "2026-09-06",
-      "human_minutes_revised_reason": "1 → 2 に上方修正。組織作成（約1分）に加えて、外部アプリ（OAuth App）のアクセス許可が約20秒必要になる見込みが判明したため。切り上げて2分とする。9/05 に『1分・あとは全部私がやります』と書いたのは、同じ文書で自分が『未検証』と書いた事項に依存した過小申告だった。人間の作業を安く見せると、途中で詰まったときに依頼そのものが信用されなくなる",
-      "cost_jpy": 0,
-      "url": "https://github.com/account/organizations/new",
-      "is_now_the_recommended_unblock": true,
-      "recommended_note": "推奨順は A > D > C（独自ドメインのほうがURLを持ち運べるため長期的には上位）。ただし A案（STEP1-B）は27日間動いていない。D案は費用ゼロ・1分で同じ要件を満たすため、待ち続けるより確実に前進する。D案で公開した後に A案へ移ることもでき、移行コストは0ページ・0インデックスの現時点が最小",
-      "name_candidates_available_on_2026-09-05": [
-        "keisanshitsu",
-        "shirabeshitsu",
-        "kurashinokeisan",
-        "kurashi-keisan",
-        "keisan-shitsu",
-        "kurashikeisan"
-      ],
-      "availability_method": "GET https://api.github.com/users/<name> が 404（ユーザー名と組織名は同一の名前空間）",
-      "weakness": "URLが GitHub に固定される。将来 Pages を離れるとURLごと失う（独自ドメインは持ち運べる）。ただし現時点の公開ページは0枚なので失うものが無い",
-      "after_human_step": "組織作成後は私が自動で行う: <組織名>.github.io リポジトリの作成 → verify.mjs → push → Pages 有効化（Source=main //docs）。ただし下の unverified を先に読むこと",
-      "unverified_resolved_by_docs_on": "2026-09-06",
-      "unverified_resolved_note": "9/05 に『どちらも組織が存在しないと試せない』と書いたが、それは調べない理由になっていなかった。実地で試せないことと仕様を調べられないことは別である。1件はドキュメント1ページで答えが出て、しかも不都合なほうの答えだった",
-      "unverified": [
-        {
-          "item": "組織配下のリポジトリ作成を保存済みトークン（gho_ = OAuth App 形式）で代行できるか",
-          "status": "ドキュメント上は「既定では通らない見込み」。実地は未検証",
-          "source": "https://docs.github.com/en/organizations/managing-oauth-access-to-your-organizations-data/about-oauth-app-access-restrictions",
-          "verbatim": "When you create a new organization, OAuth app access restrictions are enabled by default.",
-          "consequence": "POST /orgs/<org>/repos が 403 で弾かれる可能性が高い。人間の作業は『1分』ではなく『1分＋20秒』になる",
-          "fallback": "https://github.com/organizations/<org>/settings/oauth_application_policy を人間に案内し、Remove restrictions か個別承認をしてもらう。SETUP_HUMAN.md の D案『6の補足』に記載済み。403 が出ても黙って諦めない",
-          "fallback_security_note": "Remove restrictions はその組織に対する外部アプリ全般への扉を開ける。当該組織には全世界に公開予定の静的サイトしか入らないため実害は小さいと判断したが、判断はユーザーに委ね、個別承認という選択肢も併記した"
-        },
-        {
-          "item": "ユーザー／組織サイト（<owner>.github.io）で発行元のフォルダに /docs を選べるか",
-          "status": "ドキュメント上は制限の記述なし（＝選べる見込み）。実地は未検証",
-          "source": "https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site",
-          "verbatim": "the source folder can either be the root of the repository (/) on the source branch or a /docs folder on the source branch",
-          "consequence": "サイト種別による限定の記述は見当たらなかった。ただし『記述が無い』は『できる』の証明ではないので、通ったことにしない"
-        }
-      ]
-    },
-    {
-      "id": "STEP1-B",
-      "what": "独自ドメインを取得する（推奨 keisanshitsu.com）。年1,000〜2,000円",
-      "why_blocking": "公開URLをこれにすると決めたため、公開の引き金（1-C）がこれを待つ",
-      "blocks": "公開そのもの・Search Console 登録（STEP1.5）",
-      "status": "pending",
-      "human_minutes": 10,
-      "is_now_the_only_blocker": false,
-      "is_now_the_only_blocker_note": "2026-08-09 時点では『公開までに残る唯一の作業』だったが、2026-09-05 にこれは誤りだったと判明した。STEP1-E（組織サイト・無料）が同じ要件を満たすため、これは公開の必須条件ではない。長期的にはこちら（URLを持ち運べる）が上位だが、公開を止めてまで待つ理由は無い",
-      "downgraded_on": "2026-09-05",
-      "downgrade_reason": "『URLに名前や数字を入れない』要件を満たす手段がこれ1つだと、一度も確認せずに決めていた。27日間これを唯一のボトルネックとして人間キューに積み続けた。capability_discoveries 2026-09-05 参照",
-      "unanswered_days": 27,
-      "availability_reverified_on": "2026-08-08",
-      "availability_method": "RDAP（TLDごとの正しいレジストリ endpoint）と DNS の NXDOMAIN の2系統で照合",
-      "available_candidates": [
-        "keisanshitsu.com",
-        "shirabeshitsu.com",
-        "kurashinokeisan.com",
-        "kurashi-keisan.net"
-      ],
-      "decision_deadline": "2026-08-12",
-      "on_deadline": "『名前入りURL（hori0827.github.io/kurashi-keisan/）で先に公開し、ドメインは後から移す』案を最上位で提案する。URLに名前が出るのは見た目の問題だが、未公開は収益が構造的にゼロという問題であるため。ただし公開の引き金は人間にしか引けないので最終判断はユーザーに残る"
-    },
-    {
-      "id": "STEP1-D",
-      "what": "ドメインを買った業者の管理画面で DNS を登録する（A×4・AAAA×4・CNAME(www)＝hori0827.github.io・Search Console確認用TXT）",
-      "why_blocking": "GitHub Pages 側の設定は自動で入るが、ドメインを GitHub へ向けるのはレジストラ側の操作であり、そのアカウントに入れるのは本人だけ",
-      "blocks": "独自ドメインでの表示・HTTPS証明書の発行",
-      "status": "pending",
-      "human_minutes": 3,
-      "depends_on": "STEP1-B",
-      "tip": "STEP1.5-1 の Search Console 確認用TXTも同じ画面で登録できる。先にSearch Consoleの画面を開いてTXT値を出しておけば、DNS管理画面に1回入るだけで全部済む"
-    },
-    {
       "id": "STEP1.5",
-      "what": "Search Console 登録（『ドメイン』型 = 取得した独自ドメイン。DNSのTXTで確認）+ サービスアカウント作成 + キー配置 + sitemap 送信",
-      "property_type_changed_on": "2026-08-08",
-      "property_type_change_reason": "独自ドメインに切り替えたので URLプレフィックス型から『ドメイン』型へ。www有無・http/https をまとめて計測でき、HG Analytics の数字が混入する懸念も消える",
-      "why_blocking": "計測できないと意思決定ルールの #4〜#7 が永久に判定不能になり、ループが増産だけを繰り返す",
-      "blocks": "計測・以降の全ての判断",
+      "what": "Search Console にプロパティを登録し、確認用の meta タグを渡す",
+      "why_blocking": "計測できないと L1（検索表示 > 0）を判定できず、意思決定ルール #4〜#7 に永久に到達しない",
+      "blocks": "計測・以降のすべての判断",
       "status": "pending",
-      "human_minutes": 21,
-      "added_on_2026-08-07": "1.5-6（sitemap の手動送信）。サブディレクトリ配信では robots.txt が読まれないため"
+      "human_minutes": 5,
+      "property_type": "URLプレフィックス（https://keisanshitsu.github.io/）",
+      "verification": "HTMLタグ方式。独自ドメインではないため DNS の TXT レコードは使えない。meta タグを渡してもらえば私が docs/index.html に入れて push する",
+      "note": "サービスアカウント（API読み取り）は STEP1.6 に分離した。先に登録だけ済ませればインデックスは始まる"
+    },
+    {
+      "id": "STEP1.6",
+      "what": "GCPでサービスアカウントを作り JSON キーを secrets/ に置く",
+      "why_blocking": "私が無人で GSC の数字を読むために必要。登録(STEP1.5)だけでも索引は進む",
+      "blocks": "自動計測のみ",
+      "status": "pending",
+      "human_minutes": 15
     }
   ],
   "resolved_human_tasks": [
@@ -320,6 +225,27 @@
       "not_yet_executed": true,
       "not_yet_executed_reason": "custom_domain が未確定のため意図的に保留中。ここを先に押すと hori0827.github.io/kurashi-keisan/ で公開が始まり『URLに名前や数字を入れたくない』という要件に反する",
       "verification_status": "未実行。ドメイン確定まで到達できない経路であり、通ったことにしない（2026-08-08 の同種の記録と同じ扱い）"
+    },
+    {
+      "id": "STEP1-E",
+      "what": "GitHub 組織 keisanshitsu の作成",
+      "status": "done",
+      "resolved_on": "2026-09-09",
+      "evidence": "api.github.com/orgs/keisanshitsu created_at=2026-09-09T13:07:08Z / membership role=admin"
+    },
+    {
+      "id": "STEP1-A",
+      "what": "リポジトリ作成",
+      "status": "done",
+      "resolved_on": "2026-09-09",
+      "evidence": "keisanshitsu/keisanshitsu.github.io を保存済み資格情報で作成（人間の作業ゼロ）"
+    },
+    {
+      "id": "STEP1-C",
+      "what": "Pages 有効化",
+      "status": "done",
+      "resolved_on": "2026-09-09",
+      "evidence": "source=main /docs・status=built・https://keisanshitsu.github.io/ が 200"
     }
   ],
   "capability_discoveries": [
@@ -365,8 +291,7 @@
       "score": 28,
       "score_scale": "35点満点（7項目）",
       "built_on": "2026-08-06",
-      "published_on": null,
-      "publish_blocked_by": "STEP1（git remote 未設定。2026-08-07 に公開先リポジトリを kurashi-keisan へ変更済み）",
+      "published_on": "2026-09-09",
       "gate_passed": {
         "verify": true,
         "assertions": 22,
@@ -392,7 +317,8 @@
         "status": "none",
         "plan": "壁紙EC（RESTA等）の物販アフィリ。単価は低い。L2到達後に検討",
         "score_note": "収益導線は2/5。第1号は収益ではなく『順位が取れるか』の検証が目的"
-      }
+      },
+      "published_url": "https://keisanshitsu.github.io/tools/wallpaper-quantity/"
     },
     {
       "id": "T003",
@@ -402,8 +328,7 @@
       "score": 29,
       "score_scale": "35点満点（7項目）",
       "built_on": "2026-08-06",
-      "published_on": null,
-      "publish_blocked_by": "STEP1（git remote 未設定。2026-08-07 に公開先リポジトリを kurashi-keisan へ変更済み）",
+      "published_on": "2026-09-09",
       "gate_passed": {
         "verify": true,
         "assertions": 74,
@@ -453,7 +378,8 @@
         "status": "none",
         "plan": "塗料・養生資材のEC物販アフィリ。単価は低い。L2到達後に検討",
         "score_note": "収益導線は2/5。T002と同じく、まず順位が取れるかの検証が目的"
-      }
+      },
+      "published_url": "https://keisanshitsu.github.io/tools/paint-quantity/"
     }
   ],
   "backlog": [
@@ -823,5 +749,15 @@
     "receipt_file": "state/notify_receipt.json（.gitignore 済み。ローカル絶対パスを含み、かつ実行時状態でプロジェクトの知見ではないため。リポジトリは public）",
     "exit_code_note": "Parser::ParseFile で構文0エラー、UTF-8 BOM付きで保存、実際の実行で exit 0 を確認済み。なお検証中に exit 255 が出たのは、テスト側で `| Select-Object -First 2` を挟んで子プロセスのパイプラインを打ち切ったためで、スクリプトの欠陥ではない（打ち切りなしでの再実行は exit 0）"
   },
-  "decision_log_ref": "state/decisions.md"
+  "decision_log_ref": "state/decisions.md",
+  "deferred_options": [
+    {
+      "id": "STEP1-B",
+      "what": "独自ドメインの取得",
+      "status": "deferred",
+      "deferred_on": "2026-09-09",
+      "why": "組織サイトで要件（URLに名前を出さない）は満たせた。ドメインは移植性（GitHubを離れてもURLを保てる）のためだけに残る利点であり、流入ゼロの現時点で年1,500円を払う根拠が無い。L1 到達後に再検討する",
+      "cost_of_waiting": "keisanshitsu.com は 2026-08-07 に空きだったが 2026-09-09 には登録済みだった。待つと候補は減る"
+    }
+  ]
 }

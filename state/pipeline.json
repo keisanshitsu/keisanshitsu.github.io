@@ -20,7 +20,6 @@
     "goal_jpy_monthly": 100000,
     "model": "niche-web-tool-portfolio"
   },
-
   "north_star": {
     "metric": "monthly_sessions",
     "metric_not_measurable_by_planned_stack": {
@@ -43,22 +42,41 @@
     "target_caveat_2026-08-09": "⚠ この 50,000 という数字は『アフィリエイト単価1,500円（求人・派遣登録系）』を前提に逆算されている。現在の在庫2本（T002・T003）はどちらも収益導線 2/5 の物販アフィリであり、この前提を満たさない。物販は成果報酬が売上の数%であって登録1件いくらではないため、桁が違う。つまり現在のポートフォリオは、仮に狙ったニッチで全勝しても 50,000セッションでは10万円に届かない。これは想定どおり（最初の3本は L1〜L2 の検証が目的）だが、『検証用の在庫』から『収益用の在庫』へ切り替える規則が意思決定ルールに存在しなかったため、2026-08-09 の週次レビューで CLAUDE.md に追加した",
     "current_level": "L0",
     "kpi_ladder": {
-      "L0": { "goal": "公開＋Search Console登録", "deadline": "2026-08-12", "done": false,
-              "deadline_basis": "CLAUDE.md『公開経路の接続から3日』。git remote 接続日 2026-08-09 + 3日。ドメイン決定期限（STEP1-B）と同日である",
-              "overdue_days_2026-09-05": 24,
-              "overdue_days_2026-09-06": 25,
-              "overdue_days_2026-09-08": 27,
-              "overdue_note": "期限を24日超過。ただしこの24日のうち25日分は日次ループ自体が起動していない（meta.gap_note）。つまり『打ち手を打ったが効かなかった』のではなく『打ち手を打つ機会が無かった』。両者を混同すると、効いていない施策を効いたと誤認する",
-              "on_miss": "人間タスクを再掲・催促。ただし週次レビュー(2026-08-09)の結論により催促は行わない。2026-09-05 に前提そのものを実測した結果、『公開には課金が要る』が誤りと判明したため、催促ではなく費用ゼロの代替経路（STEP1-E 組織サイト）の提示に切り替えた" },
-      "L1": { "goal": "検索表示回数 > 0", "deadline": null, "done": false },
-      "L2": { "goal": "月1,000セッション", "deadline": null, "done": false,
-              "on_miss": "増産停止。ニッチ選定の見直しへ" },
-      "L3": { "goal": "月10,000セッション／初収益", "deadline": null, "done": false },
-      "L4": { "goal": "月50,000セッション／月10万円", "deadline": null, "done": false }
+      "L0": {
+        "goal": "公開＋Search Console登録",
+        "deadline": "2026-08-12",
+        "done": false,
+        "deadline_basis": "CLAUDE.md『公開経路の接続から3日』。git remote 接続日 2026-08-09 + 3日。ドメイン決定期限（STEP1-B）と同日である",
+        "overdue_days_2026-09-05": 24,
+        "overdue_days_2026-09-06": 25,
+        "overdue_days_2026-09-08": 27,
+        "overdue_note": "期限を24日超過。ただしこの24日のうち25日分は日次ループ自体が起動していない（meta.gap_note）。つまり『打ち手を打ったが効かなかった』のではなく『打ち手を打つ機会が無かった』。両者を混同すると、効いていない施策を効いたと誤認する",
+        "on_miss": "人間タスクを再掲・催促。ただし週次レビュー(2026-08-09)の結論により催促は行わない。2026-09-05 に前提そのものを実測した結果、『公開には課金が要る』が誤りと判明したため、催促ではなく費用ゼロの代替経路（STEP1-E 組織サイト）の提示に切り替えた"
+      },
+      "L1": {
+        "goal": "検索表示回数 > 0",
+        "deadline": null,
+        "done": false
+      },
+      "L2": {
+        "goal": "月1,000セッション",
+        "deadline": null,
+        "done": false,
+        "on_miss": "増産停止。ニッチ選定の見直しへ"
+      },
+      "L3": {
+        "goal": "月10,000セッション／初収益",
+        "deadline": null,
+        "done": false
+      },
+      "L4": {
+        "goal": "月50,000セッション／月10万円",
+        "deadline": null,
+        "done": false
+      }
     },
     "note": "deadline は L0 到達日（＝公開日）が決まった時点で日次ループが埋める"
   },
-
   "phase": "bootstrap",
   "phase_definition": {
     "bootstrap": "公開経路が未接続。サイトの器とツールを作り、接続を待つ",
@@ -66,23 +84,24 @@
     "monetize": "流入あり。収益導線を敷く",
     "scale": "収益あり。勝ち筋の周辺を取る"
   },
-
   "site": {
-    "published_url": null,
+    "published_url": "https://keisanshitsu.github.io/",
     "published_url_planned": "STEP1-E なら https://<組織名>.github.io/ ／ STEP1-B なら https://<独自ドメイン>/。どちらを選んでも要件（URLに名前・数字を入れない）を満たす",
     "published_url_option_org": "https://<組織名>.github.io/",
     "published_url_option_org_note": "2026-09-05 追加。組織サイトは無料で、URLに個人名も数字も含まれない。gsc_property は URLプレフィックス型で https://<組織名>.github.io/ を使う（自前のホストなので HG Analytics の数字は混入しない）。robots.txt も自分のホスト直下に置けるため sitemap の手動送信は必須でなくなる",
     "published_url_fallback_removed_on": "2026-09-05",
     "published_url_fallback_removed_reason": "旧B案 https://hori0827.github.io/kurashi-keisan/ を削除した。組織サイト（STEP1-E）と費用も手間も同じでありながら、アカウント名がURLに出る・HG Analytics とホストを共有する・robots.txt が他プロジェクトの管理下という3点で劣るため、選択肢として残す意味が無い",
-    "gsc_property": null,
+    "gsc_property": "https://keisanshitsu.github.io/",
     "gsc_property_planned": "ドメイン型プロパティ（取得した独自ドメイン。DNSのTXTレコードで確認）",
     "custom_domain": null,
-    "custom_domain_note": "set_domain.mjs がここと docs/CNAME・sitemap・robots.txt をまとめて更新する。ここが null の間 connect_github.ps1 は Pages を有効化しない（＝公開されない）",
+    "custom_domain_note": "未取得。keisanshitsu.com は 2026-08-07 時点で空きだったが 2026-09-09 に再確認したところ登録済みになっていた。待った33日でこのドメインは失われた。D案で要件（名前を出さない）は満たせているため、ドメイン購入は L1 到達後に再検討する",
     "git_remote": "https://github.com/hori0827/kurashi-keisan.git",
     "git_remote_connected_on": "2026-08-09",
-    "git_remote_note": "remote 設定と初回 push は完了。ただし **公開はされていない**。GitHub Pages は Settings→Pages（またはAPI）で発行元を設定するまで1枚も配信しない。有効化は custom_domain が入るまで保留する"
+    "git_remote_note": "remote 設定と初回 push は完了。ただし **公開はされていない**。GitHub Pages は Settings→Pages（またはAPI）で発行元を設定するまで1枚も配信しない。有効化は custom_domain が入るまで保留する",
+    "github_org": "keisanshitsu",
+    "repo": "keisanshitsu/keisanshitsu.github.io",
+    "url_kind": "GitHub Organization site (D案)。ユーザー名も数字も含まない"
   },
-
   "publication": {
     "connected": false,
     "connected_note": "false は『まだ1枚も公開されていない』の意味。push経路（リポジトリ・remote・認証・公開前ゲート）は 2026-08-09 に本番で通っており、残るは Pages の有効化のみ。有効化は custom_domain 待ちで意図的に保留している",
@@ -128,7 +147,6 @@
     "safety_verified_on": "2026-08-07",
     "safety_verification_evidence": "connect_github.ps1 -RepoName hori0827.github.io を実際に実行し、exit 8 で中止・remote未設定・API読み取りのみであることを確認した"
   },
-
   "subdirectory_constraints": {
     "why": "プロジェクトサイトはサイトのルートがドメインのルートと一致しない",
     "resolved": [
@@ -157,7 +175,6 @@
       }
     ]
   },
-
   "measurement": {
     "connected": false,
     "method": "Google Search Console API (service account)",
@@ -167,7 +184,10 @@
     "test_added_on": "2026-09-09",
     "test_wired_into_gate": "verify.mjs の『3.5 インフラのテスト』から毎回実行する。失敗は ERROR で exit 1（push が止まる）。Python が無い環境では WARN 止まりにする（ツールの正しさとは独立した検査であり、ここで止めると verify そのものが迂回される側に回るため）",
     "blocked_on": "STEP1.5",
-    "last_probe": { "date": "2026-09-09", "status": "not_configured" },
+    "last_probe": {
+      "date": "2026-09-09",
+      "status": "not_configured"
+    },
     "defect_found_2026-09-09": {
       "what": "成功時の出力に sessions キーが無かった。失敗時は全経路が sessions:null を出すため、下流から見て『取得成功』と『未計測』が完全に同形だった",
       "how_it_hid": "gsc_property が未設定のため、起票から35日間 fetch_metrics.py は 69行目（not_configured）で必ず戻っており、成功経路 71〜124行目は一度も実行されていなかった。公開されるツールにはテストを義務づけていたのに、意思決定の入力を作るこのスクリプトには1本も無かった",
@@ -180,7 +200,6 @@
       "lesson": "人間の作業を待っている間に、その作業が完了した直後に走る経路を実行しておく。待ち時間は解除後の経路を検査するのに使える唯一の時間であり、費用ゼロで、しかも待っている間しかできない（解除後は本番になる）"
     }
   },
-
   "blocked_on_human": [
     {
       "id": "STEP1-E",
@@ -197,7 +216,14 @@
       "url": "https://github.com/account/organizations/new",
       "is_now_the_recommended_unblock": true,
       "recommended_note": "推奨順は A > D > C（独自ドメインのほうがURLを持ち運べるため長期的には上位）。ただし A案（STEP1-B）は27日間動いていない。D案は費用ゼロ・1分で同じ要件を満たすため、待ち続けるより確実に前進する。D案で公開した後に A案へ移ることもでき、移行コストは0ページ・0インデックスの現時点が最小",
-      "name_candidates_available_on_2026-09-05": ["keisanshitsu", "shirabeshitsu", "kurashinokeisan", "kurashi-keisan", "keisan-shitsu", "kurashikeisan"],
+      "name_candidates_available_on_2026-09-05": [
+        "keisanshitsu",
+        "shirabeshitsu",
+        "kurashinokeisan",
+        "kurashi-keisan",
+        "keisan-shitsu",
+        "kurashikeisan"
+      ],
       "availability_method": "GET https://api.github.com/users/<name> が 404（ユーザー名と組織名は同一の名前空間）",
       "weakness": "URLが GitHub に固定される。将来 Pages を離れるとURLごと失う（独自ドメインは持ち運べる）。ただし現時点の公開ページは0枚なので失うものが無い",
       "after_human_step": "組織作成後は私が自動で行う: <組織名>.github.io リポジトリの作成 → verify.mjs → push → Pages 有効化（Source=main //docs）。ただし下の unverified を先に読むこと",
@@ -236,7 +262,12 @@
       "unanswered_days": 27,
       "availability_reverified_on": "2026-08-08",
       "availability_method": "RDAP（TLDごとの正しいレジストリ endpoint）と DNS の NXDOMAIN の2系統で照合",
-      "available_candidates": ["keisanshitsu.com", "shirabeshitsu.com", "kurashinokeisan.com", "kurashi-keisan.net"],
+      "available_candidates": [
+        "keisanshitsu.com",
+        "shirabeshitsu.com",
+        "kurashinokeisan.com",
+        "kurashi-keisan.net"
+      ],
       "decision_deadline": "2026-08-12",
       "on_deadline": "『名前入りURL（hori0827.github.io/kurashi-keisan/）で先に公開し、ドメインは後から移す』案を最上位で提案する。URLに名前が出るのは見た目の問題だが、未公開は収益が構造的にゼロという問題であるため。ただし公開の引き金は人間にしか引けないので最終判断はユーザーに残る"
     },
@@ -262,7 +293,6 @@
       "added_on_2026-08-07": "1.5-6（sitemap の手動送信）。サブディレクトリ配信では robots.txt が読まれないため"
     }
   ],
-
   "resolved_human_tasks": [
     {
       "id": "STEP0",
@@ -292,7 +322,6 @@
       "verification_status": "未実行。ドメイン確定まで到達できない経路であり、通ったことにしない（2026-08-08 の同種の記録と同じ扱い）"
     }
   ],
-
   "capability_discoveries": [
     {
       "date": "2026-08-09",
@@ -327,7 +356,6 @@
       "related_failure": "2026-09-04 の実行は 'Failed to authenticate: OAuth session expired and could not be refreshed' で exit 1。この失敗は logs/ にしか出力されず人間が気づく経路が無いため、SETUP_HUMAN.md STEP 0 に復旧手順を記載した"
     }
   ],
-
   "tools": [
     {
       "id": "T002",
@@ -339,7 +367,12 @@
       "built_on": "2026-08-06",
       "published_on": null,
       "publish_blocked_by": "STEP1（git remote 未設定。2026-08-07 に公開先リポジトリを kurashi-keisan へ変更済み）",
-      "gate_passed": { "verify": true, "assertions": 22, "warnings": 0, "on": "2026-08-06" },
+      "gate_passed": {
+        "verify": true,
+        "assertions": 22,
+        "warnings": 0,
+        "on": "2026-08-06"
+      },
       "visual_check_375px": "未実施（puppeteer未導入。理由は decisions.md 2026-08-06 参照）",
       "basis": [
         {
@@ -371,7 +404,12 @@
       "built_on": "2026-08-06",
       "published_on": null,
       "publish_blocked_by": "STEP1（git remote 未設定。2026-08-07 に公開先リポジトリを kurashi-keisan へ変更済み）",
-      "gate_passed": { "verify": true, "assertions": 74, "warnings": 0, "on": "2026-08-06" },
+      "gate_passed": {
+        "verify": true,
+        "assertions": 74,
+        "warnings": 0,
+        "on": "2026-08-06"
+      },
       "visual_check_375px": "未実施（puppeteer未導入。T002と同じ理由）",
       "cluster": "内装DIYの数量計算。T002と相互リンク済み（面を取る狙い）",
       "differentiators": [
@@ -418,7 +456,6 @@
       }
     }
   ],
-
   "backlog": [
     {
       "id": "T001",
@@ -440,7 +477,6 @@
       "ymyl_risk": "high"
     }
   ],
-
   "metrics_history": [
     {
       "date": "2026-08-06",
@@ -523,7 +559,6 @@
       "note_measurement_defect": "⚠ 本日の主眼は流入ではなく計測基盤そのものの実測である。この『not_configured / sessions: null』という記録は正しいが、修正前のスクリプトは**取得に成功した日も同じ形の記録を出す**構造だった（成功経路に sessions キーが無く、下流から未計測と区別できない）。measurement.defect_found_2026-09-09 を参照。以後この配列の項目には measured を必ず入れる"
     }
   ],
-
   "facts_to_recheck": [
     {
       "topic": "所得税の年収の壁",
@@ -538,7 +573,10 @@
       "confirmed": true,
       "recheck_by": "2026-10-01",
       "reverified_on": "2026-09-06",
-      "reverified_history": ["2026-08-09", "2026-09-06"],
+      "reverified_history": [
+        "2026-08-09",
+        "2026-09-06"
+      ],
       "reverified_by": "週次レビュー。厚生労働省「『年収の壁』への対応」を直接取得",
       "reverified_early_reason": "recheck_by（2026-10-01）まで25日あるが前倒しした。日次ループの稼働率が27日で2/27 であり、10/01 までに再び起動できる保証が無いため。期限に間に合わせるのではなく、起動できたときに済ませる",
       "source_url": "https://www.mhlw.go.jp/stf/taiou_001_00002.html",
@@ -560,7 +598,6 @@
       "note": "製品のリニューアルで容量ラインナップと塗り面積が変わる。テストの『2社突き合わせ』と『缶ごとの㎡/Lのばらつき』が壊れたら即再確認する"
     }
   ],
-
   "weekly_reviews": [
     {
       "date": "2026-08-09",
@@ -716,12 +753,14 @@
       "honest_summary": "うまくいっていない。32日間で公開0ページ・流入は一度も測れず・収益0円。前回の週次レビュー（8/09・5日目）から27日が経ったが、事業の数字は1つも動いていない。しかも動いていない理由の説明が、この4週間で3回変わっている——8/09は『人間がドメインを買わないから』、9/05は『私が手段を1つだと思い込んでいたから』、そして本日は『そもそも依頼が人間に届く経路が無かったから』。3回とも私は自信を持って書いており、3回とも未検証の前提を握っていた。本日の発見（通知経路の欠落）もまた検証途中である——通知を送る仕組みは作ったが、それが画面に出たかを私は確認できていない。したがって『これで解決した』とは書かない。ひとつだけ前回と違うのは、今回の修正が『人間がどう振る舞うか』ではなく『私の側に経路があるか』という、私が検証できる側の問題を扱っている点である。次の起動時に確認すべきことは1つ: 記入欄の『通知は見えたか』に答えがあるか。無ければ通知方式を変える"
     }
   ],
-
   "notification_channel": {
     "added_on": "2026-09-06",
     "why": "32日間、私の出力先は SETUP_HUMAN.md と logs/ の2つだけで、どちらも .gitignore 済みのローカルファイルだった。人間に届く経路が設計上存在しなかった",
     "script": "scripts/notify_human.ps1",
-    "called_from": ["scripts/daily_run.ps1（claude 実行後）", "scripts/weekly_review.ps1（同）"],
+    "called_from": [
+      "scripts/daily_run.ps1（claude 実行後）",
+      "scripts/weekly_review.ps1（同）"
+    ],
     "behavior": "blocked_on_human に status=pending が1件以上あるときだけ動く。(1) Windows トースト通知（PowerShell の AppId を借用。レジストリ書き込みなし） (2) プロジェクト直下に『いま必要な作業.txt』を生成。pending が0件になると txt を自動削除する",
     "safety": "全体を try/catch で包み、常に exit 0 を返す。通知の失敗で日次ループを落とさない。UTF-8 BOM付きで保存し、Parser::ParseFile で構文0エラー・実際の実行まで確認済み（2026-08-06 の教訓『書いて終わりにしない』を適用）",
     "verified": "スクリプトの実行は成功（『通知を出した: [STEP1-E] …（経過 32 日）』を出力し exit 0）。いま必要な作業.txt も生成された",
@@ -729,7 +768,6 @@
     "not_verified_resolved_on": "2026-09-07",
     "not_verified_resolved_note": "⚠ 上の not_verified は誤りだった。『確認できない』は未検証の前提であり、実際には私の側で機械的に測れた（所要10分）。しかもこの誤りは、確認のコストを人間に押しつけて未解決の質問を1つ増やすという、32日間の失敗と同じ形をしていた",
     "gitignored": "いま必要な作業.txt は .gitignore に追加した（SETUP_HUMAN.md の要約であり、記入内容が入りうるため）",
-
     "revised_on": "2026-09-07",
     "revised_why": "9/06 の週次レビューは『次回、記入欄に答えが無ければ通知方式を変える』を次の一手に定めていた。記入欄は空欄だったが、方式を変える前に実測したところ、変えるべきは方式ではなかった",
     "measurements_2026-09-07": {
@@ -785,6 +823,5 @@
     "receipt_file": "state/notify_receipt.json（.gitignore 済み。ローカル絶対パスを含み、かつ実行時状態でプロジェクトの知見ではないため。リポジトリは public）",
     "exit_code_note": "Parser::ParseFile で構文0エラー、UTF-8 BOM付きで保存、実際の実行で exit 0 を確認済み。なお検証中に exit 255 が出たのは、テスト側で `| Select-Object -First 2` を挟んで子プロセスのパイプラインを打ち切ったためで、スクリプトの欠陥ではない（打ち切りなしでの再実行は exit 0）"
   },
-
   "decision_log_ref": "state/decisions.md"
 }

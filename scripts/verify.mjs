@@ -15,6 +15,7 @@
 import { readdirSync, readFileSync, statSync, existsSync } from "node:fs";
 import { join, dirname, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { spawnSync } from "node:child_process";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 // 公開されるフォルダ。GitHub Pages が「main ブランチの /docs」を配信するため
@@ -160,6 +161,50 @@ if (domain) {
   warn("docs/CNAME", "CNAME があるのに pipeline.json の custom_domain が未設定。どちらが正か確認する");
 }
 
+// ── 3.5. インフラのテスト（計測スクリプト） ──────────────────────────
+// 2026-09-09 追加。公開されるツールにはテストを強制していたのに、
+// **意思決定の入力そのものを作る fetch_metrics.py には1本も無かった。**
+// 実際、35日間その成功経路は一度も実行されず、成功時に "sessions" を
+// 出力しない（＝取得成功と未計測が下流から区別できない）欠陥が残っていた。
+//
+// テストは「書いた」だけでは腐るので、公開前ゲートから毎回実行する。
+// ただし Python が無い環境では WARN に留める。この検査のために push は止めない
+// （ツールの正しさとは独立した検査であり、止めると verify そのものが迂回される）。
+let infraAssertions = 0;
+let infraStatus = "未実行";
+for (const t of [join(ROOT, "scripts", "fetch_metrics.test.py")]) {
+  const rel = relative(ROOT, t).replaceAll("\\", "/");
+  if (!existsSync(t)) { err(rel, "インフラのテストが見つからない"); continue; }
+
+  const candidates = process.platform === "win32"
+    ? [["py", ["-3", t]], ["python", [t]]]
+    : [["python3", [t]], ["python", [t]]];
+  let r = null;
+  for (const [cmd, args] of candidates) {
+    r = spawnSync(cmd, args, {
+      encoding: "utf8", env: { ...process.env, PYTHONIOENCODING: "utf-8" },
+    });
+    if (!r.error) break;
+  }
+  if (!r || r.error) {
+    warn(rel, "Python を実行できないため未検査（py -3 / python3 が無い）");
+    infraStatus = "スキップ（Python 未検出）";
+    continue;
+  }
+
+  const out = `${r.stdout ?? ""}${r.stderr ?? ""}`;
+  const total = out.match(/(\d+)\/(\d+) PASS/);
+  if (r.status === 0) {
+    infraAssertions += total ? Number(total[2]) : 0;
+    infraStatus = `アサーション ${infraAssertions}件`;
+  } else {
+    const fails = out.split(/\r?\n/).filter((l) => l.includes("[FAIL]")).map((l) => l.trim());
+    err(rel, `失敗: ${fails.join(" / ") || out.trim().slice(0, 300)}`);
+    // 「失敗」を「スキップ」と表示しない。検査が落ちたことを要約行から隠さない。
+    infraStatus = `失敗 ${fails.length || 1}件`;
+  }
+}
+
 // ── 4. 実レンダリング検証（puppeteer があるときだけ） ────────────────
 let rendered = false;
 try {
@@ -181,6 +226,7 @@ try {
 
 // ── 結果 ─────────────────────────────────────────────────────────────
 console.log(`検査: HTML ${pages.length}枚 / ツール ${toolDirs.length}本 / アサーション ${assertions}件`);
+console.log(`インフラ検査: fetch_metrics.py — ${infraStatus}`);
 console.log(rendered
   ? "375px 実レンダリング検証: 実施"
   : "375px 実レンダリング検証: スキップ（npm i -D puppeteer で有効化）");

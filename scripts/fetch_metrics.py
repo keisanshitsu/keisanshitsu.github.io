@@ -9,13 +9,16 @@
   2. Search Console のプロパティ設定 → ユーザーと権限 → そのサービスアカウントの
      メールアドレスを「フル」権限で追加する
   3. state/pipeline.json の site.gsc_property に対象URLを書く
-     現在の値: "https://hori0827.github.io/kurashi-keisan/"（URLプレフィックス型）
+     現在の値: null（未公開のため。公開先が決まっていない）
 
-     ⚠ 末尾の "/kurashi-keisan/" を必ず含めること。ここを "https://hori0827.github.io/"
-     にすると、同じホストで別に稼働している HG Analytics（株式スクリーニング）の
-     数字が混入する。流入がどちらのものか区別できなくなり、意思決定ルールの
-     #4〜#7 が誤った前提で発火する。独自ドメインへ移行したら
-     "sc-domain:<取得したドメイン>" に置き換えてよい。
+     公開先によって書く値が変わる:
+       - D案（組織サイト）… "https://<組織名>.github.io/"（URLプレフィックス型）
+       - A案（独自ドメイン）… "sc-domain:<取得したドメイン>"（ドメイン型）
+
+     ⚠ どちらの場合も "https://hori0827.github.io/" と書いてはならない。
+     同じホストで別に稼働している HG Analytics（株式スクリーニング）の数字が混入する。
+     流入がどちらのものか区別できなくなり、意思決定ルールの #4〜#7 が
+     誤った前提で発火する。D案・A案はどちらも別ホストなのでこの問題は起きない。
 
 依存: py -3 -m pip install google-api-python-client google-auth
 
@@ -28,6 +31,28 @@
 重要: 計測できない場合は流入を 0 ではなく null として記録する。
 「ゼロだった」と「測っていない」を混同すると、誰にも見えていないツールの
 SEO改善に時間を溶かすことになる。
+
+⚠ Search Console は sessions を返さない（2026-09-09 に一次情報で確認）
+--------------------------------------------------------------------
+https://developers.google.com/webmaster-tools/v1/searchanalytics/query
+ApiDataRow の指標は **clicks / impressions / ctr / position の4つだけ**であり、
+sessions / users / visits は存在しない。
+
+一方 pipeline.json の north_star.metric は "monthly_sessions" で、
+KPIラダー L2〜L4 も「月◯セッション」で定義されている。
+**つまり本スクリプトは、北極星指標を原理的に測れない。**
+
+このことは 35日間気づかれなかった。理由は、成功経路が一度も実行されていなかったため
+（gsc_property が未設定で 69行目で必ず戻る）。さらに悪いことに、修正前の成功経路は
+`sessions` キーを **出力していなかった**。失敗時は "sessions": null を出すので、
+下流から見ると **「取得成功」と「未計測」が区別できない**。
+意思決定ルール #1（計測値が null なら計測を通す）が永久に発火し続け、
+人間が STEP1.5 を終えても #4〜#7 に到達しない状態だった。
+
+したがって全ての経路で次の2つを必ず出す:
+  - "measured": 取得に成功したか（true/false）。**null かどうかで判断させない**
+  - "sessions": 常に null（GSCでは取得できない）。理由は sessions_note に書く
+ラダーを clicks で読み替えるか GA4 を足すかは方針判断なので、週次レビューに送る。
 """
 
 import argparse
@@ -55,7 +80,10 @@ def main():
     args = ap.parse_args()
 
     stamp = dt.date.today().isoformat()
-    base = {"fetched_at": stamp, "window_days": args.days}
+    # measured / sessions は **全経路で必ず出す**。どちらかが欠けると、下流は
+    # 「取得成功」と「未計測」を区別できない（2026-09-09 のテストで実際に検出）。
+    base = {"fetched_at": stamp, "window_days": args.days,
+            "measured": False, "sessions": None}
 
     if not PIPELINE.exists():
         emit({**base, "status": "no_pipeline", "sessions": None,
@@ -103,12 +131,26 @@ def main():
               "hint": "サービスアカウントがSearch Consoleのユーザーに追加されているか確認する"}, 2)
 
     t = totals[0] if totals else {}
+    clicks = t.get("clicks", 0)
     emit({
         **base,
         "status": "ok",
+        "measured": True,          # ← 取得できた。sessions が null でも「未計測」ではない
+        "sessions": None,
+        "sessions_note": (
+            "Search Console は sessions を返さない（指標は clicks/impressions/ctr/position の4つのみ。"
+            "https://developers.google.com/webmaster-tools/v1/searchanalytics/query 2026-09-09 確認）。"
+            "したがって sessions が null であることは失敗を意味しない。measured を見ること"
+        ),
+        "sessions_proxy_candidate": {
+            "metric": "clicks",
+            "value": clicks,
+            "caveat": "検索経由のクリックのみ。SNS・直接流入・被リンク経由は含まないため実セッションを下回る",
+            "status": "未採用。KPIラダーを clicks で読み替えるか GA4 を足すかは週次レビューで決める",
+        },
         "property": prop,
         "period": {"start": start.isoformat(), "end": end.isoformat()},
-        "clicks": t.get("clicks", 0),
+        "clicks": clicks,
         "impressions": t.get("impressions", 0),
         "avg_position": round(t.get("position", 0), 1) if t else None,
         "by_page": [

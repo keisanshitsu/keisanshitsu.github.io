@@ -205,15 +205,44 @@ try {
 
     # 経過日数は「起票日から今日まで」。前回実行からの差ではない
     # （日次ループは日次で動いていないため。CLAUDE.md 環境メモ参照）。
-    $days = [int]((Get-Date) - [datetime]$p.meta.created).TotalDays
+    # [int] は四捨五入する。22時間を「1日」と書くと自己申告が実際より進んで見えるので切り捨てる
+    $days = [int][Math]::Floor(((Get-Date) - [datetime]$p.meta.created).TotalDays)
 
     $minutes = if ($null -ne $top.human_minutes) { "$($top.human_minutes)分" } else { "数分" }
     $cost    = if ($null -ne $top.cost_jpy -and $top.cost_jpy -eq 0) { "0円" } else { "" }
     $cost_s  = if ($cost) { "・$cost" } else { "" }
 
-    $title = "くらし計算室 — 公開が {0}日 止まっています" -f $days
-    $body  = "{0}`n所要 {1}{2}。デスクトップの「★くらし計算室 いま必要な作業.txt」に手順があります" `
-             -f $top.what, $minutes, $cost_s
+    # ⚠ 見出しは state から作る。固定文にしない（2026-09-09 修正）
+    # 修正前は「公開が N日 止まっています」を無条件に出していた。公開した当日に
+    # この文が出て、**人間に届く唯一の経路が嘘をついた**。
+    # 9/06〜9/08 で潰してきたのは「届かない」問題だが、届いても内容が誤っていれば同じである。
+    $published = $false
+    try { $published = [bool]$p.publication.connected } catch { }
+
+    if ($published) {
+        $liveUrl  = $p.site.published_url
+        $sinceStr = ''
+        if ($p.publication.published_on) {
+            $sinceStr = " 公開から {0}日。" -f [int][Math]::Floor(((Get-Date) - [datetime]$p.publication.published_on).TotalDays)
+        }
+        $title = "くらし計算室 — 公開済み。残りの作業は1件です"
+        $lead  = "サイトは公開されています: $liveUrl$sinceStr`n次に必要なのは、この1点だけです。"
+    }
+    else {
+        $title = "くらし計算室 — 公開が {0}日 止まっています" -f $days
+        $lead  = "いま止まっているのは、この1点だけです。"
+    }
+
+    $body = "{0}`n所要 {1}{2}。デスクトップの「★くらし計算室 いま必要な作業.txt」に手順があります" `
+            -f $top.what, $minutes, $cost_s
+
+    # 空の項目は行ごと出さない。「URL  : 」のような空欄は、書いたつもりで
+    # 何も伝えていない状態になる（2026-09-09 に実際に出力してしまった）。
+    $detail = "  所要 : $minutes$cost_s"
+    if (-not [string]::IsNullOrWhiteSpace($top.url)) { $detail += "`n  URL  : $($top.url)" }
+    if (-not [string]::IsNullOrWhiteSpace($top.why_human_only)) {
+        $detail += "`n  なぜ私にできないか: $($top.why_human_only)"
+    }
 
     # ── 2. durable: デスクトップ直下とプロジェクト直下の両方に置く ──────────
     #    9/06 版はプロジェクト直下だけだった。フォルダを開かないと目に入らず、
@@ -221,20 +250,18 @@ try {
     $note = @"
 $title
 
-いま止まっているのは、この1点だけです。
+$lead
 
   [$($top.id)] $($top.what)
 
-  所要 : $minutes$cost_s
-  URL  : $($top.url)
-  なぜ私にできないか: $($top.why_human_only)
+$detail
 
 終わったら、プロジェクトフォルダの SETUP_HUMAN.md の「記入欄」に書いてください。
-次の自動実行で私が拾って、公開まで進めます。
+次の自動実行で私が拾って続きを進めます。
 
 ──────────────────────────────────────────────
-やらない場合は「C」とだけ書いてください。増産を止めます。
-在庫を積むだけで1円も生まない状態を続けるのは、いちばん損だからです。
+やらないと決めた場合は「やらない」とだけ書いてください。それも有効な答えです。
+増産を止めます。在庫を積むだけで1円も生まない状態を続けるのが、いちばん損なので。
 ──────────────────────────────────────────────
 
 （このファイルは自動生成です。作業が片づくと自動で消えます）

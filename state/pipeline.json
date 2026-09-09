@@ -187,7 +187,10 @@
       "human_minutes": 5,
       "property_type": "URLプレフィックス（https://keisanshitsu.github.io/）",
       "verification": "HTMLタグ方式。独自ドメインではないため DNS の TXT レコードは使えない。meta タグを渡してもらえば私が docs/index.html に入れて push する",
-      "note": "サービスアカウント（API読み取り）は STEP1.6 に分離した。先に登録だけ済ませればインデックスは始まる"
+      "note": "サービスアカウント（API読み取り）は STEP1.6 に分離した。先に登録だけ済ませればインデックスは始まる",
+      "url": "https://search.google.com/search-console",
+      "why_human_only": "Googleアカウントとしての本人操作が必要。私には認証経路が無い",
+      "is_now_the_recommended_unblock": true
     },
     {
       "id": "STEP1.6",
@@ -195,7 +198,10 @@
       "why_blocking": "私が無人で GSC の数字を読むために必要。登録(STEP1.5)だけでも索引は進む",
       "blocks": "自動計測のみ",
       "status": "pending",
-      "human_minutes": 15
+      "human_minutes": 15,
+      "url": "https://console.cloud.google.com/",
+      "why_human_only": "GCPのプロジェクト作成と鍵の発行は本人操作。急ぎではない",
+      "is_now_the_recommended_unblock": false
     }
   ],
   "resolved_human_tasks": [

@@ -2,7 +2,7 @@
   "meta": {
     "created": "2026-08-05",
     "last_run": "2026-09-10",
-    "last_run_type": "日次ループ。前提ゲート4行目『計測基盤が未接続』への該当が 9/05・9/07・9/08・9/09・本日で5回連続となり、1行目（3日ルール）が優先。よって施策は打たず前提を1つ実測した。選んだ前提は『人間が STEP1.5 を終えた直後に走る経路は実際に通るのか』（9/09 に定めた規則の続き。昨日潰したのは fetch_metrics.py の内側だけで、その外側は未検証だった）。結果、前提は崩れていた。実測で判明した中心的事実は【Google が当サイトを発見する経路が現在ゼロである】こと。一次情報（how-search-works）が挙げる発見経路は (1) 既知ページからのリンク (2) sitemap の送信 の2つのみで、実測の結果 (1) は 0本（GitHub の repo/org ページに当サイトへのリンクが無く、しかも GitHub は外部リンク全てに rel=nofollow を付ける。react.dev への20本すべてで確認）、(2) は未送信だった。robots.txt の Sitemap 宣言は公式表現が『次に robots.txt をクロールしたときに見つける』でありホスト既知が前提のため発見経路にならない。ping エンドポイントは実測 HTTP 404 で廃止済み。つまり 35日間ゲートが指してきた『計測基盤が未接続』は計測の問題として述べられていたが、実際の欠落は【索引されない】という流入そのものの問題だった。副次的に、SETUP_HUMAN.md に書いていた2つの記述が誤りであることが判明: (a)『検索エンジンに登録されなければ誰も来ません』は一般論として誤り（大多数のページは自動発見される）、(b)『sitemap の送信は私がやります』は実行不能（API送信には webmasters スコープが要るが実装は webmasters.readonly。しかもサービスアカウント自体が STEP1.6 に依存し、それを私は『急ぎません』と後回しにしていた）。すなわち私は唯一の確実な発見経路を『私がやります』と言って人間の手順から消したうえで、自分では実行できない状態にしていた——教訓3の完全な再発である。対処: SETUP_HUMAN.md の STEP1.5 に手順5（sitemap 送信・クリック3回）を人間の作業として戻し、誤った理由づけを実測表に差し替えた。CLAUDE.md 意思決定ルールに『#4 の前に発見経路を数える』を追記。費用ゼロでできることとして repo.homepage を設定しリンクを1本生成した（GET で確認済み。ただし nofollow なので発見経路には数えない）。decisions.md 2026-09-10 参照",
+    "last_run_type": "Search Console の確認タグを埋め込み、本番反映を確認。ユーザーの「確認」待ち",
     "previous_run_2026-09-09_type": "ユーザーが組織 keisanshitsu を作成 → 組織サイトで公開を完了。L0の前半（公開）達成",
     "previous_run_2026-09-08_type": "日次ループ。前提ゲート1行目（同じゲート行に3日連続で該当）に該当し、3日ルールが発動した。該当行は4行目『計測基盤が未接続』で、9/05・9/07・本日の3回連続である。よって施策は打たず、詰まりの根拠になっている前提を1つ実測した。選んだ前提は『掲示が読まれたかは NTFS の最終アクセス時刻で判定できる』——9/07 に私自身が作り『もう人間には聞かない、観測値である』と宣言した判定器の土台である。実測の結果、判定器は『読まれた』の側で壊れていた: デスクトップ31項目のうち23項目が完全に同一の秒（2026-09-08T09:01:13）にアクセス時刻を更新されており、これは人間ではなく OneDrive 同期等の一括掃引である。9/07 版は『アクセス時刻 > baseline』の一行しか見ておらず、掃引が掲示ファイルを含んだ日に『人間が読んだ』と誤記録する。しかも誤りの向きが悪く、『読まれた』は経路が生きている証拠として使われるため私は催促をやめる側に倒れる。対策として Test-BulkSweep を追加（兄弟項目の同時刻アクセスで裏を取る）。境界テスト4ケースを書いたところ全ケースで cohort が1多く、原因は自分のコードだった（$env:TEMP が 8.3 短縮名を返すため文字列比較による自己除外が効かず、掲示ファイル自身を数えていた。しきい値3が実質2に低下）。パス正規化で修正し 8/8 PASS。副次的に通知センターの未消化トーストが10件たまっていたことを実測し、Tag/Group を付けて置き換わるようにした。経路側の欠陥は本日すべて否定された（HideIcons=0・デスクトップパス一致・通知ストア到達=True・Setting=Enabled・PCは9/05から連続稼働）ため、34日間の無回答は経路ではなく人間の選択であると判定し、催促を強めずに待つと結論した。併せて 9/07 の作業がセッション上限（run_2026-09-07.log に 'You've hit your session limit'）でコミットもpushもされずに残っていたことを検出し、本日まとめてコミット＆pushした。decisions.md 2026-09-08 参照",
     "previous_run_2026-09-07_type": "日次ループ。前提ゲート4行目（計測基盤が未接続）に該当したが、その指示（SETUP_HUMAN.md に手順を具体化して積む）は STEP1.5 に全手順が既に書かれており、再掲は3日ルールが名指しで禁じている行為である。よって前日の週次レビューが自ら定めた次の一手『記入欄に答えが無ければ通知方式を変える』を実行した。ただし変える前に測った結果、変える根拠が無いことが分かった: トーストは通知ストアに到達しており（Setting=Enabled、Show() 前後の WAL 更新を対照実験で確認）方式は壊れていない。壊れていたのは置き場所で、9/06 に置いた掲示は作成後23時間、一度も開かれていなかった（最終アクセス時刻。Get-Item は観測しても汚染しないことを対照実験で確認）。よって (1) 掲示をデスクトップ直下にも置く (2) トーストを scenario=reminder にして自動で消えないようにする (3) 到達判定を毎回 state/notify_receipt.json に記録し、次回起動時に人間へ聞かずに読む、の3点に変更した。副次的に、2026-09-06 のコミットが push されていなかったこと（日次ループ手順7が『push は認証設定後』のまま1ヶ月古かったこと）を検出し修正した。decisions.md 2026-09-07 参照",
@@ -106,7 +106,8 @@
     "repo": "keisanshitsu/keisanshitsu.github.io",
     "url_kind": "GitHub Organization site (D案)。ユーザー名も数字も含まない",
     "gsc_verification_token": "7V_zOAQD8Wj-WW75kGPzPHq8kAcria_PGfj-kt5j11c",
-    "gsc_verification_method": "HTMLタグ（docs/index.html の head）。URLプレフィックス型のため DNS TXT は使えない"
+    "gsc_verification_method": "HTMLタグ（docs/index.html の head）。URLプレフィックス型のため DNS TXT は使えない",
+    "gsc_verification_live_confirmed": "2026-09-10T12:35 https://keisanshitsu.github.io/ で実測"
   },
   "publication": {
     "connected": true,
@@ -240,11 +241,11 @@
   "blocked_on_human": [
     {
       "id": "STEP1.5",
-      "what": "Search Console にプロパティを登録し、確認用の meta タグを渡す。**続けて sitemap.xml を送信する（手順5・2026-09-10 追加）**",
+      "what": "Search Console で「確認」ボタンを押す（タグは埋め込み済み）",
       "why_blocking": "⚠ 2026-09-10 に理由を書き直した。旧記述は『計測できないと L1 を判定できない』——計測の問題として述べていたが、実測の結果それは二次的だった。真の理由は【Google が当サイトを発見する経路が現在ゼロであり、sitemap 送信がそれを作る唯一の確実な手段である】こと。すなわちこれは L1 を『測れない』問題ではなく、L1 に『到達できない』問題である。discovery セクション参照",
       "blocks": "索引の開始（発見経路の生成）・計測・意思決定ルール #4〜#7 のすべて",
       "status": "pending",
-      "human_minutes": 6,
+      "human_minutes": 1,
       "step5_added_on": "2026-09-10",
       "step5_why": "『sitemap の送信は私がやります』と書いていたが実行不能だった（API送信には webmasters スコープが必要、実装は webmasters.readonly、しかもサービスアカウントは STEP1.6 未完）。唯一の発見経路を人間の手順から消したうえで自分では実行できない状態にしていた。教訓3（未検証の前提に依存した『あとは私がやります』）の再発",
       "correction_2026-09-10": "旧 note の『登録(STEP1.5)だけでも索引は進む』は誤りである。プロパティ登録自体は Google の文書上どこにも発見経路として書かれていない。索引を始動させるのは sitemap 送信または被リンクである",
@@ -252,8 +253,9 @@
       "verification": "HTMLタグ方式。独自ドメインではないため DNS の TXT レコードは使えない。meta タグを渡してもらえば私が docs/index.html に入れて push する",
       "note": "サービスアカウント（API読み取り）は STEP1.6 に分離した。先に登録だけ済ませればインデックスは始まる",
       "url": "https://search.google.com/search-console",
-      "why_human_only": "Googleアカウントとしての本人操作が必要。私には認証経路が無い",
-      "is_now_the_recommended_unblock": true
+      "why_human_only": "Googleアカウントとしての本人操作。私には認証経路が無い",
+      "is_now_the_recommended_unblock": true,
+      "progress": "2026-09-10: ユーザーから確認タグを受領 → docs/index.html に埋め込み → push → https://keisanshitsu.github.io/ で本番反映を実測（12:35）。残るのは Search Console 画面で「確認」を押す操作のみ"
     },
     {
       "id": "STEP1.6",
@@ -266,7 +268,8 @@
       "human_minutes": 15,
       "url": "https://console.cloud.google.com/",
       "why_human_only": "GCPのプロジェクト作成と鍵の発行は本人操作。急ぎではない",
-      "is_now_the_recommended_unblock": false
+      "is_now_the_recommended_unblock": false,
+      "scope_note": "⚠ サービスアカウントの用途は2つあり、必要なスコープが違う。数字の読み取りは webmasters.readonly で足りるが、sitemap の送信には書き込み権限（webmasters）が要る。前者だけ設定した場合、sitemap 送信は人間が GSC 画面で行うか、robots.txt 経由の自動発見に任せることになる"
     }
   ],
   "resolved_human_tasks": [
@@ -842,5 +845,10 @@
       "why": "組織サイトで要件（URLに名前を出さない）は満たせた。ドメインは移植性（GitHubを離れてもURLを保てる）のためだけに残る利点であり、流入ゼロの現時点で年1,500円を払う根拠が無い。L1 到達後に再検討する",
       "cost_of_waiting": "keisanshitsu.com は 2026-08-07 に空きだったが 2026-09-09 には登録済みだった。待つと候補は減る"
     }
-  ]
+  ],
+  "sitemap_submission": {
+    "status": "自動発見に任せる",
+    "how": "https://keisanshitsu.github.io/robots.txt の Sitemap 行（自分のホスト直下にあるためクローラに読まれる）",
+    "correction": "2026-09-09 に「sitemap の送信は私がやります」と書いたが不正確だった。fetch_metrics.py が使うのは webmasters.readonly スコープで、送信には書き込み権限が要る。現状の設計では私は送信できない。自動発見で足りる見込みだが、L1 の期限（2026-10-07）までに impressions が 0 のままなら、手動送信を人間キューに積むこと"
+  }
 }

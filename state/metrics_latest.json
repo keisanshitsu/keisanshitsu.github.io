@@ -1,8 +1,8 @@
 {
-  "fetched_at": "2026-09-09",
+  "fetched_at": "2026-09-10",
   "window_days": 28,
   "measured": false,
   "sessions": null,
-  "status": "not_configured",
-  "hint": "pipeline.json の site.gsc_property が未設定。まだ公開していない可能性が高い"
+  "status": "no_credentials",
+  "hint": "C:\\Users\\horik_vle3kvw\\OneDrive\\Desktop\\プロジェクト\\secrets\\gsc_service_account.json が無い。SETUP_HUMAN.md STEP 1.5 が未完了"
 }

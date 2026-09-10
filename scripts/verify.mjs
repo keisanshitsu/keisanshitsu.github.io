@@ -205,6 +205,42 @@ for (const t of [join(ROOT, "scripts", "fetch_metrics.test.py")]) {
   }
 }
 
+// ── 3.6. インフラのテスト（通知の到達判定） ──────────────────────────
+// 2026-09-10 追加。9/08 に notify_human.ps1 の境界テストを4件書いたが、
+// **その場で走らせただけでコミットしなかった**ため、9/10 に同じ向きの欠陥が再発した
+// （プロジェクト側の掲示が自分の処理系に触られ「読まれた」と誤判定していた）。
+// 判定器の誤りは「もう催促しなくてよい」という方向に効くので、静かに私を黙らせる。
+// 走らせ続けない検査は無いのと同じなので、ここから毎回実行する。
+let notifyStatus = "未実行";
+{
+  const t = join(ROOT, "scripts", "notify_human.test.ps1");
+  const rel = relative(ROOT, t).replaceAll("\\", "/");
+  if (!existsSync(t)) {
+    err(rel, "通知判定のテストが見つからない");
+    notifyStatus = "欠落";
+  } else if (process.platform !== "win32") {
+    warn(rel, "Windows 以外のため未検査（PowerShell 5.1 前提）");
+    notifyStatus = "スキップ（非Windows）";
+  } else {
+    const r = spawnSync("powershell",
+      ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", t], { encoding: "utf8" });
+    if (r.error) {
+      warn(rel, "PowerShell を実行できないため未検査");
+      notifyStatus = "スキップ（PowerShell 未検出）";
+    } else {
+      const out = `${r.stdout ?? ""}${r.stderr ?? ""}`;
+      const m = out.match(/(\d+)\/(\d+) PASS/);
+      if (r.status === 0) {
+        notifyStatus = `アサーション ${m ? m[2] : "?"}件`;
+      } else {
+        const fails = out.split(/\r?\n/).filter((l) => l.includes("[FAIL]")).map((l) => l.trim());
+        err(rel, `失敗: ${fails.join(" / ") || out.trim().slice(0, 300)}`);
+        notifyStatus = `失敗 ${fails.length || 1}件`;
+      }
+    }
+  }
+}
+
 // ── 4. 実レンダリング検証（puppeteer があるときだけ） ────────────────
 let rendered = false;
 try {
@@ -227,6 +263,7 @@ try {
 // ── 結果 ─────────────────────────────────────────────────────────────
 console.log(`検査: HTML ${pages.length}枚 / ツール ${toolDirs.length}本 / アサーション ${assertions}件`);
 console.log(`インフラ検査: fetch_metrics.py — ${infraStatus}`);
+console.log(`インフラ検査: notify_human.ps1 — ${notifyStatus}`);
 console.log(rendered
   ? "375px 実レンダリング検証: 実施"
   : "375px 実レンダリング検証: スキップ（npm i -D puppeteer で有効化）");

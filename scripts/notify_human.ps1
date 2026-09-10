@@ -120,6 +120,25 @@ function Test-BulkSweep([string]$Path, [string]$AccessTime) {
     catch { return $null }
 }
 
+function Get-CountsTowardVerdict($Target) {
+    # 「読まれたか」の判定母数に入れてよい掲示かを返す（2026-09-10 追加）。
+    # 明示フラグを最優先。無ければ role で後方互換（古い receipt 用）。
+    # role すら無ければ真——判定を落とすより、うるさい側に倒す。
+    if ($null -ne $Target.counts_toward_verdict) { return [bool]$Target.counts_toward_verdict }
+    if ($Target.role) { return ([string]$Target.role -eq 'desktop') }
+    return $true
+}
+
+function Get-AnyOpened($Opened) {
+    # opened_since だけで数えてはならない。判定母数に入る掲示に限る。
+    #
+    # ⚠ ここで $_.counts_toward_verdict を直接読んではいけない（2026-09-10 のテストで検出）。
+    #   プロパティが無いオブジェクトでは $null＝偽になり、**全件が「未読」に化ける**。
+    #   本番では直前に付与しているので実害は出なかったが、判定基準が2箇所に分かれると
+    #   片方の付け忘れが静かに効く。Get-CountsTowardVerdict に一本化する。
+    return [bool](@($Opened | Where-Object { $_.opened_since -and (Get-CountsTowardVerdict $_) }).Count -gt 0)
+}
+
 function Get-WalStamp {
     # Windows 通知プラットフォームの書き込み先。ここが更新されれば
     # トーストは「画面に出たかはともかく、通知ストアには届いた」と言える。
@@ -127,6 +146,11 @@ function Get-WalStamp {
     if (-not (Test-Path $wal)) { return $null }
     try { return (Get-Item $wal).LastWriteTime } catch { return $null }
 }
+
+# テストから dot-source するときは本体を動かさない（掲示を書き換えないため）。
+# 判定関数だけを読み込みたいので、ここで抜ける。exit ではなく return にすること——
+# dot-source 中の exit は呼び出し側のセッションごと落とす。
+if ($env:NOTIFY_HUMAN_TEST -eq '1') { return }
 
 try {
     if (-not (Test-Path $Pipeline)) { "pipeline.json が無いので通知しない"; exit 0 }
@@ -154,21 +178,36 @@ try {
             if ($moved) { $sweep = Test-BulkSweep $t.path $now }
             $wasOpened = $moved -and -not ($sweep -and $sweep.is_sweep)
 
+            # ⚠ プロジェクト側の掲示は判定に使わない（2026-09-10 追加）。
+            #   あれは git のワークツリー内かつ OneDrive 配下にあり、**書き込んだ直後に
+            #   自分の処理系に触られる**。2026-09-10 の実測では baseline 22:39:58 に対し
+            #   access_now 22:40:02 と、**同一実行の4秒後**に動いていた。一方、人間が
+            #   実際に目にするデスクトップ側は 1秒も動いていなかった。
+            #   Test-BulkSweep はこれを拾えない——触るのが1ファイルだけなので
+            #   兄弟の同時刻アクセスが発生せず、cohort_size は 0 になる。
+            #   結果、判定器は「読まれた」と報告した。**誰も読んでいないのに、である。**
+            #   これは 9/08 に潰したのと同じ向きの誤り（私を黙らせる側）なので、
+            #   判定母数を「人間が開きうる場所にある掲示」だけに絞る。
+            #   古い receipt には counts_toward_verdict が無いので role で後方互換をとる。
+            $counts = Get-CountsTowardVerdict $t
+
             $opened += [pscustomobject]@{
-                role            = $t.role
-                exists_now      = [bool]$now
-                opened_since    = $wasOpened
-                access_moved    = $moved
-                sweep_suspected = [bool]($sweep -and $sweep.is_sweep)
-                cohort_size     = $(if ($sweep) { $sweep.cohort_size } else { $null })
-                access_now      = $now
-                baseline        = $t.baseline_access
+                role                  = $t.role
+                exists_now            = [bool]$now
+                opened_since          = $wasOpened
+                counts_toward_verdict = $counts
+                access_moved          = $moved
+                sweep_suspected       = [bool]($sweep -and $sweep.is_sweep)
+                cohort_size           = $(if ($sweep) { $sweep.cohort_size } else { $null })
+                access_now            = $now
+                baseline              = $t.baseline_access
             }
         }
         $verdict = [pscustomobject]@{
             checked_on      = (Get-Date -Format 'yyyy-MM-dd')
             written_on      = $prev.last_written
-            any_opened      = [bool](@($opened | Where-Object { $_.opened_since }).Count -gt 0)
+            any_opened      = (Get-AnyOpened $opened)
+            observed_only   = @($opened | Where-Object { $_.opened_since -and -not $_.counts_toward_verdict } | ForEach-Object { $_.role })
             targets         = $opened
             toast_reached   = $prev.toast.reached_store
         }
@@ -176,7 +215,10 @@ try {
         if ($history.Count -gt 30) { $history = $history[($history.Count - 30)..($history.Count - 1)] }
 
         if ($verdict.any_opened) {
-            "前回の掲示は読まれた（最終アクセスが更新され、かつ一括掃引ではない）"
+            "前回の掲示は読まれた（デスクトップの掲示の最終アクセスが更新され、かつ一括掃引ではない）"
+        }
+        elseif (@($verdict.observed_only).Count -gt 0) {
+            "⚠ 前回の掲示は読まれていない（動いたのは $(@($verdict.observed_only) -join ',') 側だけ。そこは git・OneDrive・自動処理が触るため判定に使わない）"
         }
         elseif (@($opened | Where-Object { $_.sweep_suspected }).Count -gt 0) {
             "⚠ 前回の掲示は読まれていない（アクセス時刻は動いたが、同一秒に多数の兄弟項目も動いており一括掃引と判定）"
@@ -274,10 +316,14 @@ $detail
         try {
             Set-Content -Path $pair.path -Value $note -Encoding UTF8 -ErrorAction Stop
             $targets += [pscustomobject]@{
-                role            = $pair.role
-                path            = $pair.path
-                written_at      = (Get-Date -Format 's')
-                baseline_access = (Get-AccessTime $pair.path)
+                role                  = $pair.role
+                path                  = $pair.path
+                written_at            = (Get-Date -Format 's')
+                baseline_access       = (Get-AccessTime $pair.path)
+                # デスクトップ側だけを「読まれたか」の判定に使う（2026-09-10）。
+                # プロジェクト側は git・OneDrive・自分の処理系が触るため観測にならない。
+                # 置くこと自体はやめない（人間がプロジェクトを開いたときに目に入る）。
+                counts_toward_verdict = ($pair.role -eq 'desktop')
             }
         }
         catch { "掲示の書き込みに失敗（無視して続行）: $($pair.path) / $($_.Exception.Message)" }

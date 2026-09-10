@@ -21,6 +21,18 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 // 公開されるフォルダ。GitHub Pages が「main ブランチの /docs」を配信するため
 // この名前でなければならない（CLAUDE.md「公開の仕組み」参照）。
 const SITE = join(ROOT, "docs");
+const pipeline = JSON.parse(readFileSync(join(ROOT, "state", "pipeline.json"), "utf8"));
+
+// canonical URL の期待値。公開URLとファイルの位置から機械的に決まるので、
+// 人が手で書くと必ずずれる。ずれた canonical は「別ページの複製」と解釈されうる。
+const canonicalFor = (file) => {
+  const base = (pipeline.site?.published_url ?? "").replace(/\/+$/, "");
+  if (!base) return null;
+  const rel = relative(SITE, file).replaceAll("\\", "/");
+  if (rel === "index.html") return base + "/";
+  if (rel.endsWith("/index.html")) return base + "/" + rel.slice(0, -"index.html".length);
+  return base + "/" + rel;
+};
 
 const errors = [];
 const warns = [];
@@ -97,6 +109,34 @@ for (const page of pages) {
       err(rel, "YMYL必須: 最終判断を専門家に委ねる旨の記載が無い");
   }
 
+  // canonical / OGP / 構造化データ（2026-09-10 追加）
+  // これらは **初回クロール前に入っていることに価値がある**。したがって
+  // 意思決定ルール #4（公開2週間・表示回数0）の発火を待たずに必須とする。
+  // 後から足しても、最初のクロールで拾われた形は上書きしにくい。
+  const expectedCanon = canonicalFor(page);
+  const canonMatch = html.match(/<link[^>]+rel=["']canonical["'][^>]*href=["']([^"']+)["']/i);
+  if (expectedCanon) {
+    if (!canonMatch) err(rel, `canonical が無い（期待値 ${expectedCanon}）`);
+    else if (canonMatch[1] !== expectedCanon)
+      err(rel, `canonical が ${canonMatch[1]}。期待値は ${expectedCanon}`);
+  }
+
+  if (!noindex) {
+    for (const prop of ["og:title", "og:description", "og:url"]) {
+      if (!new RegExp(`property=["']${prop}["']`, "i").test(html))
+        err(rel, `OGP ${prop} が無い。SNSで共有されたときの表示が壊れる`);
+    }
+    const ogUrl = html.match(/property=["']og:url["'][^>]*content=["']([^"']+)["']/i);
+    if (ogUrl && expectedCanon && ogUrl[1] !== expectedCanon)
+      err(rel, `og:url(${ogUrl[1]}) が canonical と食い違う`);
+  }
+
+  // JSON-LD は壊れていても画面には出ないので、機械で見るしかない
+  for (const m of html.matchAll(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)) {
+    try { JSON.parse(m[1]); }
+    catch (e) { err(rel, `JSON-LD が壊れている: ${e.message}`); }
+  }
+
   // 横スクロールを生みやすい書き方の検出（静的ヒューリスティック）
   // max-width は可変なので除外し、固定 width / min-width だけを見る
   for (const m of html.matchAll(/(?<!max-)\b(?:min-)?width\s*:\s*(\d{3,})px/gi))
@@ -139,7 +179,6 @@ for (const dir of toolDirs) {
 // ── 3. サイト全体の SEO 基盤 ────────────────────────────────────────
 if (!existsSync(join(SITE, "robots.txt"))) err("docs/robots.txt", "存在しない");
 
-const pipeline = JSON.parse(readFileSync(join(ROOT, "state", "pipeline.json"), "utf8"));
 const published = pipeline.site?.published_url;
 if (published && !existsSync(join(SITE, "sitemap.xml")))
   err("docs/sitemap.xml", "公開URLが確定しているのに sitemap が無い。node scripts/gen_sitemap.mjs");

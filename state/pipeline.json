@@ -2,7 +2,7 @@
   "meta": {
     "created": "2026-08-05",
     "last_run": "2026-09-10",
-    "last_run_type": "Search Console の確認タグを埋め込み、本番反映を確認。ユーザーの「確認」待ち",
+    "last_run_type": "Search Console の所有権確認が完了 → L0 達成。以降は索引待ち",
     "previous_run_2026-09-09_type": "ユーザーが組織 keisanshitsu を作成 → 組織サイトで公開を完了。L0の前半（公開）達成",
     "previous_run_2026-09-08_type": "日次ループ。前提ゲート1行目（同じゲート行に3日連続で該当）に該当し、3日ルールが発動した。該当行は4行目『計測基盤が未接続』で、9/05・9/07・本日の3回連続である。よって施策は打たず、詰まりの根拠になっている前提を1つ実測した。選んだ前提は『掲示が読まれたかは NTFS の最終アクセス時刻で判定できる』——9/07 に私自身が作り『もう人間には聞かない、観測値である』と宣言した判定器の土台である。実測の結果、判定器は『読まれた』の側で壊れていた: デスクトップ31項目のうち23項目が完全に同一の秒（2026-09-08T09:01:13）にアクセス時刻を更新されており、これは人間ではなく OneDrive 同期等の一括掃引である。9/07 版は『アクセス時刻 > baseline』の一行しか見ておらず、掃引が掲示ファイルを含んだ日に『人間が読んだ』と誤記録する。しかも誤りの向きが悪く、『読まれた』は経路が生きている証拠として使われるため私は催促をやめる側に倒れる。対策として Test-BulkSweep を追加（兄弟項目の同時刻アクセスで裏を取る）。境界テスト4ケースを書いたところ全ケースで cohort が1多く、原因は自分のコードだった（$env:TEMP が 8.3 短縮名を返すため文字列比較による自己除外が効かず、掲示ファイル自身を数えていた。しきい値3が実質2に低下）。パス正規化で修正し 8/8 PASS。副次的に通知センターの未消化トーストが10件たまっていたことを実測し、Tag/Group を付けて置き換わるようにした。経路側の欠陥は本日すべて否定された（HideIcons=0・デスクトップパス一致・通知ストア到達=True・Setting=Enabled・PCは9/05から連続稼働）ため、34日間の無回答は経路ではなく人間の選択であると判定し、催促を強めずに待つと結論した。併せて 9/07 の作業がセッション上限（run_2026-09-07.log に 'You've hit your session limit'）でコミットもpushもされずに残っていたことを検出し、本日まとめてコミット＆pushした。decisions.md 2026-09-08 参照",
     "previous_run_2026-09-07_type": "日次ループ。前提ゲート4行目（計測基盤が未接続）に該当したが、その指示（SETUP_HUMAN.md に手順を具体化して積む）は STEP1.5 に全手順が既に書かれており、再掲は3日ルールが名指しで禁じている行為である。よって前日の週次レビューが自ら定めた次の一手『記入欄に答えが無ければ通知方式を変える』を実行した。ただし変える前に測った結果、変える根拠が無いことが分かった: トーストは通知ストアに到達しており（Setting=Enabled、Show() 前後の WAL 更新を対照実験で確認）方式は壊れていない。壊れていたのは置き場所で、9/06 に置いた掲示は作成後23時間、一度も開かれていなかった（最終アクセス時刻。Get-Item は観測しても汚染しないことを対照実験で確認）。よって (1) 掲示をデスクトップ直下にも置く (2) トーストを scenario=reminder にして自動で消えないようにする (3) 到達判定を毎回 state/notify_receipt.json に記録し、次回起動時に人間へ聞かずに読む、の3点に変更した。副次的に、2026-09-06 のコミットが push されていなかったこと（日次ループ手順7が『push は認証設定後』のまま1ヶ月古かったこと）を検出し修正した。decisions.md 2026-09-07 参照",
@@ -43,13 +43,14 @@
     "target": 50000,
     "rationale": "月10万円 ≒ 月4〜6万セッション。CLAUDE.md「10万円が意味する流入量」参照",
     "target_caveat_2026-08-09": "⚠ この 50,000 という数字は『アフィリエイト単価1,500円（求人・派遣登録系）』を前提に逆算されている。現在の在庫2本（T002・T003）はどちらも収益導線 2/5 の物販アフィリであり、この前提を満たさない。物販は成果報酬が売上の数%であって登録1件いくらではないため、桁が違う。つまり現在のポートフォリオは、仮に狙ったニッチで全勝しても 50,000セッションでは10万円に届かない。これは想定どおり（最初の3本は L1〜L2 の検証が目的）だが、『検証用の在庫』から『収益用の在庫』へ切り替える規則が意思決定ルールに存在しなかったため、2026-08-09 の週次レビューで CLAUDE.md に追加した",
-    "current_level": "L0",
+    "current_level": "L1",
     "kpi_ladder": {
       "L0": {
         "goal": "公開＋Search Console登録",
         "deadline": "2026-09-12",
-        "done": false,
-        "progress": "公開は 2026-09-09 に完了。Search Console 登録が未了（STEP1.5）"
+        "done": true,
+        "progress": "公開 2026-09-09 / Search Console 所有権確認 2026-09-10。35日目に達成",
+        "achieved_on": "2026-09-10"
       },
       "L1": {
         "goal": "検索表示回数 > 0（impressions）",
@@ -57,7 +58,8 @@
         "done": false,
         "note": "公開から4週。GSC の impressions で判定できる（clicks/impressions は取得可能）",
         "unreachable_as_of_2026-09-10": "⚠ 現状では到達経路が存在しない。Google が当サイトを発見する経路が実測ゼロだったため（discovery セクション）。期限まで27日あるが、日数の問題ではない。sitemap が送信されるまでカウントダウンは実質始まっていない",
-        "what_starts_the_clock": "SETUP_HUMAN.md STEP1.5 の手順5（sitemap 送信）。ここが済んだ日を discovery.sitemap_submitted_on に記録し、L1 の実質的な起点をそこへ置き直すこと"
+        "what_starts_the_clock": "SETUP_HUMAN.md STEP1.5 の手順5（sitemap 送信）。ここが済んだ日を discovery.sitemap_submitted_on に記録し、L1 の実質的な起点をそこへ置き直すこと",
+        "progress": "索引待ち。公開から4週が期限"
       },
       "L2": {
         "goal": "月1,000セッション",
@@ -240,28 +242,10 @@
   },
   "blocked_on_human": [
     {
-      "id": "STEP1.5",
-      "what": "Search Console で「確認」ボタンを押す（タグは埋め込み済み）",
-      "why_blocking": "⚠ 2026-09-10 に理由を書き直した。旧記述は『計測できないと L1 を判定できない』——計測の問題として述べていたが、実測の結果それは二次的だった。真の理由は【Google が当サイトを発見する経路が現在ゼロであり、sitemap 送信がそれを作る唯一の確実な手段である】こと。すなわちこれは L1 を『測れない』問題ではなく、L1 に『到達できない』問題である。discovery セクション参照",
-      "blocks": "索引の開始（発見経路の生成）・計測・意思決定ルール #4〜#7 のすべて",
-      "status": "pending",
-      "human_minutes": 1,
-      "step5_added_on": "2026-09-10",
-      "step5_why": "『sitemap の送信は私がやります』と書いていたが実行不能だった（API送信には webmasters スコープが必要、実装は webmasters.readonly、しかもサービスアカウントは STEP1.6 未完）。唯一の発見経路を人間の手順から消したうえで自分では実行できない状態にしていた。教訓3（未検証の前提に依存した『あとは私がやります』）の再発",
-      "correction_2026-09-10": "旧 note の『登録(STEP1.5)だけでも索引は進む』は誤りである。プロパティ登録自体は Google の文書上どこにも発見経路として書かれていない。索引を始動させるのは sitemap 送信または被リンクである",
-      "property_type": "URLプレフィックス（https://keisanshitsu.github.io/）",
-      "verification": "HTMLタグ方式。独自ドメインではないため DNS の TXT レコードは使えない。meta タグを渡してもらえば私が docs/index.html に入れて push する",
-      "note": "サービスアカウント（API読み取り）は STEP1.6 に分離した。先に登録だけ済ませればインデックスは始まる",
-      "url": "https://search.google.com/search-console",
-      "why_human_only": "Googleアカウントとしての本人操作。私には認証経路が無い",
-      "is_now_the_recommended_unblock": true,
-      "progress": "2026-09-10: ユーザーから確認タグを受領 → docs/index.html に埋め込み → push → https://keisanshitsu.github.io/ で本番反映を実測（12:35）。残るのは Search Console 画面で「確認」を押す操作のみ"
-    },
-    {
       "id": "STEP1.6",
       "what": "GCPでサービスアカウントを作り JSON キーを secrets/ に置く",
       "why_blocking": "私が無人で GSC の数字を読むために必要",
-      "blocks": "自動計測のみ",
+      "blocks": "自動計測のみ。索引と検索表示は止まらない",
       "correction_2026-09-10": "旧記述『登録(STEP1.5)だけでも索引は進む』は誤りだったので削除した。索引を始動させるのは sitemap 送信であり、登録だけでは発見経路は生まれない。ただし sitemap 送信は GSC の画面から人間が30秒でできるため、STEP1.6 が L1 の前提になるわけではない。優先度『急ぎません』は据え置きで正しい",
       "scope_note_2026-09-10": "現行 SCOPES は webmasters.readonly（読み取り専用）。将来 sitemap 送信まで自動化したい場合は https://www.googleapis.com/auth/webmasters が要る。ただし送信は一度きりの作業なので、自動化の価値は低い",
       "status": "pending",
@@ -269,7 +253,8 @@
       "url": "https://console.cloud.google.com/",
       "why_human_only": "GCPのプロジェクト作成と鍵の発行は本人操作。急ぎではない",
       "is_now_the_recommended_unblock": false,
-      "scope_note": "⚠ サービスアカウントの用途は2つあり、必要なスコープが違う。数字の読み取りは webmasters.readonly で足りるが、sitemap の送信には書き込み権限（webmasters）が要る。前者だけ設定した場合、sitemap 送信は人間が GSC 画面で行うか、robots.txt 経由の自動発見に任せることになる"
+      "scope_note": "⚠ サービスアカウントの用途は2つあり、必要なスコープが違う。数字の読み取りは webmasters.readonly で足りるが、sitemap の送信には書き込み権限（webmasters）が要る。前者だけ設定した場合、sitemap 送信は人間が GSC 画面で行うか、robots.txt 経由の自動発見に任せることになる",
+      "urgency": "低。L1（2026-10-07）の判定までに済んでいればよい"
     }
   ],
   "resolved_human_tasks": [
@@ -320,6 +305,13 @@
       "status": "done",
       "resolved_on": "2026-09-09",
       "evidence": "source=main /docs・status=built・https://keisanshitsu.github.io/ が 200"
+    },
+    {
+      "id": "STEP1.5",
+      "what": "Search Console のプロパティ登録と所有権確認",
+      "status": "done",
+      "resolved_on": "2026-09-10",
+      "evidence": "HTMLタグ方式。docs/index.html に埋め込み → 本番反映を12:35に実測 → ユーザーが確認を実行"
     }
   ],
   "capability_discoveries": [

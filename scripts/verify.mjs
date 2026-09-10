@@ -161,6 +161,19 @@ if (domain) {
   warn("docs/CNAME", "CNAME があるのに pipeline.json の custom_domain が未設定。どちらが正か確認する");
 }
 
+// Search Console の所有権確認タグ。pipeline.json を正とし、HTML と一致させる。
+// これが黙って消えると所有権確認が外れ、計測が止まる。しかも
+// 「サイトは見えているのに数字だけ来ない」という気づきにくい壊れ方をするので、
+// 機械で守る（2026-09-10 追加）。
+const gscToken = pipeline.site?.gsc_verification_token;
+if (gscToken) {
+  const home = join(SITE, "index.html");
+  if (!existsSync(home)) err("docs/index.html", "存在しない");
+  else if (!readFileSync(home, "utf8").includes(gscToken))
+    err("docs/index.html",
+      `Search Console の確認タグ（${gscToken.slice(0, 8)}…）が消えている。所有権確認が外れ計測が止まる`);
+}
+
 // ── 3.5. インフラのテスト（計測スクリプト） ──────────────────────────
 // 2026-09-09 追加。公開されるツールにはテストを強制していたのに、
 // **意思決定の入力そのものを作る fetch_metrics.py には1本も無かった。**

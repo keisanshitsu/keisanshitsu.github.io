@@ -104,7 +104,9 @@
     "git_remote_note": "remote 設定と初回 push は完了。ただし **公開はされていない**。GitHub Pages は Settings→Pages（またはAPI）で発行元を設定するまで1枚も配信しない。有効化は custom_domain が入るまで保留する",
     "github_org": "keisanshitsu",
     "repo": "keisanshitsu/keisanshitsu.github.io",
-    "url_kind": "GitHub Organization site (D案)。ユーザー名も数字も含まない"
+    "url_kind": "GitHub Organization site (D案)。ユーザー名も数字も含まない",
+    "gsc_verification_token": "7V_zOAQD8Wj-WW75kGPzPHq8kAcria_PGfj-kt5j11c",
+    "gsc_verification_method": "HTMLタグ（docs/index.html の head）。URLプレフィックス型のため DNS TXT は使えない"
   },
   "publication": {
     "connected": true,

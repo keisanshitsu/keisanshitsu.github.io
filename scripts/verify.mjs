@@ -293,6 +293,71 @@ let notifyStatus = "未実行";
   }
 }
 
+// ── 3.7. 人間キューの整合（記録と実体の突き合わせ） ──────────────────
+// 2026-09-11 追加。2026-09-10 の決定ログには「sitemap 送信の手順を人間キューに
+// 戻した」と書いてあったが、実際の SETUP_HUMAN.md には「sitemap」の語が1つも無かった。
+// 同じ日に同ファイルを2回書き換えており、2回目の節ごとの差し替えで消えていた。
+//
+// **この欠落は git では見えない。** SETUP_HUMAN.md は .gitignore 済みで未追跡なので、
+// 削除は diff にもコミットにも現れない。決定ログとファイルが食い違っても、
+// 突き合わせる仕組みが無ければ誰も気づかない。
+//
+// 誤りの向きが最悪である: 記録上は「依頼済み・あとは人間待ち」に見えるため、
+// 私は催促もせずに待つ側へ倒れる。人間から見れば依頼は存在しない。
+// sitemap 送信は discovery の実測で「Google への唯一の確実な入口」と分かっているため、
+// これが静かに消えることは流入そのものが永久に始まらないことを意味する。
+let queueStatus = "対象外";
+{
+  const rel = "SETUP_HUMAN.md";
+  const queuePath = join(ROOT, rel);
+  const submitted = pipeline.discovery?.sitemap_submitted_on ?? null;
+  const task = (pipeline.blocked_on_human ?? []).find((t) => t?.id === "STEP1.5-5");
+  const needsStep = !submitted && task?.status === "pending";
+
+  if (!needsStep) {
+    queueStatus = submitted ? `sitemap 送信済み(${submitted}) — 検査対象外` : "対象外";
+  } else if (!existsSync(queuePath)) {
+    // ファイルごと無い場合は WARN に留める。今回実際に起きた壊れ方は
+    // 「ファイルはあるが手順だけ消える」であり、そちらを確実に止める側へ倒す。
+    warn(rel, "人間キューのファイルが見つからない（唯一の依頼経路である）");
+    queueStatus = "スキップ（ファイル無し）";
+  } else {
+    const q = readFileSync(queuePath, "utf8");
+    const missing = [];
+    if (!/sitemap|サイトマップ/i.test(q)) missing.push("sitemap 送信の手順");
+    if (!/search\.google\.com\/search-console|Search Console/i.test(q))
+      missing.push("Search Console への導線");
+    if (missing.length)
+      err(rel,
+        `sitemap が未送信なのに人間キューに ${missing.join(" と ")} が無い。` +
+        `記録上は依頼済みに見えるが実体が存在しない（2026-09-11 に実際に起きた壊れ方）`);
+
+    // 9/10 に一次情報で誤りと確認した主張。決定ログだけ訂正して
+    // 人間が読む文書に残していると、間違った理由が間違った行動リストを生む。
+    //
+    // ⚠ この検査は初版で自分の訂正文に誤爆した。誤りを撤回するには誤りを引用する
+    // 必要があるため、文字列の一致だけでは「主張」と「その撤回」を区別できない。
+    // そこで一致箇所の周囲を見て、訂正の目印があれば主張とみなさない。
+    // 誤りの向きは「見逃す側」に倒してある——訂正文を ERROR にすると、
+    // 直した人間（私）が検査を黙らせるために訂正そのものを消す方向に圧力がかかり、
+    // 記録が痩せる。見逃せば次に気づいた者が直せばよい。
+    const claimRe = /(登録|STEP\s*1\.5)[^。\n]{0,20}(が?済めば|すれば)[^。\n]{0,12}索引[^。\n]{0,8}(始まり|進み)/g;
+    const isRetracted = (text, at) => {
+      const ctx = text.slice(Math.max(0, at - 160), at + 260);
+      return /誤り|訂正|間違い|ではありません|でした[』」]?\s*$|書いていましたが/.test(ctx);
+    };
+    for (const m of q.matchAll(claimRe)) {
+      if (isRetracted(q, m.index)) continue;
+      err(rel,
+        "『登録すれば索引が始まる』という記述が残っている。2026-09-10 に一次情報で否定済み" +
+        "（索引を始動させるのは sitemap 送信か被リンク）");
+      break;
+    }
+
+    queueStatus = missing.length ? "不整合" : "整合";
+  }
+}
+
 // ── 4. 実レンダリング検証（puppeteer があるときだけ） ────────────────
 let rendered = false;
 try {
@@ -316,6 +381,7 @@ try {
 console.log(`検査: HTML ${pages.length}枚 / ツール ${toolDirs.length}本 / アサーション ${assertions}件`);
 console.log(`インフラ検査: fetch_metrics.py — ${infraStatus}`);
 console.log(`インフラ検査: notify_human.ps1 — ${notifyStatus}`);
+console.log(`人間キューの整合: SETUP_HUMAN.md — ${queueStatus}`);
 console.log(rendered
   ? "375px 実レンダリング検証: 実施"
   : "375px 実レンダリング検証: スキップ（npm i -D puppeteer で有効化）");

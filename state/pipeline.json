@@ -1,8 +1,11 @@
 {
   "meta": {
     "created": "2026-08-05",
-    "last_run": "2026-09-10",
-    "last_run_type": "Search Console の所有権確認が完了 → L0 達成。以降は索引待ち",
+    "last_run": "2026-09-11",
+    "last_run_type": "日次ループ。前提ゲート4行目（計測基盤が未接続）に該当したが、同じ行への該当は 9/05・9/07・9/08・9/09・9/10・本日で6回連続であり、1行目（3日ルール）が優先する。よって施策は打たず、詰まりの根拠になっている前提を1つ実測した。選んだ前提は『Google への唯一の入口（sitemap 送信）は、すでに人間キューに積んであり、あとは人間が実行するだけである』——9/10 に自分でそう記録したもの。実測の結果、**前提は崩れていた**: SETUP_HUMAN.md 全体に『sitemap』『サイトマップ』の語が0件で、依頼は存在しなかった。9/10 は同日中に同ファイルを2回書き換えており、2回目（L0達成への書き直し）で STEP1.5 の節ごと差し替えたとき手順5も消えていた。ファイルは .gitignore 済み（git 未追跡）のため削除は diff に現れず、決定ログには『足した』と書かれたまま実体だけが消えていた。さらに同ファイルには 9/10 に一次情報で誤りと確認した主張『STEP 1.5 が済めば索引は始まります』が残っており、訂正が決定ログにしか反映されていなかった。対策は3点: (1) 送信手順を SETUP_HUMAN.md 最上部に一次情報の引用つきで復活 (2) 誤った主張を実測表に差し替え (3) blocked_on_human に STEP1.5-5 を is_now_the_recommended_unblock=true で追加し通知経路に載せた。恒久対策として verify.mjs に『3.7 人間キューの整合』を追加し、sitemap 未送信のあいだ手順が実在しなければ ERROR で push を止めるようにした（欠陥注入の両方向で確認済み）。decisions.md 2026-09-11 参照",
+    "previous_run_2026-09-10_type": "Search Console の所有権確認が完了 → L0 達成。以降は索引待ち",
+    "gap_days_2026-09-11": 1,
+    "gap_note_2026-09-11": "前回実行 2026-09-10 → 本日 2026-09-11。差は1日で欠測なし。起動時チェック（9/08 に追加した規則）も実施: git status は clean、git rev-parse HEAD と origin/main が一致（ともに 5f722ac）。前回は手順6・7まで完走していた",
     "previous_run_2026-09-09_type": "ユーザーが組織 keisanshitsu を作成 → 組織サイトで公開を完了。L0の前半（公開）達成",
     "previous_run_2026-09-08_type": "日次ループ。前提ゲート1行目（同じゲート行に3日連続で該当）に該当し、3日ルールが発動した。該当行は4行目『計測基盤が未接続』で、9/05・9/07・本日の3回連続である。よって施策は打たず、詰まりの根拠になっている前提を1つ実測した。選んだ前提は『掲示が読まれたかは NTFS の最終アクセス時刻で判定できる』——9/07 に私自身が作り『もう人間には聞かない、観測値である』と宣言した判定器の土台である。実測の結果、判定器は『読まれた』の側で壊れていた: デスクトップ31項目のうち23項目が完全に同一の秒（2026-09-08T09:01:13）にアクセス時刻を更新されており、これは人間ではなく OneDrive 同期等の一括掃引である。9/07 版は『アクセス時刻 > baseline』の一行しか見ておらず、掃引が掲示ファイルを含んだ日に『人間が読んだ』と誤記録する。しかも誤りの向きが悪く、『読まれた』は経路が生きている証拠として使われるため私は催促をやめる側に倒れる。対策として Test-BulkSweep を追加（兄弟項目の同時刻アクセスで裏を取る）。境界テスト4ケースを書いたところ全ケースで cohort が1多く、原因は自分のコードだった（$env:TEMP が 8.3 短縮名を返すため文字列比較による自己除外が効かず、掲示ファイル自身を数えていた。しきい値3が実質2に低下）。パス正規化で修正し 8/8 PASS。副次的に通知センターの未消化トーストが10件たまっていたことを実測し、Tag/Group を付けて置き換わるようにした。経路側の欠陥は本日すべて否定された（HideIcons=0・デスクトップパス一致・通知ストア到達=True・Setting=Enabled・PCは9/05から連続稼働）ため、34日間の無回答は経路ではなく人間の選択であると判定し、催促を強めずに待つと結論した。併せて 9/07 の作業がセッション上限（run_2026-09-07.log に 'You've hit your session limit'）でコミットもpushもされずに残っていたことを検出し、本日まとめてコミット＆pushした。decisions.md 2026-09-08 参照",
     "previous_run_2026-09-07_type": "日次ループ。前提ゲート4行目（計測基盤が未接続）に該当したが、その指示（SETUP_HUMAN.md に手順を具体化して積む）は STEP1.5 に全手順が既に書かれており、再掲は3日ルールが名指しで禁じている行為である。よって前日の週次レビューが自ら定めた次の一手『記入欄に答えが無ければ通知方式を変える』を実行した。ただし変える前に測った結果、変える根拠が無いことが分かった: トーストは通知ストアに到達しており（Setting=Enabled、Show() 前後の WAL 更新を対照実験で確認）方式は壊れていない。壊れていたのは置き場所で、9/06 に置いた掲示は作成後23時間、一度も開かれていなかった（最終アクセス時刻。Get-Item は観測しても汚染しないことを対照実験で確認）。よって (1) 掲示をデスクトップ直下にも置く (2) トーストを scenario=reminder にして自動で消えないようにする (3) 到達判定を毎回 state/notify_receipt.json に記録し、次回起動時に人間へ聞かずに読む、の3点に変更した。副次的に、2026-09-06 のコミットが push されていなかったこと（日次ループ手順7が『push は認証設定後』のまま1ヶ月古かったこと）を検出し修正した。decisions.md 2026-09-07 参照",
@@ -150,6 +153,9 @@
   },
   "discovery": {
     "measured_on": "2026-09-10",
+    "remeasured_on": "2026-09-11",
+    "sitemap_submitted_on": null,
+    "sitemap_submitted_on_note": "送信された日をここに入れる。L1 の実質的な起点はこの日であって公開日ではない。null のあいだ verify.mjs が『人間キューに送信手順が載っていること』を ERROR で守る（3.7）",
     "verdict": "paths_to_google = 0",
     "what_it_means": "サイトは配信されている（GET で 200）が、Google がこのホストに到達する経路が1本も無い。『公開した』と『見つけられる』は別である。L1（impressions > 0・期限 2026-10-07）は現状では原理的に到達できない",
     "primary_source": "https://developers.google.com/search/docs/fundamentals/how-search-works",
@@ -166,7 +172,8 @@
       {
         "path": "sitemap の送信",
         "status": "未送信。これが唯一の確実な入口",
-        "how_human": "Search Console の『サイトマップ』レポートに sitemap.xml と入力して送信（クリック3回・30秒）。SETUP_HUMAN.md STEP1.5 の手順5",
+        "how_human": "Search Console の『サイトマップ』レポートに sitemap.xml と入力して送信（クリック3回・30秒）。SETUP_HUMAN.md の最上部『STEP 1.5-5』および blocked_on_human の同ID",
+        "how_human_pointer_was_dangling": "2026-09-11 訂正。旧記述は『SETUP_HUMAN.md STEP1.5 の手順5』を指していたが、その節は同日中に別の編集で削除されており、指し先が存在しなかった",
         "how_machine": "PUT https://www.googleapis.com/webmasters/v3/sites/{siteUrl}/sitemaps/{feedpath}",
         "machine_blocked_by": "必要スコープは https://www.googleapis.com/auth/webmasters。fetch_metrics.py の SCOPES は webmasters.readonly（68行目）で送信できない。さらにサービスアカウント自体が STEP1.6 未完",
         "source": "https://developers.google.com/webmaster-tools/v1/sitemaps/submit"
@@ -185,6 +192,17 @@
       }
     ],
     "correction_to_earlier_records": "decisions.md 2026-09-09 および blocked_on_human STEP1.5 に『登録(STEP1.5)だけでも索引は進む』と書いていたが、これは誤り。プロパティ登録は発見経路として文書化されていない。索引を開始させるのは sitemap 送信（または被リンク）である",
+    "defect_found_2026-09-11": {
+      "what": "『唯一の確実な入口（sitemap 送信）を人間キューに戻した』という 9/10 の記録が、実体と一致していなかった。SETUP_HUMAN.md 全体を grep したところ『sitemap』『サイトマップ』の語が **0件**",
+      "how_it_happened": "9/10 は同じ日に2回 SETUP_HUMAN.md を書き換えている。1回目で手順5（sitemap 送信）を足し、2回目（Search Console の確認が通った後の『✅ L0 達成』への書き直し）で STEP1.5 の節ごと差し替えた。節を消したとき、その中にあった手順5も一緒に消えた",
+      "why_it_was_invisible": "SETUP_HUMAN.md は .gitignore 済みで git 管理外である（git ls-files で未追跡・check-ignore が .gitignore:2 で一致）。したがって削除は diff に現れず、コミットにも履歴にも痕跡が残らない。決定ログには『足した』と書いてあり、ファイルには無い——この2つが食い違っていても、誰も突き合わせない限り検出されない",
+      "why_dangerous": "誤りの向きが最悪である。記録上は『依頼済み、あとは人間待ち』に見えるため、私は催促もせず待つ側に倒れる。しかも pipeline.json の blocked_on_human にも項目が無かったので notify_human.ps1 の対象にならず、掲示にもトーストにも一度も出ていない。人間から見れば依頼は存在せず、私から見れば依頼済みだった",
+      "second_defect": "同じファイルの STEP1.6 冒頭に『STEP 1.5 が済めば**索引は始まります**』が残っていた。これは 9/10 に一次情報で誤りと確認し、decisions.md に訂正として明記した当の主張である。訂正は決定ログにだけ書かれ、人間が読む文書には反映されていなかった",
+      "fix": "(1) SETUP_HUMAN.md の最上部に STEP 1.5-5 として送信手順を復活（一次情報の引用つき） (2) 誤った主張『登録すれば索引が始まる』を実測表に差し替え (3) blocked_on_human に STEP1.5-5 を is_now_the_recommended_unblock=true で追加し、通知経路に載せた",
+      "fix_durable": "verify.mjs に『3.7 人間キューの整合』を追加した。discovery.sitemap_submitted_on が null かつ STEP1.5-5 が pending のあいだ、SETUP_HUMAN.md に送信手順が実在しなければ ERROR で push を止める。9/10 の教訓『走らせ続けない検査は、書いていないのと同じ』の適用",
+      "error_direction": "ファイルが存在しない場合は WARN に留め、存在するのに手順が欠けている場合のみ ERROR にした。今回の壊れ方は後者（節ごとの差し替えによる欠落）であり、そちらを確実に止める側へ倒している",
+      "lesson": "記録と実体は別々に壊れる。『やった』と書いた作業は、書いた先のファイルを読み返して実在を確かめるまで、やったことにならない。とくに git 管理外のファイルへの変更は、コミットしても検証されない"
+    },
     "indexing_status_unknown": "当サイトが索引済みかどうかは未確認。WebSearch で site: 演算子を試したが演算子が無視され別ドメインの結果が返ったため、判定に使えなかった。『未索引の証拠』としては扱わない。確実な確認手段は GSC の URL 検査であり STEP1.5 に依存する"
   },
   "subdirectory_constraints": {
@@ -241,6 +259,25 @@
     }
   },
   "blocked_on_human": [
+    {
+      "id": "STEP1.5-5",
+      "what": "Search Console で sitemap.xml を送信する（クリック3回・30秒）",
+      "why_blocking": "Google が当サイトを発見する唯一の確実な入口。discovery.paths の実測は paths_to_google = 0 であり、これが済むまで L1（impressions > 0）のカウントダウンは実質始まっていない",
+      "blocks": "索引そのもの。計測ではなく流入が止まる",
+      "how": "https://search.google.com/search-console → 左メニュー「サイトマップ」→ 入力欄に sitemap.xml と入れて「送信」",
+      "primary_source": "https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap",
+      "verbatim": "Submit a sitemap in Search Console using the Sitemaps report. This will allow you to see when Googlebot accessed the sitemap and also potential processing errors.",
+      "why_human_only": "送信APIに必要なスコープは https://www.googleapis.com/auth/webmasters（書き込み）。fetch_metrics.py の SCOPES は webmasters.readonly であり、そもそもサービスアカウント自体が STEP1.6 未完。私には送信できない",
+      "status": "pending",
+      "human_minutes": 1,
+      "cost_jpy": 0,
+      "url": "https://search.google.com/search-console",
+      "is_now_the_recommended_unblock": true,
+      "urgency": "高。L1 の期限は 2026-10-07 だが、送信されるまで起点が立たない",
+      "created_on": "2026-09-10",
+      "requeued_on": "2026-09-11",
+      "requeued_reason": "⚠ この依頼は 2026-09-10 に人間キューへ足したと decisions.md に記録したが、同日中の別の編集（L0達成の書き直し）で SETUP_HUMAN.md から消えていた。本日 grep で実測したところ『sitemap』の語がキュー全体に0件。記録上は依頼済み・実体は未依頼という状態が1日続いていた。pipeline.json 側にも項目が無かったため notify_human.ps1 の対象にもならず、掲示にもトーストにも一度も出ていない"
+    },
     {
       "id": "STEP1.6",
       "what": "GCPでサービスアカウントを作り JSON キーを secrets/ に置く",
@@ -561,6 +598,17 @@
       "note_publication": "配信は生きている: / と /tools/wallpaper-quantity/ と /tools/paint-quantity/ と /robots.txt と /sitemap.xml がすべて 200、title も期待どおり。X-Robots-Tag ヘッダは無し。docs 内の noindex は privacy.html と contact.html のみで意図どおり。sitemap.xml の3つの loc はいずれも新しい keisanshitsu.github.io を指しており、組織サイト移行時の取り残しは無い",
       "note_discovery": "⚠ 本日の主眼は流入でも計測基盤でもなく【発見経路】である。実測の結果ゼロだった。discovery セクションを参照。配信が 200 を返すことと、クローラーがそこへ来ることは別である",
       "note_indexing_unknown": "索引済みかどうかは判定できなかった。WebSearch の site: 演算子が無視され別ドメインの結果が返ったため、これを『未索引の証拠』として扱わない（測れなかったことを測った結果として記録しない）"
+    },
+    {
+      "date": "2026-09-11",
+      "source": "scripts/fetch_metrics.py",
+      "status": "no_credentials",
+      "measured": false,
+      "sessions": null,
+      "impressions": null,
+      "note": "GSC未接続のため未計測（null）。ゼロではない。公開3日目。status は 9/10 と同じ no_credentials（secrets/gsc_service_account.json が無い＝STEP1.6 未完）。計測値そのものに変化は無い",
+      "note_publication": "配信は生きている（週次項目だが本日の判断に必要なので実施）。/ と /tools/wallpaper-quantity/ と /tools/paint-quantity/ と /sitemap.xml と /robots.txt がすべて 200、title も期待どおり",
+      "note_main_finding": "⚠ 本日の主眼は計測ではなく【記録と実体の食い違い】である。9/10 に『人間キューへ戻した』と記録した sitemap 送信手順が、SETUP_HUMAN.md に存在しなかった（grep で『sitemap』0件）。discovery.defect_found_2026-09-11 を参照。発見経路は依然 0本のままで、しかもその1本を開くための依頼が人間に一度も届いていなかった"
     }
   ],
   "facts_to_recheck": [

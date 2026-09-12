@@ -1,9 +1,12 @@
 {
   "meta": {
     "created": "2026-08-05",
-    "last_run": "2026-09-11",
-    "last_run_type": "日次ループ。前提ゲート4行目（計測基盤が未接続）に該当したが、同じ行への該当は 9/05・9/07・9/08・9/09・9/10・本日で6回連続であり、1行目（3日ルール）が優先する。よって施策は打たず、詰まりの根拠になっている前提を1つ実測した。選んだ前提は『Google への唯一の入口（sitemap 送信）は、すでに人間キューに積んであり、あとは人間が実行するだけである』——9/10 に自分でそう記録したもの。実測の結果、**前提は崩れていた**: SETUP_HUMAN.md 全体に『sitemap』『サイトマップ』の語が0件で、依頼は存在しなかった。9/10 は同日中に同ファイルを2回書き換えており、2回目（L0達成への書き直し）で STEP1.5 の節ごと差し替えたとき手順5も消えていた。ファイルは .gitignore 済み（git 未追跡）のため削除は diff に現れず、決定ログには『足した』と書かれたまま実体だけが消えていた。さらに同ファイルには 9/10 に一次情報で誤りと確認した主張『STEP 1.5 が済めば索引は始まります』が残っており、訂正が決定ログにしか反映されていなかった。対策は3点: (1) 送信手順を SETUP_HUMAN.md 最上部に一次情報の引用つきで復活 (2) 誤った主張を実測表に差し替え (3) blocked_on_human に STEP1.5-5 を is_now_the_recommended_unblock=true で追加し通知経路に載せた。恒久対策として verify.mjs に『3.7 人間キューの整合』を追加し、sitemap 未送信のあいだ手順が実在しなければ ERROR で push を止めるようにした（欠陥注入の両方向で確認済み）。decisions.md 2026-09-11 参照",
+    "last_run": "2026-09-12",
+    "last_run_type": "日次ループ。前提ゲート4行目（計測基盤が未接続）に該当したが、同じ行への該当は 9/05・9/07・9/08・9/09・9/10・9/11・本日で7回連続であり、1行目（3日ルール）が優先する。よって施策は打たず、前提を実測した。3つ確かめ、3つ目で崩れた。(1)『sitemap 送信は設計上わたしにはできない』→ 崩れていなかった。この端末に Google の資格情報が1つも無いことを実測（gcloud 未インストール / %APPDATA%\\gcloud 無し / GOOGLE_APPLICATION_CREDENTIALS 未設定 / サービスアカウント鍵らしき JSON 0件）。8/09 の教訓に従って叩いた結果、今回は前提が正しかった。(2)『索引状態は測れる』→ 測れなかった。Bing は site: 演算子を無視して無関係な結果を返し、DuckDuckGo は CAPTCHA。9/10 と同じ結論であり、未索引の証拠としては扱わない。(3)【本日の主眼】『pipeline.json の記録は一貫している』→ **崩れていた**。9/10 の discovery 実測（robots.txt の Sitemap 宣言は発見経路ではない・paths_to_google=0）が同じファイル内の他の3箇所に反映されておらず、末尾の sitemap_submission は『クローラの自力発見に委ねる』『L1 の期限 2026-10-07 まで impressions が 0 なら人間キューに積め』と、私を25日間受動側へ倒す指示を保持していた。9/11 の教訓『訂正は全ての場所に反映せよ』は決定ログ→人間向け文書の方向にだけ適用され、機械可読の正である pipeline.json 自身には適用されていなかった。対策は (a) 該当3箇所の訂正（sitemap_submission / blocked_on_human STEP1.6 の scope_note / subdirectory_constraints）(b) verify.mjs に『3.8 状態ファイル自身の整合』を追加し、未送信のあいだ自力発見に委ねる記述と宛先の実在しない STEP1.5-N 参照を ERROR で止める。両方向で確認済み。decisions.md 2026-09-12 参照",
+    "previous_run_2026-09-11_type": "日次ループ。前提ゲート4行目（計測基盤が未接続）に該当したが、同じ行への該当は 9/05・9/07・9/08・9/09・9/10・本日で6回連続であり、1行目（3日ルール）が優先する。よって施策は打たず、詰まりの根拠になっている前提を1つ実測した。選んだ前提は『Google への唯一の入口（sitemap 送信）は、すでに人間キューに積んであり、あとは人間が実行するだけである』——9/10 に自分でそう記録したもの。実測の結果、**前提は崩れていた**: SETUP_HUMAN.md 全体に『sitemap』『サイトマップ』の語が0件で、依頼は存在しなかった。9/10 は同日中に同ファイルを2回書き換えており、2回目（L0達成への書き直し）で STEP1.5 の節ごと差し替えたとき手順5も消えていた。ファイルは .gitignore 済み（git 未追跡）のため削除は diff に現れず、決定ログには『足した』と書かれたまま実体だけが消えていた。さらに同ファイルには 9/10 に一次情報で誤りと確認した主張『STEP 1.5 が済めば索引は始まります』が残っており、訂正が決定ログにしか反映されていなかった。対策は3点: (1) 送信手順を SETUP_HUMAN.md 最上部に一次情報の引用つきで復活 (2) 誤った主張を実測表に差し替え (3) blocked_on_human に STEP1.5-5 を is_now_the_recommended_unblock=true で追加し通知経路に載せた。恒久対策として verify.mjs に『3.7 人間キューの整合』を追加し、sitemap 未送信のあいだ手順が実在しなければ ERROR で push を止めるようにした（欠陥注入の両方向で確認済み）。decisions.md 2026-09-11 参照",
     "previous_run_2026-09-10_type": "Search Console の所有権確認が完了 → L0 達成。以降は索引待ち",
+    "gap_days_2026-09-12": 1,
+    "gap_note_2026-09-12": "前回実行 2026-09-11 → 本日 2026-09-12（土）。差は1日で欠測なし。起動時チェック（9/08 に追加した規則）も実施: git status は clean、git rev-parse HEAD と origin/main が一致（ともに eb0c982）。前回は手順6・7まで完走していた。明日 9/13 は日曜であり週次レビューにあたる",
     "gap_days_2026-09-11": 1,
     "gap_note_2026-09-11": "前回実行 2026-09-10 → 本日 2026-09-11。差は1日で欠測なし。起動時チェック（9/08 に追加した規則）も実施: git status は clean、git rev-parse HEAD と origin/main が一致（ともに 5f722ac）。前回は手順6・7まで完走していた",
     "previous_run_2026-09-09_type": "ユーザーが組織 keisanshitsu を作成 → 組織サイトで公開を完了。L0の前半（公開）達成",
@@ -215,21 +218,21 @@
         "regression_test": "contact.html に意図的に壊れたリンクを入れて ERROR 2件・exit 1 を確認済み"
       }
     ],
-    "accepted": [
+    "obsolete_since": "2026-09-09",
+    "obsolete_reason": "この節はプロジェクトサイト（旧B案 hori0827.github.io/kurashi-keisan/）を前提に書かれている。組織サイト（D案）への移行でホスト共有が解消したため、accepted の2件はどちらも成立しない。2026-09-12 に検出——訂正が新しい節にだけ書かれ、古い節が残っていた（sitemap_submission と同じ壊れ方）",
+    "accepted": [],
+    "accepted_resolved_on_2026-09-09": [
       {
         "issue": "docs/robots.txt はクローラに読まれない（robots.txt はホスト直下のみ有効）",
-        "impact": "sitemap の自動宣言ができない",
-        "workaround": "Search Console から sitemap を直接送信する（SETUP_HUMAN.md STEP 1.5-6）",
-        "host_robots_txt_observed": "User-agent: * / Allow: / / Sitemap: https://hori0827.github.io/sitemap.xml （2026-08-09 週次レビューで再実測）",
-        "host_robots_txt_rechecked_on": "2026-08-09",
-        "host_robots_txt_verdict": "Disallow は無い。当サイトの巡回は引き続き妨げられていない。8/7 実測時から Sitemap 行（HG Analytics のもの）が増えているが、こちらの巡回可否には影響しない",
-        "host_robots_txt_owner": "HG Analytics。他プロジェクトの都合で変わりうるため週次レビューで確認する"
+        "resolved": "組織サイトでは docs/ がホストのルートになるため、https://keisanshitsu.github.io/robots.txt として実際に配信されている（2026-09-12 に GET 200 を実測）。ホストは自分の管理下にあり、HG Analytics の robots.txt に巡回可否を握られる依存は消えた",
+        "do_not_reintroduce": "⚠ ただし robots.txt の Sitemap 宣言は【発見経路ではない】。公式の表現は『次に robots.txt をクロールしたときに見つける』であり、Google が既にホストを知っていることが前提。この節が解消したことと、Google が当サイトを発見することは無関係である（discovery 参照）",
+        "workaround_superseded": "旧記述は『Search Console から sitemap を直接送信する（SETUP_HUMAN.md STEP 1.5-6）』だったが、STEP 1.5-6 という ID は存在しない。正しくは STEP1.5-5。宛先の無い案内であり、2026-09-11 の dangling pointer と同じ形。verify.mjs 3.8(b) が今後 ERROR で止める",
+        "host_robots_txt_owner_note": "旧: HG Analytics。他プロジェクトの都合で変わりうるため週次レビューで確認する → この週次確認はもう不要である。ホストは自分のもの"
       },
       {
         "issue": "ドメイン評価と主題を株式スクリーニングサイトと共有する",
-        "impact": "検索上の不利。程度は不明",
-        "workaround": "独自ドメイン（STEP 3-1）で解消できる。任意 → L1到達後の推奨 に格上げした",
-        "note": "リンクを全て相対にしたので、移行時に docs/ の中身は1行も変えなくてよい"
+        "resolved": "Public Suffix List 上 github.io は登録済みであり、keisanshitsu.github.io は hori0827.github.io と別のサイト境界になる。共有は解消した",
+        "note": "リンクを全て相対にしてあるため、将来 独自ドメインへ移行しても docs/ の中身は1行も変えなくてよい（この利点は残る）"
       }
     ]
   },
@@ -290,7 +293,9 @@
       "url": "https://console.cloud.google.com/",
       "why_human_only": "GCPのプロジェクト作成と鍵の発行は本人操作。急ぎではない",
       "is_now_the_recommended_unblock": false,
-      "scope_note": "⚠ サービスアカウントの用途は2つあり、必要なスコープが違う。数字の読み取りは webmasters.readonly で足りるが、sitemap の送信には書き込み権限（webmasters）が要る。前者だけ設定した場合、sitemap 送信は人間が GSC 画面で行うか、robots.txt 経由の自動発見に任せることになる",
+      "scope_note": "⚠ サービスアカウントの用途は2つあり、必要なスコープが違う。数字の読み取りは webmasters.readonly で足りるが、sitemap の送信には書き込み権限（webmasters）が要る。前者だけ設定した場合、sitemap 送信は人間が GSC 画面で行う（STEP1.5-5）ことになる",
+      "scope_note_corrected_on": "2026-09-12",
+      "scope_note_correction": "旧記述は残る選択肢として『robots.txt 経由の自動発見に任せる』を挙げていたが、これは 2026-09-10 に一次情報で否定済みの主張である（robots.txt の Sitemap 宣言は Google が既にホストを知っていることが前提であり、発見経路ではない）。訂正が discovery 節にしか反映されておらず、同じファイルの中で矛盾していた",
       "urgency": "低。L1（2026-10-07）の判定までに済んでいればよい"
     }
   ],
@@ -609,6 +614,20 @@
       "note": "GSC未接続のため未計測（null）。ゼロではない。公開3日目。status は 9/10 と同じ no_credentials（secrets/gsc_service_account.json が無い＝STEP1.6 未完）。計測値そのものに変化は無い",
       "note_publication": "配信は生きている（週次項目だが本日の判断に必要なので実施）。/ と /tools/wallpaper-quantity/ と /tools/paint-quantity/ と /sitemap.xml と /robots.txt がすべて 200、title も期待どおり",
       "note_main_finding": "⚠ 本日の主眼は計測ではなく【記録と実体の食い違い】である。9/10 に『人間キューへ戻した』と記録した sitemap 送信手順が、SETUP_HUMAN.md に存在しなかった（grep で『sitemap』0件）。discovery.defect_found_2026-09-11 を参照。発見経路は依然 0本のままで、しかもその1本を開くための依頼が人間に一度も届いていなかった"
+    },
+    {
+      "date": "2026-09-12",
+      "source": "scripts/fetch_metrics.py",
+      "status": "no_credentials",
+      "measured": false,
+      "sessions": null,
+      "impressions": null,
+      "note": "GSC未接続のため未計測（null）。ゼロではない。公開4日目。status は 9/10・9/11 と同じ no_credentials（secrets/gsc_service_account.json が無い＝STEP1.6 未完）。計測値そのものに変化は無い",
+      "note_publication": "配信は生きている。/ と /tools/wallpaper-quantity/ と /tools/paint-quantity/ と /sitemap.xml と /robots.txt がすべて 200、title も期待どおり",
+      "note_credentials_probe": "『sitemap 送信は設計上わたしにはできない』という前提を実測した。この端末に Google の資格情報は1つも存在しない: gcloud CLI 未インストール / %APPDATA%\\gcloud ディレクトリ無し / application_default_credentials.json 無し / GOOGLE_APPLICATION_CREDENTIALS 未設定 / プロファイル配下にサービスアカウント鍵らしき JSON は0件。8/09 は同じ形の前提（トークンが無いから API は使えない）が崩れて4日の停止が消えたが、今回は前提が正しかった。値は一切表示していない",
+      "note_indexing_still_unmeasurable": "索引状態は本日も測れなかった。Bing は site: 演算子を無視して無関係な結果（単位換算サイト）を返し、DuckDuckGo は CAPTCHA を返した。9/10 の WebSearch と同じ失敗であり、これを『未索引の証拠』として扱わない。測れなかったことを測った結果として記録しない。確実な確認手段は GSC の URL 検査（人間は今すぐ画面で可能・私は STEP1.6 待ち）",
+      "note_human_queue": "9/11 に置いた掲示（デスクトップ直下）は最終アクセスが baseline のままで、一度も開かれていない。ただし経過はまだ1日であり、これを根拠に催促は強めない。3日ルールが名指しで禁じている行為でもある",
+      "note_main_finding": "⚠ 本日の主眼は【状態ファイル自身の内部矛盾】である。pipeline.json の sitemap_submission が『クローラの自力発見に委ねる／10/07 まで様子見』という 9/10 に否定済みの方針を保持していた。state_file_consistency_2026-09-12 を参照"
     }
   ],
   "facts_to_recheck": [
@@ -875,6 +894,41 @@
     "receipt_file": "state/notify_receipt.json（.gitignore 済み。ローカル絶対パスを含み、かつ実行時状態でプロジェクトの知見ではないため。リポジトリは public）",
     "exit_code_note": "Parser::ParseFile で構文0エラー、UTF-8 BOM付きで保存、実際の実行で exit 0 を確認済み。なお検証中に exit 255 が出たのは、テスト側で `| Select-Object -First 2` を挟んで子プロセスのパイプラインを打ち切ったためで、スクリプトの欠陥ではない（打ち切りなしでの再実行は exit 0）"
   },
+  "state_file_consistency_2026-09-12": {
+    "what": "pipeline.json が同一ファイル内で自分と矛盾していた。2026-09-10 の discovery 実測（robots.txt の Sitemap 宣言は発見経路ではない・paths_to_google = 0・依頼は高優先で起票済み）が、同じファイルの他の3箇所に反映されていなかった",
+    "sites": [
+      "sitemap_submission（末尾・9/09 執筆）— status がクローラの自力発見に委ねる方針のままで、さらに『L1 の期限 2026-10-07 までに impressions が 0 のままなら人間キューに積むこと』と書かれていた。依頼は既に 9/11 から高優先で起票済みであり、この記述は『あと25日待て』と読める",
+      "blocked_on_human[STEP1.6].scope_note — sitemap 送信の代替として自力発見を挙げていた。目視では見落とし、検査が見つけた",
+      "subdirectory_constraints.accepted — 旧プロジェクトサイト（B案）前提の制約2件が、組織サイト移行（9/09）で成立しなくなったのに残っていた。さらに『SETUP_HUMAN.md STEP 1.5-6』という実在しない ID を案内していた（正しくは STEP1.5-5）"
+    ],
+    "why_dangerous": "誤りの向きが悪い。3件とも私を『待てばよい』側へ倒す。pipeline.json は CLAUDE.md が『機械が読むのはこちら』と定めた正であり、記憶を持たずに起動した私が最初に読む場所である。決定ログや人間向け文書より誤りの影響が大きい",
+    "how_it_happened": "訂正を新しい節に書き、古い節を消さなかった。9/11 に学んだ『訂正したらその誤りが書かれている全ての場所を直す』を、決定ログ→人間向け文書の方向にだけ適用し、状態ファイルの内部には適用していなかった",
+    "fix": "3箇所とも訂正した。削除ではなく『旧記述はこうだった／なぜ誤りか』を残す形にしている（記録を痩せさせないため）",
+    "fix_durable": "verify.mjs に『3.8 状態ファイル自身の整合』を追加。(a) discovery.sitemap_submitted_on が null のあいだ、どこかの葉がクローラの自力発見に委ねる旨を書いていれば ERROR。(b) 実在しない STEP1.5-N を案内していれば ERROR",
+    "detector_had_a_hole": "初版は節を丸ごと JSON.stringify して照合したため、自分の訂正文に誤爆して 3件とも ERROR のままだった。誤りを撤回するには誤りを引用する必要があるので、文字列一致だけでは主張と撤回を区別できない（3.7 が既に記録していた問題に、同じ設計で作った 3.8 が正面から踏み込んだ）。葉単位で見て撤回の目印がある葉を除外する形に直した。さらに検出器が『自分の説明文』にも反応したため、説明からトリガ文字列の逐語引用を外した",
+    "error_direction": "見逃す側に倒してある。撤回の目印を含む葉は主張とみなさない。ERROR にすると、検査を黙らせるために訂正の記録そのものを消す圧力がかかり記録が痩せる（3.7 と同じ判断）",
+    "two_way_verified": "撤回の目印を含まない主張を2件注入 → ERROR 2件・exit 1（TEMP_INJECT.a と TEMP_INJECT.b を正しく名指し）／復元 → exit 0。両方向で確認するまで直ったことにしない",
+    "incidental_finding": "PowerShell 5.1 の Set-Content -Encoding UTF8 は BOM を付けるため、pipeline.json を書き戻すと node の JSON.parse が落ちる。状態ファイルの書き換えに PowerShell を使わないこと（.ps1 は BOM 必須だが JSON は BOM 禁止で、要求が逆である）",
+    "lesson": "記録は、実体とだけでなく【自分自身の別の場所】とも食い違う。訂正を新しい節に書くのは楽だが、古い節は消さない限り生き残り、次に起動した私はどちらを読むか選べない。8/09『できないと決めつけた』→ 9/05『手段が1つだと決めつけた』→ 9/07『測れないと決めつけた』→ 9/08『測れたと決めつけた』→ 9/09『繋げば動くと決めつけた』→ 9/10『発見されると決めつけた』→ 9/11『書いたと決めつけた』→ 9/12『【直したと】決めつけた』"
+  },
+  "for_weekly_review_2026-09-13": [
+    {
+      "id": "Q1",
+      "title": "前提ゲート4行目が、意思決定ルールを恒久的に封鎖している",
+      "detail": "ゲート4行目『計測基盤が未接続』は 7日連続で発火しており、解除条件は STEP1.6（サービスアカウント）である。ところが STEP1.6 自身が urgency=低 / is_now_the_recommended_unblock=false と記録されており、blocks も『自動計測のみ。索引と検索表示は止まらない』である。つまりゲートは、自分で低優先と判定したタスクを待って、毎日ループを止めている",
+      "what_it_blocks": "意思決定ルール #3『公開済みツールが3本未満なら新規ツールを1本作る』。公開済みは2本であり #3 は発火条件を満たしている。#3 は8行のうち唯一、計測値にまったく依存しないルールである",
+      "why_the_gate_existed": "在庫上限3本の趣旨は『公開できないまま作り続けるのは需要検証ゼロで在庫を積む行為』だった。だが公開経路は 9/09 に開通し、未公開在庫は現在0本である。趣旨は満たされている",
+      "counterargument": "CLAUDE.md は『流入ゼロのツールを10本持っても収益はゼロ。1本目が流入を取れないなら2本目を作る前に原因を潰す』とも書いている。ただし現在は流入が取れていないのではなく【まだ測れていない・そもそも発見されていない】段階であり、『原因は潰されている』（原因＝発見経路ゼロ、対策＝STEP1.5-5 で人間待ち）。この待ち時間に3本目を作ることが原則に反するかは方針判断である",
+      "why_not_decided_today": "ゲートの書き換えは方針変更であり、CLAUDE.md は方針変更を週次レビューの仕事と定めている。日次ループの1手として憲法を書き換えない",
+      "created_on": "2026-09-12"
+    },
+    {
+      "id": "Q2",
+      "title": "KPIラダー L2〜L4 を clicks で読み替えるか、GA4 を足すか（9/09 からの持ち越し）",
+      "detail": "north_star.metric_not_measurable_by_planned_stack を参照。GSC は sessions を返さないため L2 以降が原理的に判定できない。9/09 に『次の日曜に決める』としたが、9/13 が起動後最初の日曜である",
+      "created_on": "2026-09-09"
+    }
+  ],
   "decision_log_ref": "state/decisions.md",
   "deferred_options": [
     {
@@ -887,8 +941,17 @@
     }
   ],
   "sitemap_submission": {
-    "status": "自動発見に任せる",
-    "how": "https://keisanshitsu.github.io/robots.txt の Sitemap 行（自分のホスト直下にあるためクローラに読まれる）",
-    "correction": "2026-09-09 に「sitemap の送信は私がやります」と書いたが不正確だった。fetch_metrics.py が使うのは webmasters.readonly スコープで、送信には書き込み権限が要る。現状の設計では私は送信できない。自動発見で足りる見込みだが、L1 の期限（2026-10-07）までに impressions が 0 のままなら、手動送信を人間キューに積むこと"
+    "status": "人間キュー STEP1.5-5 で依頼済み・未送信",
+    "submitted_on": null,
+    "submitted_on_ref": "正は discovery.sitemap_submitted_on。ここは重複させない",
+    "how": "人間が Search Console の「サイトマップ」レポートに sitemap.xml と入力して送信する（クリック3回）",
+    "who": "人間のみ。送信APIに要るスコープは https://www.googleapis.com/auth/webmasters（書き込み）で、fetch_metrics.py の SCOPES は webmasters.readonly。そもそも鍵自体が STEP1.6 未完",
+    "who_verified_on": "2026-09-12",
+    "who_evidence": "この端末に Google の資格情報が1つも存在しないことを実測した: gcloud CLI 未インストール / %APPDATA%\\gcloud 無し / GOOGLE_APPLICATION_CREDENTIALS 未設定 / プロファイル配下にサービスアカウント鍵らしき JSON は0件。8/09 の教訓（できないと決めつける前に1回叩く）に従って確認した結果、前提は崩れていなかった",
+    "corrected_on": "2026-09-12",
+    "correction_2026-09-12": "⚠ この節は 2026-09-09 に書かれたまま、status=「自動発見に任せる」/ how=「robots.txt の Sitemap 行」/「自動発見で足りる見込みだが L1 の期限（2026-10-07）までに impressions が 0 のままなら人間キューに積むこと」を保持していた。3つとも 2026-09-10 の discovery 実測で否定済みである（robots.txt の Sitemap 宣言はホストが既知であることが前提で発見経路ではない・paths_to_google = 0・依頼は既に高優先で起票済み）。訂正が discovery 節にだけ書かれ、この節は消されていなかった",
+    "why_dangerous": "誤りの向きが悪い。旧記述は『あと25日待てばよい』と読める。pipeline.json は CLAUDE.md が『機械が読むのはこちら』と定めた正であり、記憶を持たずに起動した私が最初に読む場所である。ここに受動側へ倒す指示が残ることは、2026-09-11 に人間キューから依頼が消えていたのと同じだけ流入を止める",
+    "guarded_by": "verify.mjs 3.8(a)（状態ファイル自身の整合）。discovery.sitemap_submitted_on が null のあいだ、どこかの葉がクローラの自力発見に委ねる旨を書いていれば ERROR で push を止める。撤回の目印を含む葉は主張とみなさない（3.7 と同じ扱い）",
+    "guarded_by_note": "⚠ 検査の説明文にトリガ文字列を逐語で書かないこと。初版はここに書いたため検出器が自分の説明に反応した（2026-09-12 実測）"
   }
 }

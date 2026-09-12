@@ -358,6 +358,79 @@ let queueStatus = "対象外";
   }
 }
 
+// ── 3.8. 状態ファイル自身の整合 ──────────────────────────────────────
+// 2026-09-12 追加。3.7 は「決定ログと人間向け文書」の食い違いを止める検査だが、
+// 同じ食い違いが **pipeline.json の内部** で起きていた。
+//
+// 2026-09-10 の discovery 実測は「robots.txt の Sitemap 宣言は発見経路ではない」
+// 「paths_to_google = 0」を一次情報つきで確定させた。しかし同じファイルの末尾に
+// 9/09 に書いた sitemap_submission が生き残っており、そこには
+// 「自動発見に任せる」「L1 の期限(10/07)まで impressions が 0 のままなら人間キューに積め」
+// と書かれていた。訂正は新しい節に書かれ、古い節は消されなかった。
+//
+// 誤りの向きが悪い: 古い節は「あと25日待て」と読める。pipeline.json は
+// CLAUDE.md が「機械が読むのはこちら」と定めた正であり、記憶を持たずに起動した
+// 私が最初に読む場所である。そこに受動side へ倒す指示が残ることは、
+// 3.7 が防いだ「依頼が消える」と同じだけ流入を止める。
+//
+// 一般化はしない。実際に起きた2つの壊れ方だけを止める:
+//   (a) 未送信なのに「自動発見に任せる」と書いてある
+//   (b) 参照先の人間タスクIDが実在しない（宛先の無い案内）
+// ⚠ 初版は自分の訂正文に誤爆した。3.7 が既に書いているとおり、
+// **誤りを撤回するには誤りを引用しなければならない**ので、文字列の一致だけでは
+// 「主張」と「その撤回」を区別できない。節をまるごと JSON.stringify して見ると
+// 訂正の記録を書いた瞬間に ERROR になり、検査を黙らせるために訂正を消す圧力がかかる。
+// そこで葉（1本の文字列）単位で見て、その葉自身に撤回の目印があれば主張とみなさない。
+// 誤りの向きは 3.7 と同じく「見逃す側」に倒してある。
+const RETRACTED = /誤り|訂正|否定済み|旧記述|superseded|obsolete|成立しな|存在しな|実在しな|書いていたが|書いてあったが|であって|ではない/;
+function leaves(node, path = "", acc = []) {
+  if (typeof node === "string") acc.push([path, node]);
+  else if (Array.isArray(node)) node.forEach((v, i) => leaves(v, `${path}[${i}]`, acc));
+  else if (node && typeof node === "object")
+    for (const [k, v] of Object.entries(node)) leaves(v, path ? `${path}.${k}` : k, acc);
+  return acc;
+}
+
+let stateStatus = "整合";
+{
+  const rel = "state/pipeline.json";
+  const submitted = pipeline.discovery?.sitemap_submitted_on ?? null;
+  const all = leaves(pipeline);
+  const before = errors.length;
+
+  // (a) 送信が済んでいないあいだ、どの節も「待てばよい」と言ってはならない。
+  if (!submitted) {
+    for (const [path, text] of all) {
+      if (!/自動発見に任せる|自動発見で足りる/.test(text)) continue;
+      if (RETRACTED.test(text)) continue;              // 撤回の記録は主張ではない
+      err(rel,
+        `${path} が sitemap を「自動発見に任せる」と書いている。2026-09-10 に一次情報で否定済み` +
+        `（robots.txt の Sitemap 宣言はホストが既知であることが前提であり、発見経路ではない）`);
+    }
+  }
+
+  // (b) 宛先の実在。2026-09-11 に「SETUP_HUMAN.md STEP1.5 の手順5」を指していた
+  // 記述が、指し先の節ごと消えていた（discovery に dangling と記録済み）。
+  // 同じ形の宛先違いが subdirectory_constraints にも残っていた（STEP 1.5-6）。
+  const knownIds = new Set([
+    ...(pipeline.blocked_on_human ?? []),
+    ...(pipeline.resolved_human_tasks ?? []),
+    ...(pipeline.deferred_options ?? []),
+  ].map((t) => String(t?.id ?? "").replace(/\s+/g, "")));
+  for (const [path, text] of all) {
+    if (RETRACTED.test(text)) continue;
+    for (const m of text.matchAll(/STEP\s?1\.5-\d+/g)) {
+      const id = m[0].replace(/\s+/g, "");
+      if (knownIds.has(id)) continue;
+      err(rel,
+        `${path} が ${id} を案内しているが、その ID は blocked_on_human にも ` +
+        `resolved_human_tasks にも実在しない。宛先の無い案内は「依頼済み」に見えて` +
+        `人間には届かない（2026-09-11 に実際に起きた壊れ方）`);
+    }
+  }
+  if (errors.length > before) stateStatus = "不整合";
+}
+
 // ── 4. 実レンダリング検証（puppeteer があるときだけ） ────────────────
 let rendered = false;
 try {
@@ -382,6 +455,7 @@ console.log(`検査: HTML ${pages.length}枚 / ツール ${toolDirs.length}本 /
 console.log(`インフラ検査: fetch_metrics.py — ${infraStatus}`);
 console.log(`インフラ検査: notify_human.ps1 — ${notifyStatus}`);
 console.log(`人間キューの整合: SETUP_HUMAN.md — ${queueStatus}`);
+console.log(`状態ファイルの整合: state/pipeline.json — ${stateStatus}`);
 console.log(rendered
   ? "375px 実レンダリング検証: 実施"
   : "375px 実レンダリング検証: スキップ（npm i -D puppeteer で有効化）");

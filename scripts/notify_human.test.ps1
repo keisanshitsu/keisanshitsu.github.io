@@ -64,6 +64,23 @@ Check 'B7 旧形式・desktop が動いた → 読まれた' `
 Check 'B8 role 不明で開かれた → 数える（うるさい側に倒す）' `
                                           $true  (Get-AnyOpened @( ([pscustomobject]@{ opened_since = $true }) ))
 
+# ── Get-NoticeHeadline: 見出しの件数が state と一致するか ────────────────
+# C1 が本命。2026-09-13 に実際に起きた形——pending=2 なのに見出しが "1件" 固定だった。
+# 掲示は39日間「残りの作業は1件です」と言い続け、STEP1.6 は人間の目に一度も触れていない。
+$h2 = Get-NoticeHeadline -PendingCount 2 -Published $true -Days 39 -LiveUrl 'https://x/' -SinceStr ''
+Check 'C1 pending=2 なら見出しは2件（literal 1件の再発防止）' $true ($h2.title -like '*2件*')
+Check 'C2 pending=2 なら「この1点だけ」と書かない'            $false ($h2.lead -like '*この1点だけ*')
+
+$h1 = Get-NoticeHeadline -PendingCount 1 -Published $true -Days 39 -LiveUrl 'https://x/' -SinceStr ''
+Check 'C3 pending=1 なら見出しは1件'                          $true ($h1.title -like '*1件*')
+Check 'C4 pending=1 なら「この1点だけ」と書く'                $true ($h1.lead -like '*この1点だけ*')
+
+$h0 = Get-NoticeHeadline -PendingCount 0 -Published $false -Days 7 -LiveUrl '' -SinceStr ''
+Check 'C5 未公開なら見出しは停止日数を出す'                   $true ($h0.title -like '*7日*')
+
+$h5 = Get-NoticeHeadline -PendingCount 5 -Published $false -Days 7 -LiveUrl '' -SinceStr ''
+Check 'C6 未公開・複数件でも件数を出す'                       $true ($h5.lead -like '*5 件*')
+
 foreach ($f in $fails) { Write-Output $f }
 Write-Output "$pass/$total PASS"
 if ($fails.Count -gt 0) { exit 1 }

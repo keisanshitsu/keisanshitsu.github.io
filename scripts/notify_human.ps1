@@ -139,6 +139,37 @@ function Get-AnyOpened($Opened) {
     return [bool](@($Opened | Where-Object { $_.opened_since -and (Get-CountsTowardVerdict $_) }).Count -gt 0)
 }
 
+function Get-NoticeHeadline {
+    # 掲示とトーストの見出しを **件数から** 作る。
+    #
+    # ⚠ 2026-09-13（週次レビュー2回目）に検出した欠陥の再発防止。
+    #   9/09 に「見出しは state から作る。固定文にしない」と書いた**その4行下**で、
+    #   "残りの作業は1件です" という件数を literal で埋め込んでいた。
+    #   実際の pending は2件（STEP1.5-5 と STEP1.6）であり、掲示は39日間
+    #   **1件しか無いと言い続けていた**。STEP1.6 は人間の目に一度も触れていない。
+    #
+    #   影響は表示だけに留まらない。CLAUDE.md「人間待ちの行は日を消費しない」の
+    #   条件(2)は「通知経路に載っている」であり、載っていない STEP1.6 は
+    #   この条件を満たせない。つまり前提ゲート4行目は落ちず、ループは止まったままになる。
+    param([int]$PendingCount, [bool]$Published, [int]$Days, [string]$LiveUrl, [string]$SinceStr)
+
+    $n = [Math]::Max($PendingCount, 0)
+    if ($Published) {
+        $title = "くらし計算室 — 公開済み。残りの作業は{0}件です" -f $n
+        $lead  = if ($n -le 1) {
+            "サイトは公開されています: $LiveUrl$SinceStr`n次に必要なのは、この1点だけです。"
+        } else {
+            "サイトは公開されています: $LiveUrl$SinceStr`n残っている作業は $n 件です。上から順にお願いします。"
+        }
+    }
+    else {
+        $title = "くらし計算室 — 公開が {0}日 止まっています" -f $Days
+        $lead  = if ($n -le 1) { "いま止まっているのは、この1点だけです。" }
+                 else { "いま止まっている作業は $n 件です。上から順にお願いします。" }
+    }
+    return [pscustomobject]@{ title = $title; lead = $lead }
+}
+
 function Get-WalStamp {
     # Windows 通知プラットフォームの書き込み先。ここが更新されれば
     # トーストは「画面に出たかはともかく、通知ストアには届いた」と言える。
@@ -261,19 +292,15 @@ try {
     $published = $false
     try { $published = [bool]$p.publication.connected } catch { }
 
-    if ($published) {
-        $liveUrl  = $p.site.published_url
-        $sinceStr = ''
-        if ($p.publication.published_on) {
-            $sinceStr = " 公開から {0}日。" -f [int][Math]::Floor(((Get-Date) - [datetime]$p.publication.published_on).TotalDays)
-        }
-        $title = "くらし計算室 — 公開済み。残りの作業は1件です"
-        $lead  = "サイトは公開されています: $liveUrl$sinceStr`n次に必要なのは、この1点だけです。"
+    $liveUrl  = $p.site.published_url
+    $sinceStr = ''
+    if ($published -and $p.publication.published_on) {
+        $sinceStr = " 公開から {0}日。" -f [int][Math]::Floor(((Get-Date) - [datetime]$p.publication.published_on).TotalDays)
     }
-    else {
-        $title = "くらし計算室 — 公開が {0}日 止まっています" -f $days
-        $lead  = "いま止まっているのは、この1点だけです。"
-    }
+    $head  = Get-NoticeHeadline -PendingCount $pending.Count -Published $published `
+                                -Days $days -LiveUrl $liveUrl -SinceStr $sinceStr
+    $title = $head.title
+    $lead  = $head.lead
 
     $body = "{0}`n所要 {1}{2}。デスクトップの「★くらし計算室 いま必要な作業.txt」に手順があります" `
             -f $top.what, $minutes, $cost_s
@@ -284,6 +311,25 @@ try {
     if (-not [string]::IsNullOrWhiteSpace($top.url)) { $detail += "`n  URL  : $($top.url)" }
     if (-not [string]::IsNullOrWhiteSpace($top.why_human_only)) {
         $detail += "`n  なぜ私にできないか: $($top.why_human_only)"
+    }
+
+    # 残り（推奨1件以外）も必ず載せる。載せないと人間はその存在を知りようがなく、
+    # 「人間待ちの行は日を消費しない」条件(2) も永久に満たせない（2026-09-13 修正）。
+    $restBlock = ''
+    $rest = @($pending | Where-Object { $_.id -ne $top.id })
+    if ($rest.Count -gt 0) {
+        $lines = foreach ($r in $rest) {
+            $m = if ($null -ne $r.human_minutes) { "$($r.human_minutes)分" } else { "数分" }
+            # urgency は経緯を長く書いてあることがある。掲示には第1文だけ載せる
+            # （人間が読む場所に段落を投げ込むと、読まれない側に倒れる）
+            $u = ''
+            if (-not [string]::IsNullOrWhiteSpace($r.urgency)) {
+                $u = "（{0}）" -f (([string]$r.urgency -split '。')[0])
+            }
+            "  [$($r.id)] $($r.what)`n      所要 $m$u"
+        }
+        $restBlock = "`nこのあとに控えている作業（急ぎではありませんが、存在は知っておいてください）:`n`n" +
+                     ($lines -join "`n")
     }
 
     # ── 2. durable: デスクトップ直下とプロジェクト直下の両方に置く ──────────
@@ -297,6 +343,7 @@ $lead
   [$($top.id)] $($top.what)
 
 $detail
+$restBlock
 
 終わったら、プロジェクトフォルダの SETUP_HUMAN.md の「記入欄」に書いてください。
 次の自動実行で私が拾って続きを進めます。
@@ -389,6 +436,12 @@ $detail
         schema       = 1
         last_written = (Get-Date -Format 's')
         task_id      = $top.id
+        # ⚠ task_id は「見出しに出した1件」であって「載せた全件」ではない。
+        #   CLAUDE.md「人間待ちの行は日を消費しない」の条件(2)は **タスク単位** の判定なので、
+        #   載せた全件をここに残す。task_id だけを見ると STEP1.6 は永久に未通知と判定される
+        #   （2026-09-13 週次レビュー2回目で検出）。
+        task_ids     = @($pending | ForEach-Object { $_.id })
+        pending_count = $pending.Count
         elapsed_days = $days
         targets      = $targets
         toast        = $toast

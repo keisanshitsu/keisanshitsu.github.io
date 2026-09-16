@@ -431,6 +431,63 @@ let stateStatus = "整合";
   if (errors.length > before) stateStatus = "不整合";
 }
 
+// ── 3.9. 「公開済み」の実体確認 ──────────────────────────────────────
+// 2026-09-16 追加。3.7 は「人間向け文書」の、3.8 は「pipeline.json 内部」の
+// 食い違いを止める検査だった。同じ食い違いが **pipeline.json と本番サイトの間** で起きた。
+//
+// 2026-09-15 は3本目のツール（T004）を作り、tools[].published_on に 2026-09-15 と
+// 記録した。だがコミットも push もされておらず、翌朝 GET したら 404 だった。
+// published_on という名前のフィールドに、実際には「書き終えた日」が入っていた。
+//
+// なぜ既存の検査が素通りしたか: verify.mjs はローカルのファイルしか見ない。
+// docs/tools/<slug>/index.html はディスク上に存在し、テストも通り、
+// canonical も OGP も正しい。**ローカルから見えるものは全て正常だった。**
+// 欠けていたのは「その正常なファイルが配信元に届いているか」だけである。
+//
+// 誤りの向きが悪い: 意思決定ルール #3 は「公開済みツールが3本未満なら1本作る」。
+// published_on が3本埋まっていれば #3 は発火せず、私は #4 以降へ進む。
+// つまり **1本も増えていないのに増えたことにして次の段階へ行く。**
+// 3.7 の「依頼が消える」と同じで、記録のほうが実体より先に進んでいる。
+//
+// 検査: published_on が入っているツールは、その index.html が origin/main の
+// ツリーに存在しなければならない。verify は push の【前】に走るので、
+// 作ったばかりのツールは published_on: null であるべきであり、誤検出しない。
+// つまりこの検査は「published_on を書く前に push しろ」を強制する。
+//
+// 誤りの向き: origin/main は fetch しない限り古くなりうるが、古い ref は
+// 実体より【遅れる】ので、出る誤りは「本当は届いているのに ERROR」側になる。
+// 黙って見逃す側には倒れない。ref が無い環境（remote 未設定）は WARN 止まり。
+let publishStatus = "対象外";
+{
+  const rel = "state/pipeline.json";
+  const git = (args) =>
+    spawnSync("git", args, { cwd: ROOT, encoding: "utf8", windowsHide: true });
+
+  const claimed = (pipeline.tools ?? []).filter((t) => t?.published_on);
+  if (!claimed.length) {
+    publishStatus = "対象外（published_on を持つツールが無い）";
+  } else if (git(["rev-parse", "--verify", "--quiet", "origin/main"]).status !== 0) {
+    warn(rel, "origin/main が見つからないため「公開済み」の実体を確認できない");
+    publishStatus = "スキップ（origin/main 無し）";
+  } else {
+    const missing = [];
+    for (const t of claimed) {
+      // path は "docs/tools/<slug>/" 形式。末尾の / を落として index.html を足す。
+      const dir = String(t.path ?? `docs/tools/${t.slug}/`).replace(/\/+$/, "");
+      const entry = `${dir}/index.html`;
+      if (git(["cat-file", "-e", `origin/main:${entry}`]).status !== 0)
+        missing.push(`${t.id ?? t.slug}（${entry}）`);
+    }
+    if (missing.length)
+      err(rel,
+        `published_on が入っているのに origin/main に存在しないツールがある: ` +
+        `${missing.join(" / ")}。記録は「公開済み」だが配信元には届いておらず、` +
+        `本番は 404 を返す（2026-09-15 に実際に起きた壊れ方）。` +
+        `push してから published_on を書くこと`);
+    publishStatus = missing.length ? `不整合 ${missing.length}件` : `整合（${claimed.length}本）`;
+  }
+}
+
 // ── 4. 実レンダリング検証（puppeteer があるときだけ） ────────────────
 let rendered = false;
 try {
@@ -456,6 +513,7 @@ console.log(`インフラ検査: fetch_metrics.py — ${infraStatus}`);
 console.log(`インフラ検査: notify_human.ps1 — ${notifyStatus}`);
 console.log(`人間キューの整合: SETUP_HUMAN.md — ${queueStatus}`);
 console.log(`状態ファイルの整合: state/pipeline.json — ${stateStatus}`);
+console.log(`「公開済み」の実体: origin/main と突き合わせ — ${publishStatus}`);
 console.log(rendered
   ? "375px 実レンダリング検証: 実施"
   : "375px 実レンダリング検証: スキップ（npm i -D puppeteer で有効化）");

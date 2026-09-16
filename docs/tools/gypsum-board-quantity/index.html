@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>石膏ボードの必要枚数計算 — 割付とビス本数を自動で算出</title>
+<meta name="description" content="壁・天井の寸法を入れるだけで、石膏ボードの必要枚数を「面積割り」ではなく実際の割付（列×段）で算出します。石膏ボード工業会の施工マニュアルに沿って、留付具の本数と長さの目安まで出します。">
+<link rel="canonical" href="https://keisanshitsu.github.io/tools/gypsum-board-quantity/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="くらしの計算室">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="石膏ボードの必要枚数計算 — 割付とビス本数を自動で算出">
+<meta property="og:description" content="壁・天井の寸法を入れるだけで、石膏ボードの必要枚数を「面積割り」ではなく実際の割付（列×段）で算出します。石膏ボード工業会の施工マニュアルに沿って、留付具の本数と長さの目安まで出します。">
+<meta property="og:url" content="https://keisanshitsu.github.io/tools/gypsum-board-quantity/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "石膏ボードの必要枚数計算",
+  "description": "壁・天井の寸法を入れるだけで、石膏ボードの必要枚数を割付（列×段）で算出し、留付具の本数と長さの目安まで出します。",
+  "url": "https://keisanshitsu.github.io/tools/gypsum-board-quantity/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (web browser)",
+  "inLanguage": "ja",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "くらしの計算室",
+    "url": "https://keisanshitsu.github.io/"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1b19; --muted:#6b6862;
+    --line:#e5e2dc; --card:#fff; --accent:#0f6cbd; --accent-soft:#eef5fc;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#17181a; --fg:#e9e8e5; --muted:#a3a09a;
+           --line:#2e3033; --card:#1f2123; --accent:#6cb6f5; --accent-soft:#1b2733; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  header{border-bottom:1px solid var(--line);padding:16px 0}
+  .site{font-size:.85rem;color:var(--muted);text-decoration:none}
+  h1{font-size:1.35rem;margin:28px 0 6px;line-height:1.5}
+  .sub{color:var(--muted);font-size:.92rem;margin:0 0 28px}
+  h2{font-size:1.05rem;margin:36px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
+  h3{font-size:.95rem;margin:22px 0 6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .walls{display:flex;flex-direction:column;gap:10px}
+  .wallrow{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end}
+  label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+  input,select{width:100%;padding:9px 10px;font-size:1rem;color:var(--fg);
+    background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--fg);padding:9px 14px}
+  .del{padding:9px 11px;color:var(--muted)}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:16px}
+  .result{margin-top:20px;border:1px solid var(--accent);background:var(--accent-soft);
+    border-radius:12px;padding:18px}
+  .big{font-size:2rem;font-weight:700;color:var(--accent);line-height:1.2;margin:2px 0 0}
+  .big small{font-size:1rem;font-weight:600;margin-left:2px}
+  .sub2{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+  .split{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-top:16px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .stat .k{font-size:.76rem;color:var(--muted);margin:0}
+  .stat .v{font-size:1.15rem;font-weight:700;margin:2px 0 0}
+  .tablewrap{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;white-space:nowrap}
+  th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:600}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:14px 16px;border-radius:0 8px 8px 0;font-size:.88rem;margin:24px 0}
+  p,li{font-size:.94rem}
+  ul{padding-left:1.2em}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src li{font-size:.85rem}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:20px 0 40px;
+    color:var(--muted);font-size:.85rem}
+  footer a{color:var(--muted);margin-right:14px}
+  a{color:var(--accent)}
+  @media (max-width:400px){
+    .wallrow{grid-template-columns:1fr 1fr auto;gap:6px}
+    .big{font-size:1.7rem}
+  }
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><a class="site" href="../../">← くらしの計算室</a></div></header>
+
+<main class="wrap">
+
+<h1>石膏ボードの必要枚数計算</h1>
+<p class="sub">
+  面積で割るのではなく、実際の<strong>割付（列×段）</strong>で数えます。
+  留付具（ビス・釘）の本数と長さの目安まで出します。
+</p>
+
+<div class="card">
+  <div class="opts" style="margin-top:0">
+    <div>
+      <label for="part">張る場所</label>
+      <select id="part">
+        <option value="wall" selected>壁</option>
+        <option value="ceiling">天井</option>
+      </select>
+    </div>
+    <div>
+      <label for="method">工法・下地</label>
+      <select id="method"></select>
+    </div>
+  </div>
+
+  <div class="walls" id="walls"></div>
+
+  <div class="actions">
+    <button type="button" id="add">＋ 面を追加</button>
+    <button type="button" data-preset="6">6畳の壁4面</button>
+    <button type="button" data-preset="8">8畳の壁4面</button>
+    <button type="button" data-preset="c6">6畳の天井</button>
+  </div>
+
+  <div class="opts">
+    <div>
+      <label for="board">ボードの寸法 (mm)</label>
+      <select id="board"></select>
+    </div>
+    <div>
+      <label for="orient">張り方向</label>
+      <select id="orient">
+        <option value="vertical" selected>縦張り（長辺を縦）</option>
+        <option value="horizontal">横張り（長辺を横）</option>
+      </select>
+    </div>
+    <div>
+      <label for="thick">ボードの厚さ</label>
+      <select id="thick">
+        <option value="9.5">9.5mm</option>
+        <option value="12.5" selected>12.5mm</option>
+        <option value="15">15mm</option>
+      </select>
+    </div>
+    <div>
+      <label for="stud">下地の間隔 (mm)</label>
+      <select id="stud">
+        <option value="303">303</option>
+        <option value="455" selected>455</option>
+        <option value="606">606</option>
+      </select>
+    </div>
+    <div>
+      <label for="layers">張り方</label>
+      <select id="layers">
+        <option value="1" selected>1枚張り</option>
+        <option value="2">2枚張り（重ね張り）</option>
+      </select>
+    </div>
+    <div>
+      <label for="spare">予備</label>
+      <select id="spare">
+        <option value="0" selected>なし</option>
+        <option value="5">5%</option>
+        <option value="10">10%</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<div class="result" aria-live="polite">
+  <div>必要な枚数</div>
+  <p class="big" id="sheets">— <small>枚</small></p>
+  <p class="sub2" id="summary">面のサイズを入力してください。</p>
+
+  <div class="split">
+    <div class="stat">
+      <p class="k">面積で割っただけなら</p>
+      <p class="v" id="areaonly">—</p>
+    </div>
+    <div class="stat">
+      <p class="k">留付具（1枚あたり）</p>
+      <p class="v" id="perboard">—</p>
+    </div>
+    <div class="stat">
+      <p class="k">留付具（全体）</p>
+      <p class="v" id="fasteners">—</p>
+    </div>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>面</th><th>幅</th><th>高さ</th><th>列</th><th>段</th><th>枚数</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <p class="sub2" id="fastenernote"></p>
+</div>
+
+<div class="note">
+  <strong>この計算は概算です。</strong>
+  実際の枚数は下地の位置、開口部のおさまり、継目の割付方針、端材をどこまで使い回すかで変わります。
+  防火・準耐火・遮音などの性能が求められる部位は、仕様書で指定された工法・厚さ・留付間隔が優先されます。
+  最終的な数量と仕様は、施工店・設計者などの専門家にご確認ください。
+  計算結果にもとづく発注について責任を負いかねます。
+</div>
+
+<h2>なぜ「面積÷1枚の面積」ではいけないのか</h2>
+
+<p>
+  石膏ボードの必要枚数を、延べ面積を1枚の面積で割って求める計算をよく見かけます。
+  これは<strong>理論上の下限</strong>であって、実際に張れる枚数ではありません。
+</p>
+<p>
+  たとえば 3640mm × 2730mm の面に 910×1820 のボード（3×6版）を張るとします。
+  面積で割ると 9.94㎡ ÷ 1.66㎡ ＝ ちょうど <strong>6枚</strong>です。
+  ところが縦張りで実際に並べると、横に 4列（3640 ÷ 910）、縦に 2段（2730 ÷ 1820 を切り上げ）で
+  <strong>8枚</strong>必要になります。2枚の差は、2段目で余った部分が
+  <strong>幅の合わない細長い端材</strong>になるために生じます。
+</p>
+<p>
+  端材がまったく使えないわけではありませんが、寸法がまちまちなうえ、
+  継目の位置には制約があります（重ね張りでは上張りと下張りの継目を同じ位置にしない、など）。
+  <strong>足りないほうが困る</strong>ので、このツールは割付で数えた枚数を主たる答えとし、
+  面積割りの値は比較用に並べて表示します。
+</p>
+
+<h2>長さを変えると枚数が大きく変わります</h2>
+
+<p>
+  見落とされがちですが、<strong>ボードの長さを天井高に合わせると段継ぎが消えます</strong>。
+  天井高 2400mm の壁で比べると、次のようになります。
+</p>
+<ul>
+  <li>910×1820（3×6版）… 2400mm に届かないので<strong>2段</strong>必要。6畳の壁4面で <strong>28枚</strong></li>
+  <li>910×2420（3×8版）… 1枚で <strong>1段</strong>。同じ部屋が <strong>14枚</strong></li>
+</ul>
+<p>
+  枚数が半分になるだけでなく、<strong>横方向の継目（ジョイント）そのものが無くなります</strong>。
+  継目はパテ処理の手間が増え、後からひび割れが出やすい箇所でもあります。
+  上のツールでボードの寸法を切り替えると、この差がそのまま数字で出ます。
+</p>
+
+<h2>留付具（ビス・釘）の間隔と本数</h2>
+
+<p>
+  留付間隔は<strong>壁と天井で違い、工法によっても違います</strong>。
+  石膏ボード工業会の施工マニュアルでは次のように定められています（単位 mm・いずれも「以下」）。
+</p>
+
+<div class="tablewrap">
+  <table>
+    <thead><tr><th>部位・工法</th><th>留付具</th><th>周辺部</th><th>一般部</th></tr></thead>
+    <tbody>
+      <tr><td>壁：在来軸組工法・一般壁</td><td>釘、ねじ</td><td>200</td><td>300</td></tr>
+      <tr><td>壁：在来軸組工法・耐力壁（告示仕様）</td><td>釘</td><td>150</td><td>150</td></tr>
+      <tr><td>壁：枠組壁工法</td><td>釘、ねじ</td><td>100</td><td>200</td></tr>
+      <tr><td>壁：鋼製下地</td><td>ねじ</td><td>200</td><td>300</td></tr>
+      <tr><td>天井：在来軸組工法・一般</td><td>釘、ねじ</td><td>150</td><td>200</td></tr>
+      <tr><td>天井：枠組壁工法・一般</td><td>釘、ねじ</td><td>150</td><td>200</td></tr>
+      <tr><td>天井：鋼製下地</td><td>ねじ</td><td>150</td><td>200</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+  「周辺部」はボードの外周、「一般部」はその内側を通る下地材の上を指します。
+  外周は<strong>端から10mm程度内側</strong>で留めます。
+  本ツールはこの間隔と、入力された下地の間隔から本数を数えています。
+  切り欠いたボードは留め代が減るため、<strong>実際の本数はやや少なくなります</strong>
+  （多めに見積もる側に倒しています）。
+</p>
+<p>
+  省令準耐火仕様は「1枚目／2枚目」で間隔が分かれ、下地に対する向きでも変わるため、
+  このツールでは扱っていません。該当する場合は下記の一次情報をご確認ください。
+</p>
+
+<h3>留付具の長さ</h3>
+<ul>
+  <li><strong>木製下地に釘</strong>… ボード厚の 2.5〜3倍程度（厚12.5mmなら約31〜38mm）</li>
+  <li><strong>木製下地にねじ</strong>… ボード厚より 15mm 以上長いもの（厚12.5mmなら27.5mm以上）</li>
+  <li><strong>鋼製下地にねじ</strong>… 下地の裏面に 10mm 以上の余長が得られる長さ</li>
+</ul>
+
+<h2>よくある質問</h2>
+
+<h3>開口部（窓・ドア）は差し引けますか</h3>
+<p>
+  このツールでは差し引いていません。開口部のまわりは、継目が開口の角と重ならないように
+  <strong>ボードを切り欠いて張る</strong>のが一般的で、切り取った部分が
+  そのまま別の場所に使えるとは限らないためです。
+  掃き出し窓のように<strong>1列まるごと不要</strong>な範囲があるときは、
+  その面を左右に分けて2つの面として入力してください。
+</p>
+
+<h3>厚さは 9.5mm と 12.5mm のどちらを選べばよいですか</h3>
+<p>
+  用途によります。一般的な石膏ボード（JIS A 6901 の GB-R）は、
+  メーカー各社の製品案内で <strong>9.5mm が準不燃材料、12.5mm 以上が不燃材料</strong>として
+  扱われています。壁の下地に 12.5mm、天井に 9.5mm を使う例が多く見られますが、
+  必要な性能は部位と法令上の要求で決まるため、仕様書がある場合はそちらが優先されます。
+</p>
+
+<h3>ボードのサイズには何がありますか</h3>
+<p>
+  工業会の資料では、代表製品の長さとして 910 / 1820 / 2420 / 2730mm、
+  幅として 455 / 606 / 910 / 1210mm が挙げられています。
+  普通石膏ボードで一般に流通しているのは 910×1820（3×6版）、910×2420（3×8版）、
+  910×2730（3×9版）です。上のツールではこの組み合わせを選べます。
+</p>
+
+<h3>2枚張り（重ね張り）のときは</h3>
+<p>
+  枚数は単純に2倍になりますが、<strong>上張りと下張りの継目を同じ位置にしない</strong>
+  必要があります。割付をずらすぶん端材が増えるので、予備を見ておくと安全です。
+</p>
+
+<h3>ほかの材料の数量も出せますか</h3>
+<p>
+  下地が終わったあとの仕上げについては、
+  <a href="../wallpaper-quantity/">壁紙・クロスの必要量</a>と
+  <a href="../paint-quantity/">ペンキ・塗料の必要量</a>を用意しています。
+  同じ部屋でも<strong>材料ごとに数え方の作法が反対になる</strong>点（開口部を引くか引かないか）
+  も、それぞれのページで説明しています。
+</p>
+
+<h2>出典</h2>
+<ul class="src">
+  <li>一般社団法人 石膏ボード工業会「石膏ボード施工マニュアル －木製下地・鋼製下地編」
+    <a href="https://www.gypsumboard-a.or.jp/pdf/Construct_Manual.pdf" rel="nofollow noopener" target="_blank">gypsumboard-a.or.jp</a>
+    — 代表製品の長さ及び幅／表３．５（壁の取付け方法）／表３．６（天井の取付け方法）／
+    ボード周辺部は端部から10mm程度内側／釘はボード厚の2.5〜3倍・ねじはボード厚＋15mm以上／
+    鋼製下地は裏面に10mm以上の余長。
+    同工業会は JIS A 6901（せっこうボード製品）の原案作成団体です</li>
+  <li>吉野石膏「せっこうボード製品 JIS A 6901：2014」
+    <a href="https://yoshino-gypsum.com/special/hosoku/list_jis" rel="nofollow noopener" target="_blank">yoshino-gypsum.com</a>
+    — 種類（GB-R／GB-F／GB-S ほか）と厚さの系列</li>
+  <li>チヨダウーテ「せっこうボード9.5 12.5」
+    <a href="https://www.chiyoda-ute.co.jp/product/gypsumboard/gb.html" rel="nofollow noopener" target="_blank">chiyoda-ute.co.jp</a>
+    — 9.5mm が準不燃材料、12.5mm 以上が不燃材料（吉野石膏の製品案内と一致することを確認）</li>
+</ul>
+<p class="src">最終確認日: 2026年9月15日</p>
+
+</main>
+
+<footer class="wrap">
+  <a href="../../">トップ</a>
+  <a href="../../privacy.html">プライバシーポリシー</a>
+  <a href="../../contact.html">お問い合わせ</a>
+  <p>&copy; 2026 くらしの計算室</p>
+</footer>
+
+<script type="module">
+import { calculate, BOARD_SIZES, FASTENING, fastenerLength } from "./calc.js";
+
+const PRESETS = {
+  6:  { part: "wall", faces: [["壁A（長辺）",3640,2400],["壁B（短辺）",2730,2400],["壁C（長辺）",3640,2400],["壁D（短辺）",2730,2400]] },
+  8:  { part: "wall", faces: [["壁A（長辺）",3640,2400],["壁B（短辺）",3640,2400],["壁C（長辺）",3640,2400],["壁D（短辺）",3640,2400]] },
+  c6: { part: "ceiling", faces: [["天井",2730,3640]] },
+};
+
+const $walls = document.getElementById("walls");
+const $rows = document.getElementById("rows");
+const $part = document.getElementById("part");
+const $method = document.getElementById("method");
+const $board = document.getElementById("board");
+const num = (v) => { const n = parseFloat(v); return Number.isFinite(n) ? n : 0; };
+
+for (const b of BOARD_SIZES) {
+  const o = document.createElement("option");
+  o.value = b.id;
+  o.textContent = b.label;
+  if (b.id === "910x1820") o.selected = true;
+  $board.appendChild(o);
+}
+
+function fillMethods() {
+  const set = FASTENING[$part.value] ?? {};
+  $method.innerHTML = "";
+  for (const [key, v] of Object.entries(set)) {
+    const o = document.createElement("option");
+    o.value = key;
+    o.textContent = `${v.label}（周辺${v.edge}／一般${v.field}）`;
+    $method.appendChild(o);
+  }
+}
+
+function addRow(label = "", w = "", h = 2400) {
+  const i = $walls.children.length + 1;
+  const div = document.createElement("div");
+  div.className = "wallrow";
+  div.innerHTML = `
+    <div><label>幅 (mm)</label><input type="number" inputmode="numeric" min="0" step="1"
+      class="w" placeholder="3640" value="${w}" aria-label="${label || "面" + i}の幅(mm)"></div>
+    <div><label>高さ (mm)</label><input type="number" inputmode="numeric" min="0" step="1"
+      class="h" value="${h}" aria-label="${label || "面" + i}の高さ(mm)"></div>
+    <button type="button" class="del" aria-label="この面を削除">✕</button>`;
+  div.dataset.label = label || `面${i}`;
+  $walls.appendChild(div);
+}
+
+function render() {
+  const faces = [...$walls.children].map((el) => ({
+    label: el.dataset.label,
+    widthMm: num(el.querySelector(".w").value),
+    heightMm: num(el.querySelector(".h").value),
+  }));
+
+  const thickness = num(document.getElementById("thick").value);
+  const r = calculate(faces, {
+    boardId: $board.value,
+    orientation: document.getElementById("orient").value,
+    part: $part.value,
+    method: $method.value,
+    studSpacing: num(document.getElementById("stud").value),
+    layers: num(document.getElementById("layers").value),
+    sparePercent: num(document.getElementById("spare").value),
+  });
+
+  const $sheets = document.getElementById("sheets");
+  const $sum = document.getElementById("summary");
+  const $area = document.getElementById("areaonly");
+  const $per = document.getElementById("perboard");
+  const $fast = document.getElementById("fasteners");
+  const $fnote = document.getElementById("fastenernote");
+
+  if (r.rows.length === 0) {
+    $sheets.innerHTML = `— <small>枚</small>`;
+    $sum.textContent = "面のサイズを入力してください。";
+    $rows.innerHTML = "";
+    $area.textContent = $per.textContent = $fast.textContent = "—";
+    $fnote.textContent = "";
+    return;
+  }
+
+  $sheets.innerHTML = `${r.recommendedSheets}<small> 枚</small>`;
+
+  const spare = r.options.sparePercent;
+  $sum.textContent =
+    `${r.board.label} を${r.options.orientation === "vertical" ? "縦" : "横"}張り。` +
+    `割付で ${r.sheets}枚` +
+    (r.layers > 1 ? `（2枚張り）` : "") +
+    (spare > 0 ? `、予備${spare}%を含めて ${r.recommendedSheets}枚。` : "。") +
+    ` 延べ ${r.totalAreaSqm.toFixed(2)}㎡。`;
+
+  $area.textContent = `${r.areaOnlySheets} 枚`;
+  if (r.extraVsAreaOnly > 0) {
+    $area.textContent += `（${r.extraVsAreaOnly}枚 不足）`;
+  }
+
+  if (r.fastenersPerBoard) {
+    $per.textContent = `${r.fastenersPerBoard.total} 本`;
+    $fast.textContent = `約 ${r.fastenersTotal} 本`;
+    const fl = fastenerLength(thickness, r.options.method === "kousei" ? "steel" : "wood");
+    const lenText = fl && fl.nailMinMm
+      ? `釘なら ${fl.nailMinMm}〜${fl.nailMaxMm}mm、ねじなら ${fl.screwMinMm}mm 以上。`
+      : fl ? `ねじは ${fl.screwMinMm}mm 以上（${fl.note}）。` : "";
+    $fnote.textContent =
+      `内訳は1枚あたり 周辺部 ${r.fastenersPerBoard.perimeter}本 ＋ 一般部 ${r.fastenersPerBoard.field}本` +
+      `（内側を通る下地 ${r.fastenersPerBoard.interiorSupports}本）。厚さ${thickness}mm なら ${lenText}`;
+  }
+
+  $rows.innerHTML = r.rows.map((x) => `<tr>
+      <td>${x.label}</td><td>${x.widthMm}</td><td>${x.heightMm}</td>
+      <td>${x.cols}</td><td>${x.rows}</td><td>${x.sheets}枚</td>
+    </tr>`).join("");
+}
+
+document.getElementById("add").addEventListener("click", () => { addRow(); render(); });
+
+$walls.addEventListener("input", render);
+$walls.addEventListener("click", (e) => {
+  if (!e.target.classList.contains("del")) return;
+  e.target.closest(".wallrow").remove();
+  render();
+});
+
+$part.addEventListener("change", () => { fillMethods(); render(); });
+
+for (const b of document.querySelectorAll("[data-preset]")) {
+  b.addEventListener("click", () => {
+    const p = PRESETS[b.dataset.preset];
+    $part.value = p.part;
+    fillMethods();
+    $walls.innerHTML = "";
+    for (const [label, w, h] of p.faces) addRow(label, w, h);
+    render();
+  });
+}
+
+for (const id of ["board", "orient", "thick", "stud", "layers", "spare", "method"]) {
+  document.getElementById(id).addEventListener("change", render);
+}
+
+fillMethods();
+for (const [label, w, h] of PRESETS[6].faces) addRow(label, w, h);
+render();
+</script>
+
+</body>
+</html>

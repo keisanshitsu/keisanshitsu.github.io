@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>屋根面積の計算 — 勾配から実面積・棟や隅棟の長さまで算出</title>
+<meta name="description" content="建物の幅・奥行き・軒の出と屋根勾配を入れるだけで、屋根の実面積を㎡と坪で算出します。切妻・寄棟・片流れ・陸屋根に対応し、棟・軒先・けらば・隅棟の長さも出します。計算の根拠を式で示しています。">
+<link rel="canonical" href="https://keisanshitsu.github.io/tools/roof-area/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="くらしの計算室">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="屋根面積の計算 — 勾配から実面積・棟や隅棟の長さまで算出">
+<meta property="og:description" content="建物の幅・奥行き・軒の出と屋根勾配を入れるだけで、屋根の実面積を㎡と坪で算出します。切妻・寄棟・片流れ・陸屋根に対応し、棟・軒先・けらば・隅棟の長さも出します。">
+<meta property="og:url" content="https://keisanshitsu.github.io/tools/roof-area/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "屋根面積の計算",
+  "description": "建物の寸法と屋根勾配から、屋根の実面積（㎡・坪）と、棟・軒先・けらば・隅棟の長さを算出します。切妻・寄棟・片流れ・陸屋根に対応。",
+  "url": "https://keisanshitsu.github.io/tools/roof-area/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (web browser)",
+  "inLanguage": "ja",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "くらしの計算室",
+    "url": "https://keisanshitsu.github.io/"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1b19; --muted:#6b6862;
+    --line:#e5e2dc; --card:#fff; --accent:#0f6cbd; --accent-soft:#eef5fc;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#17181a; --fg:#e9e8e5; --muted:#a3a09a;
+           --line:#2e3033; --card:#1f2123; --accent:#6cb6f5; --accent-soft:#1b2733; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  header{border-bottom:1px solid var(--line);padding:16px 0}
+  .site{font-size:.85rem;color:var(--muted);text-decoration:none}
+  h1{font-size:1.35rem;margin:28px 0 6px;line-height:1.5}
+  .sub{color:var(--muted);font-size:.92rem;margin:0 0 28px}
+  h2{font-size:1.05rem;margin:36px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
+  h3{font-size:.95rem;margin:22px 0 6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+  input,select{width:100%;padding:9px 10px;font-size:1rem;color:var(--fg);
+    background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--fg);padding:9px 14px}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:16px}
+  .slope{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end}
+  .result{margin-top:20px;border:1px solid var(--accent);background:var(--accent-soft);
+    border-radius:12px;padding:18px}
+  .big{font-size:2rem;font-weight:700;color:var(--accent);line-height:1.2;margin:2px 0 0}
+  .big small{font-size:1rem;font-weight:600;margin-left:2px}
+  .sub2{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+  .split{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-top:16px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .stat .k{font-size:.76rem;color:var(--muted);margin:0}
+  .stat .v{font-size:1.15rem;font-weight:700;margin:2px 0 0}
+  .tablewrap{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;white-space:nowrap}
+  th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:600}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:14px 16px;border-radius:0 8px 8px 0;font-size:.88rem;margin:24px 0}
+  .formula{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:10px 14px;margin:12px 0;font-size:.9rem;overflow-x:auto;white-space:nowrap}
+  p,li{font-size:.94rem}
+  ul{padding-left:1.2em}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src li{font-size:.85rem}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:20px 0 40px;
+    color:var(--muted);font-size:.85rem}
+  footer a{color:var(--muted);margin-right:14px}
+  a{color:var(--accent)}
+  @media (max-width:400px){
+    .big{font-size:1.7rem}
+  }
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><a class="site" href="../../">← くらしの計算室</a></div></header>
+
+<main class="wrap">
+
+<h1>屋根面積の計算</h1>
+<p class="sub">
+  建物の寸法と勾配から、<strong>屋根の実面積</strong>と
+  <strong>棟・軒先・けらば・隅棟の長さ</strong>を出します。
+  早見表ではなく式で計算し、その式の導き方もこのページに書いています。
+</p>
+
+<div class="card">
+  <div class="opts" style="margin-top:0">
+    <div>
+      <label for="shape">屋根の形状</label>
+      <select id="shape">
+        <option value="kirizuma" selected>切妻（きりづま）</option>
+        <option value="yosemune">寄棟（よせむね）</option>
+        <option value="katanagare">片流れ（かたながれ）</option>
+        <option value="rikuyane">陸屋根（ろくやね・フラット）</option>
+      </select>
+    </div>
+    <div>
+      <label for="width">建物の幅 (mm)</label>
+      <input id="width" type="number" inputmode="numeric" value="9100" min="1" step="10">
+    </div>
+    <div>
+      <label for="depth">建物の奥行き (mm)</label>
+      <input id="depth" type="number" inputmode="numeric" value="7280" min="1" step="10">
+    </div>
+    <div>
+      <label for="eaves">軒の出 (mm)</label>
+      <input id="eaves" type="number" inputmode="numeric" value="600" min="0" step="10">
+    </div>
+  </div>
+
+  <div class="opts">
+    <div id="slopebox">
+      <label for="slopeval">屋根の勾配</label>
+      <div class="slope">
+        <input id="slopeval" type="number" inputmode="decimal" value="4" step="0.5">
+        <select id="slopeunit">
+          <option value="sun" selected>寸（水平10に対し）</option>
+          <option value="deg">度</option>
+          <option value="percent">％</option>
+          <option value="fraction">分数（分母を指定）</option>
+        </select>
+      </div>
+      <div id="runbox" style="display:none;margin-top:8px">
+        <label for="sloperun">分数の分母（水平側）</label>
+        <input id="sloperun" type="number" inputmode="decimal" value="10" step="1">
+      </div>
+    </div>
+    <div id="ridgebox">
+      <label for="ridge">棟（頂部）を通す向き</label>
+      <select id="ridge">
+        <option value="auto" selected>長い辺に通す（標準）</option>
+        <option value="width">幅の方向に通す</option>
+        <option value="depth">奥行きの方向に通す</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button type="button" data-preset="30">総2階 30坪くらい</button>
+    <button type="button" data-preset="garage">物置・カーポート</button>
+    <button type="button" data-preset="hirayaG">平屋の切妻</button>
+  </div>
+</div>
+
+<div class="result" aria-live="polite">
+  <div>屋根の実面積</div>
+  <p class="big" id="area">— <small>㎡</small></p>
+  <p class="sub2" id="summary">寸法と勾配を入力してください。</p>
+
+  <div class="split">
+    <div class="stat">
+      <p class="k">坪（参考値）</p>
+      <p class="v" id="tsubo">—</p>
+    </div>
+    <div class="stat">
+      <p class="k">水平投影面積</p>
+      <p class="v" id="proj">—</p>
+    </div>
+    <div class="stat">
+      <p class="k">勾配係数（伸び率）</p>
+      <p class="v" id="factor">—</p>
+    </div>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>部位</th><th>本数</th><th>1本の長さ</th><th>合計</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <p class="sub2" id="notes"></p>
+</div>
+
+<div class="note">
+  <strong>この計算は概算です。</strong>
+  実際の屋根は、下屋・ドーマー・天窓・出窓・隅切りなどで平面が単純な長方形にならないことが多く、
+  面ごとに勾配が違うこともあります。見積書の数量と一致しないときは、
+  業者が拾った図面の寸法と本ページの入力値を突き合わせてください。
+  屋根の上での実測や工事の可否については、必ず屋根工事の<strong>専門家</strong>にご相談ください。
+  高所作業は転落の危険があります。
+</div>
+
+<h2>屋根の形が違っても、勾配が同じなら面積は同じです</h2>
+<p>
+  「寄棟は面が4つあるから計算が複雑」という説明をよく見かけますが、
+  <strong>面積に関しては複雑ではありません。</strong>
+  切妻でも寄棟でも入母屋でも、すべての面の勾配が等しければ、答えは同じ1本の式で出ます。
+</p>
+<div class="formula">屋根の実面積 ＝ 水平投影面積 × 勾配係数</div>
+<p>
+  理由は影の性質です。水平面に対して角度 θ だけ傾いた平らな図形は、
+  真上から見た影の面積が「もとの面積 × cos θ」になります。ここから
+  「実面積 ＝ 投影面積 ÷ cos θ」が出ます。
+</p>
+<p>
+  屋根が何枚の面に分かれていても、すべての面の勾配が同じなら、面ごとに同じ式が成り立ちます。
+  そして<strong>影をすべて足し合わせたものが、建物の水平投影面積</strong>です。
+</p>
+<div class="formula">Σ(実面積) ＝ Σ(投影面積) ÷ cos θ ＝ 水平投影面積 ÷ cos θ</div>
+<p>
+  だから面の数も、寄棟の隅がどう切れているかも、面積には影響しません。
+  影響するのは<strong>真上から見た輪郭の広さ</strong>と<strong>勾配</strong>だけです。
+  このページの計算機で、寸法と勾配を変えずに形状だけ切り替えてみてください。面積は動きません。
+</p>
+<p>
+  逆に言えば、<strong>面ごとに勾配が違う屋根ではこの式は使えません</strong>。
+  差し掛け屋根や、途中で勾配が変わる錣（しころ）屋根のような場合は、
+  勾配ごとに屋根を分け、それぞれの投影面積に別々の係数を掛けて足してください。
+</p>
+
+<h2>勾配係数（伸び率）の出し方</h2>
+<p>
+  日本の屋根勾配は「寸」で表します。<strong>水平に10進むあいだに垂直に何上がるか</strong>で、
+  4寸勾配なら水平10に対して垂直4です。つまり tan θ ＝ 4/10 です。
+  三角比の関係から、勾配係数はこうなります。
+</p>
+<div class="formula">勾配係数 ＝ 1 ÷ cos θ ＝ √( 1 ＋ (寸 ÷ 10)² )</div>
+<div class="tablewrap">
+  <table>
+    <thead><tr><th>勾配</th><th>角度</th><th>百分率</th><th>勾配係数</th></tr></thead>
+    <tbody id="sloperows"></tbody>
+  </table>
+</div>
+<p class="sub2">
+  上の表はこのページの計算機と同じ関数で生成しています。表と計算結果がずれることはありません。
+</p>
+
+<h2>隅棟の長さは勾配係数では出せません</h2>
+<p>
+  寄棟の<strong>隅棟（下り棟）</strong>は、平面上で45度の方向に走ります。
+  水平方向に2つの成分を持つため、勾配係数をそのまま掛けると<strong>3割ほど短く出ます</strong>。
+  短辺の投影寸法を S とすると、隅棟1本の長さはこうなります。
+</p>
+<div class="formula">隅棟 ＝ (S ÷ 2) × √( 2 ＋ (寸 ÷ 10)² )</div>
+<p>
+  根号の中が「1＋」ではなく「2＋」になっているのが、水平成分が2つあることの表れです。
+  4寸勾配なら、流れ方向の伸び率が約1.0770なのに対し、隅棟は約1.4697になります。
+</p>
+<p>
+  隅棟・棟・けらば・軒先の長さは、棟板金やケラバ水切り、雪止め、軒樋といった
+  <strong>「長さで数える部材」</strong>の数量に直結します。面積だけでは見積書と突き合わせられません。
+  このページが長さも出しているのはそのためです。
+</p>
+
+<h2>「坪」について</h2>
+<p>
+  屋根の話では坪がよく使われますが、<strong>坪は計量法の法定計量単位ではありません。</strong>
+  経済産業省は、計量法第8条第1項が
+  「法定計量単位以外の計量単位（非法定計量単位）は、第2条第1項第1号に掲げる物象の状態の量について、
+  取引又は証明に用いてはならない」と定めていると説明しています。
+</p>
+<p>
+  一方で同じ解説は、何が「取引又は証明」に当たらないかも示しています。
+  「『真実である旨を表明すること』とは、真実であることについて一定の法的責任等を伴って表明すること。
+  <strong>参考値を示すなど、単なる事実の表明は該当しない</strong>」。
+  本ページが ㎡ を主たる表示にし、坪を参考値として併記しているのはこの整理によります。
+</p>
+<p>
+  換算に使っている 1坪 ＝ 400/121 ㎡（約3.3058㎡）は、1尺 ＝ 10/33 m という
+  明治24年の度量衡法に由来する慣行値です。1間 ＝ 6尺 ＝ 20/11 m を2乗すると 400/121 ㎡ になります。
+  <strong>現行法にこの定義はありません。</strong>契約書や申請書の数量は ㎡ で確認してください。
+</p>
+
+<h2>よくある質問</h2>
+
+<h3>図面が無いのですが、外から測れますか</h3>
+<p>
+  建物の外周を地上で測れば、水平投影の幅と奥行きは取れます。軒の出は、
+  軒先の真下に下げ振りや重りを落として外壁からの距離を測ります。
+  勾配は、屋根に上がらなくても<strong>水平器と定規</strong>で確認できます——
+  軒先の板金などに水平器を当て、水平に10cm進んだ位置で屋根面までの高さを測れば、その cm 数が寸です。
+  ただし<strong>屋根に上がっての実測は専門家に任せてください。</strong>
+</p>
+
+<h3>L字型やコの字型の家はどう入力しますか</h3>
+<p>
+  平面を複数の長方形に分けて、それぞれ計算して足してください。
+  ただし分割した境目では軒の出が発生しないので、その辺の軒の出は0として別々に計算するか、
+  全体を「軒の出0」で計算してから軒部分を長方形として足すほうが正確です。
+  このツールが長方形しか受け付けないのは、
+  <strong>間違った平面図を勝手に推測するより、分けて足してもらうほうが正しい答えになる</strong>からです。
+</p>
+
+<h3>屋根材の必要枚数まで出ませんか</h3>
+<p>
+  出していません。屋根材の枚数は製品ごとの働き寸法（重ね代を除いた有効な寸法）で決まり、
+  同じ「スレート」でも製品によって違います。
+  メーカーの施工基準を数値で確認できた製品が今回はそろわなかったため、
+  <strong>推定値で枚数を出すことはしませんでした。</strong>
+  必要枚数は、使う製品の施工基準に載っている「1㎡あたりの枚数」または働き寸法に、
+  このページで出した実面積を掛けて求めてください。
+</p>
+
+<h3>屋根材の最低勾配は判定できますか</h3>
+<p>
+  していません。屋根材には「この勾配より緩いと雨仕舞いが成立しない」という下限がありますが、
+  同じ種類でも製品や地域（積雪など）、流れ長さによって基準が変わります。
+  メーカー公式の施工基準を今回は数値で確認できなかったため、載せていません。
+  採用予定の製品の施工基準を必ず確認してください。
+</p>
+
+<h3>足場の面積は出ませんか</h3>
+<p>
+  出していません。足場の架面積は「建物の外周＋4m」「高さ＋0.5m」といった式で概算されますが、
+  この 4m や 0.5m は業界の慣行値で、公的な根拠を確認できませんでした。
+  <strong>根拠を示せない数値は載せない</strong>方針のため、見送っています。
+</p>
+
+<h3>ほかの材料の数量も出せますか</h3>
+<p>
+  内装まわりの数量計算をそろえています。
+  屋根や外壁を塗るときの塗料の量は<a href="../paint-quantity/">ペンキ・塗料の必要量</a>で、
+  室内の壁は<a href="../wallpaper-quantity/">壁紙・クロスの必要量</a>と
+  <a href="../gypsum-board-quantity/">石膏ボードの必要枚数</a>で計算できます。
+  このページで出した実面積を塗料のページに入れれば、必要なリットル数と缶の組み合わせが出ます。
+</p>
+
+<h2>出典</h2>
+<ul class="src">
+  <li>経済産業省「計量法における単位規制の概要 ２．取引又は証明における規制」
+    <a href="https://www.meti.go.jp/policy/economy/hyojun/techno_infra/11_gaiyou_tani2.html" rel="nofollow noopener" target="_blank">meti.go.jp</a>
+    — 計量法第8条第1項の条文、および「参考値を示すなど、単なる事実の表明は該当しない」という
+    取引・証明の解釈。坪を参考値として併記する根拠</li>
+  <li>勾配係数 √(1＋(寸÷10)²) と、実面積 ＝ 投影面積 ÷ cos θ の関係は、
+    出典を引く性質のものではなく三角比から導かれます。
+    導出はこのページ本文に書いてあり、
+    <a href="./calc.js">計算コード</a>のコメントにも同じ式を残しています</li>
+  <li>1坪 ＝ 400/121 ㎡ は 1尺 ＝ 10/33 m（明治24年 度量衡法）に由来する慣行値です。
+    現行の計量法に坪の定義はありません（上記 経済産業省の解説を参照）</li>
+</ul>
+<p class="src">最終確認日: 2026年9月17日</p>
+
+</main>
+
+<footer class="wrap">
+  <a href="../../">トップ</a>
+  <a href="../../privacy.html">プライバシーポリシー</a>
+  <a href="../../contact.html">お問い合わせ</a>
+  <p>&copy; 2026 くらしの計算室</p>
+</footer>
+
+<script type="module">
+import { calculate, toSun, slopeFactor, slopeDeg, slopePercent, SHAPES } from "./calc.js";
+
+const PRESETS = {
+  30:      { width: 9100, depth: 7280, eaves: 600, shape: "yosemune",   val: 4, unit: "sun" },
+  garage:  { width: 3640, depth: 2730, eaves: 300, shape: "katanagare", val: 2, unit: "sun" },
+  hirayaG: { width: 10920, depth: 5460, eaves: 900, shape: "kirizuma",  val: 5, unit: "sun" },
+};
+
+const $ = (id) => document.getElementById(id);
+const fields = ["shape", "width", "depth", "eaves", "slopeval", "slopeunit", "sloperun", "ridge"];
+
+const fmt = (v, u) => (v === null || v === undefined ? "—" : `${v.toLocaleString("ja-JP")} ${u}`);
+
+function render() {
+  const shape = $("shape").value;
+  const unit = $("slopeunit").value;
+  $("runbox").style.display = unit === "fraction" ? "" : "none";
+  const flat = !(SHAPES[shape]?.sloped ?? true);
+  $("slopebox").style.opacity = flat ? ".45" : "";
+  $("slopeval").disabled = flat;
+  $("slopeunit").disabled = flat;
+  $("ridgebox").style.display = shape === "rikuyane" ? "none" : "";
+
+  const sun = toSun(unit, Number($("slopeval").value), Number($("sloperun").value));
+  const res = calculate({
+    widthMm: Number($("width").value),
+    depthMm: Number($("depth").value),
+    eavesMm: Number($("eaves").value),
+    shape,
+    sun,
+    ridgeAlong: $("ridge").value,
+  });
+
+  if (!res.ok) {
+    $("area").innerHTML = '— <small>㎡</small>';
+    $("tsubo").textContent = "—";
+    $("proj").textContent = "—";
+    $("factor").textContent = "—";
+    $("rows").innerHTML = "";
+    $("summary").textContent = res.errors[0];
+    $("notes").textContent = "";
+    return;
+  }
+
+  $("area").innerHTML = `${res.roof.areaM2.toLocaleString("ja-JP")} <small>㎡</small>`;
+  $("tsubo").textContent = `約 ${res.roof.tsubo} 坪`;
+  $("proj").textContent = `${res.projected.areaM2} ㎡`;
+  $("factor").textContent = `${res.slope.factor}`;
+  $("summary").textContent =
+    `${res.shapeLabel} ／ 投影 ${res.projected.widthM}m × ${res.projected.depthM}m ／ ` +
+    `勾配 ${res.slope.sun}寸（${res.slope.deg}° ・ ${res.slope.percent}%）`;
+
+  const L = res.lengths;
+  const rows = [];
+  if (L.ridgeM !== null) rows.push([shape === "katanagare" ? "頂部（棟側）" : "棟", 1, L.ridgeM, L.ridgeM]);
+  if (L.hipEachM !== null) rows.push(["隅棟（下り棟）", L.hipCount, L.hipEachM, L.hipTotalM]);
+  if (L.slopeLenM !== null) rows.push(["流れ長さ（軒先→棟）", "—", L.slopeLenM, "—"]);
+  if (L.rakeM !== null) rows.push(["けらば", shape === "katanagare" ? 2 : 4, null, L.rakeM]);
+  if (L.eaveM !== null) rows.push([shape === "rikuyane" ? "パラペット周長" : "軒先", "—", null, L.eaveM]);
+  $("rows").innerHTML = rows.map(([k, n, each, tot]) =>
+    `<tr><td>${k}</td><td>${n}</td><td>${each === null ? "—" : fmt(each, "m")}</td><td>${tot === "—" ? "—" : fmt(tot, "m")}</td></tr>`
+  ).join("");
+
+  $("notes").textContent = res.notes.join(" ");
+}
+
+// 解説の早見表は計算機と同じ関数から作る。表だけ古くなるのを防ぐため。
+const round = (v, d) => Math.round(v * 10 ** d) / 10 ** d;
+$("sloperows").innerHTML = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 10]
+  .map((s) => `<tr><td>${s}寸</td><td>${round(slopeDeg(s), 1)}°</td><td>${round(slopePercent(s), 1)}%</td><td>${round(slopeFactor(s), 4)}</td></tr>`)
+  .join("");
+
+for (const id of fields) {
+  const el = $(id);
+  el.addEventListener("input", render);
+  el.addEventListener("change", render);
+}
+for (const b of document.querySelectorAll("[data-preset]")) {
+  b.addEventListener("click", () => {
+    const p = PRESETS[b.dataset.preset];
+    $("width").value = p.width;
+    $("depth").value = p.depth;
+    $("eaves").value = p.eaves;
+    $("shape").value = p.shape;
+    $("slopeval").value = p.val;
+    $("slopeunit").value = p.unit;
+    render();
+  });
+}
+render();
+</script>
+
+</body>
+</html>

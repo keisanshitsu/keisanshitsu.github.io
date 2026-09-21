@@ -488,6 +488,67 @@ let publishStatus = "対象外";
   }
 }
 
+// ── 3.10. 孤立したツールページの検出 ─────────────────────────────────
+// 2026-09-21 追加。9/18 に作られた T006（block-wall）は、ディスク上に揃っていて
+// テストも全て通り、canonical も OGP も JSON-LD も正しく、**ゲートは exit 0 を返した。**
+// だが docs/index.html からリンクされておらず、docs/sitemap.xml にも載っていなかった。
+//
+// つまり「配信はされるが、サイトのどこからも辿り着けないページ」を、
+// 公開可と判定していた。これは 2026-09-10 に一次情報で確認した
+// 「Google が URL を見つける経路は (1) 既知ページからのリンク (2) sitemap の送信 の2つだけ」
+// という事実に照らすと、**発見経路がゼロのページを増やす**ことに等しい。
+// 本ドクトリンの一般則「『公開した』と『見つけられる』は別である」の、
+// サイト内部版にあたる。
+//
+// 既存の検査が素通りした理由: 1 は各HTMLを個別に見て内部リンクの【解決先】が
+// 実在するかを確かめるが、**そのページ自身が誰かから指されているか**は見ていない。
+// リンクは向きを持つので、出ていくリンクを何本数えても入ってくるリンクの証拠にならない。
+//
+// 誤りの向き: docs/tools/ 配下に index.html があるものだけを対象にし、
+// 判定はトップからのリンクと sitemap の【両方】を要求する。
+// 作りかけのツールは index.html を置いた時点で ERROR になるが、
+// それは「導線を張るまで push するな」という意図どおりの向きであり、
+// 黙って孤立ページを公開する側には倒れない。
+let orphanStatus = "対象外";
+{
+  const toolsDir = join(SITE, "tools");
+  if (!existsSync(toolsDir)) {
+    orphanStatus = "対象外（docs/tools が無い）";
+  } else {
+    const slugs = readdirSync(toolsDir, { withFileTypes: true })
+      .filter((d) => d.isDirectory() && existsSync(join(toolsDir, d.name, "index.html")))
+      .map((d) => d.name);
+
+    const home = existsSync(join(SITE, "index.html"))
+      ? readFileSync(join(SITE, "index.html"), "utf8")
+      : "";
+    const sitemapPath = join(SITE, "sitemap.xml");
+    const sitemap = existsSync(sitemapPath) ? readFileSync(sitemapPath, "utf8") : "";
+
+    const problems = [];
+    for (const slug of slugs) {
+      // トップからの相対リンクは "tools/<slug>/" の形で書かれている。
+      const linked = new RegExp(`href=["']\\.?/?tools/${slug}/["']`).test(home);
+      // sitemap は絶対URL。末尾スラッシュまで含めて一致を要求する。
+      const inSitemap = new RegExp(`/tools/${slug}/<`).test(sitemap);
+      if (!linked || !inSitemap) {
+        const lack = [!linked && "トップからのリンク", !inSitemap && "sitemap への収録"]
+          .filter(Boolean).join(" と ");
+        problems.push(`${slug}（${lack} が無い）`);
+      }
+    }
+    if (problems.length)
+      err("docs/tools",
+        `サイト内のどこからも辿り着けないツールページがある: ${problems.join(" / ")}。` +
+        `Google が URL を見つける経路は「既知ページからのリンク」と「sitemap の送信」の` +
+        `2つだけなので、どちらも無いページは配信されていても発見されない` +
+        `（2026-09-18 に実際に起きた壊れ方）`);
+    orphanStatus = problems.length
+      ? `孤立 ${problems.length}件`
+      : `整合（ツール ${slugs.length}本すべてトップと sitemap に載っている）`;
+  }
+}
+
 // ── 4. 実レンダリング検証（puppeteer があるときだけ） ────────────────
 let rendered = false;
 try {
@@ -514,6 +575,7 @@ console.log(`インフラ検査: notify_human.ps1 — ${notifyStatus}`);
 console.log(`人間キューの整合: SETUP_HUMAN.md — ${queueStatus}`);
 console.log(`状態ファイルの整合: state/pipeline.json — ${stateStatus}`);
 console.log(`「公開済み」の実体: origin/main と突き合わせ — ${publishStatus}`);
+console.log(`サイト内の到達性: トップ＋sitemap と突き合わせ — ${orphanStatus}`);
 console.log(rendered
   ? "375px 実レンダリング検証: 実施"
   : "375px 実レンダリング検証: スキップ（npm i -D puppeteer で有効化）");

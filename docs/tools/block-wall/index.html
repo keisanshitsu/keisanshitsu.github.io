@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ブロック塀の計算 — ブロック数・鉄筋・控え壁と基準の確認</title>
+<meta name="description" content="塀の長さと段数を入れるだけで、必要なブロックの個数・鉄筋の本数と長さ・控え壁の本数・基礎のコンクリート量を算出します。あわせて建築基準法施行令第62条の8の各号に適合するかを条文つきで確認できます。">
+<link rel="canonical" href="https://keisanshitsu.github.io/tools/block-wall/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="くらしの計算室">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="ブロック塀の計算 — ブロック数・鉄筋・控え壁と基準の確認">
+<meta property="og:description" content="塀の長さと段数から、ブロックの個数・鉄筋・控え壁・基礎の数量を算出し、建築基準法施行令第62条の8の各号に適合するかを条文つきで確認します。">
+<meta property="og:url" content="https://keisanshitsu.github.io/tools/block-wall/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "ブロック塀の計算",
+  "description": "塀の長さと段数から、必要なブロックの個数・鉄筋の本数と長さ・控え壁の本数・基礎のコンクリート量を算出し、建築基準法施行令第62条の8の各号への適合を確認します。",
+  "url": "https://keisanshitsu.github.io/tools/block-wall/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (web browser)",
+  "inLanguage": "ja",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "くらしの計算室",
+    "url": "https://keisanshitsu.github.io/"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1b19; --muted:#6b6862;
+    --line:#e5e2dc; --card:#fff; --accent:#0f6cbd; --accent-soft:#eef5fc;
+    --ok:#1f7a45; --ok-soft:#eaf6ef; --ng:#b3261e; --ng-soft:#fdeeed;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#17181a; --fg:#e9e8e5; --muted:#a3a09a;
+           --line:#2e3033; --card:#1f2123; --accent:#6cb6f5; --accent-soft:#1b2733;
+           --ok:#5fd08a; --ok-soft:#16261d; --ng:#ff8a80; --ng-soft:#2a1a19; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  header{border-bottom:1px solid var(--line);padding:16px 0}
+  .site{font-size:.85rem;color:var(--muted);text-decoration:none}
+  h1{font-size:1.35rem;margin:28px 0 6px;line-height:1.5}
+  .sub{color:var(--muted);font-size:.92rem;margin:0 0 28px}
+  h2{font-size:1.05rem;margin:36px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
+  h3{font-size:.95rem;margin:22px 0 6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+  input,select{width:100%;padding:9px 10px;font-size:1rem;color:var(--fg);
+    background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--fg);padding:9px 14px}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:16px}
+  .fold{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+  .fold summary{cursor:pointer;font-size:.86rem;color:var(--muted)}
+  .result{margin-top:20px;border:1px solid var(--accent);background:var(--accent-soft);
+    border-radius:12px;padding:18px}
+  .big{font-size:2rem;font-weight:700;color:var(--accent);line-height:1.2;margin:2px 0 0}
+  .big small{font-size:1rem;font-weight:600;margin-left:2px}
+  .sub2{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+  .split{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:16px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .stat .k{font-size:.76rem;color:var(--muted);margin:0}
+  .stat .v{font-size:1.15rem;font-weight:700;margin:2px 0 0}
+  .verdict{margin-top:18px;border-radius:10px;padding:12px 14px;font-weight:700;font-size:1rem}
+  .verdict.ok{background:var(--ok-soft);color:var(--ok);border:1px solid var(--ok)}
+  .verdict.ng{background:var(--ng-soft);color:var(--ng);border:1px solid var(--ng)}
+  .checks{list-style:none;padding:0;margin:14px 0 0}
+  .checks li{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin-bottom:8px}
+  .checks .hd{font-size:.9rem;font-weight:600;margin:0}
+  .checks .dt{font-size:.82rem;color:var(--muted);margin:3px 0 0}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;border-radius:5px;
+    padding:1px 7px;margin-right:7px;vertical-align:2px}
+  .tag.ok{background:var(--ok-soft);color:var(--ok)}
+  .tag.ng{background:var(--ng-soft);color:var(--ng)}
+  .tag.na,.tag.info{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+  .tag.warn{background:var(--accent-soft);color:var(--accent)}
+  .tablewrap{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;white-space:nowrap}
+  th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:600}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:14px 16px;border-radius:0 8px 8px 0;font-size:.88rem;margin:24px 0}
+  .law{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;margin:14px 0;font-size:.86rem}
+  .law p{margin:0 0 6px;font-size:.86rem}
+  .law p:last-child{margin-bottom:0}
+  .formula{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:10px 14px;margin:12px 0;font-size:.9rem;overflow-x:auto;white-space:nowrap}
+  p,li{font-size:.94rem}
+  ul{padding-left:1.2em}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src li{font-size:.85rem}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:20px 0 40px;
+    color:var(--muted);font-size:.85rem}
+  footer a{color:var(--muted);margin-right:14px}
+  a{color:var(--accent)}
+  @media (max-width:400px){
+    .big{font-size:1.7rem}
+  }
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><a class="site" href="../../">← くらしの計算室</a></div></header>
+
+<main class="wrap">
+
+<h1>ブロック塀の計算</h1>
+<p class="sub">
+  塀の長さと段数から、<strong>ブロックの個数・鉄筋・控え壁・基礎の数量</strong>を出します。
+  あわせて<strong>建築基準法施行令 第62条の8 の七つの号</strong>に適合するかを、
+  条文そのものと突き合わせて確認します。
+</p>
+
+<div class="card">
+  <div class="opts" style="margin-top:0">
+    <div>
+      <label for="length">塀の長さ (mm)</label>
+      <input id="length" type="number" inputmode="numeric" value="10000" min="1" step="100">
+    </div>
+    <div>
+      <label for="courses">ブロックの段数</label>
+      <input id="courses" type="number" inputmode="numeric" value="8" min="1" step="1">
+    </div>
+    <div>
+      <label for="thickness">ブロックの厚さ</label>
+      <select id="thickness">
+        <option value="100">100mm（10cm）</option>
+        <option value="120">120mm（12cm）</option>
+        <option value="150" selected>150mm（15cm）</option>
+        <option value="190">190mm（19cm）</option>
+      </select>
+    </div>
+    <div>
+      <label for="buttress">控え壁</label>
+      <select id="buttress">
+        <option value="yes" selected>設ける</option>
+        <option value="no">設けない</option>
+      </select>
+    </div>
+  </div>
+
+  <details class="fold">
+    <summary>鉄筋・基礎・ロス率の設定を開く</summary>
+    <div class="opts">
+      <div>
+        <label for="rebar">鉄筋の呼び名</label>
+        <select id="rebar">
+          <option value="10" selected>D10（径10mm）</option>
+          <option value="13">D13（径13mm）</option>
+        </select>
+      </div>
+      <div>
+        <label for="vspacing">縦筋の間隔 (mm)</label>
+        <input id="vspacing" type="number" inputmode="numeric" value="400" min="1" step="10">
+      </div>
+      <div>
+        <label for="hspacing">横筋の間隔 (mm)</label>
+        <input id="hspacing" type="number" inputmode="numeric" value="600" min="200" step="10">
+      </div>
+      <div>
+        <label for="ftype">基礎の形状</label>
+        <select id="ftype">
+          <option value="I" selected>I 形（立上りのみ）</option>
+          <option value="invT">逆T形（両側に張り出す）</option>
+          <option value="L">L 形（片側に張り出す）</option>
+        </select>
+      </div>
+      <div>
+        <label for="fdepth">基礎の丈 (mm)</label>
+        <input id="fdepth" type="number" inputmode="numeric" value="350" min="1" step="10">
+      </div>
+      <div>
+        <label for="fembed">基礎の根入れ深さ (mm)</label>
+        <input id="fembed" type="number" inputmode="numeric" value="300" min="0" step="10">
+      </div>
+      <div>
+        <label for="frise">基礎の地上部の立ち上がり (mm)</label>
+        <input id="frise" type="number" inputmode="numeric" value="50" min="0" step="10">
+      </div>
+      <div>
+        <label for="coping">笠木の高さ (mm・無ければ0)</label>
+        <input id="coping" type="number" inputmode="numeric" value="0" min="0" step="10">
+      </div>
+      <div>
+        <label for="loss">ロス率 (%)</label>
+        <input id="loss" type="number" inputmode="decimal" value="5" min="0" step="1">
+      </div>
+    </div>
+  </details>
+
+  <div class="actions">
+    <button type="button" data-preset="low">境界の目隠し（5段・1.05m）</button>
+    <button type="button" data-preset="mid">標準的な塀（8段・1.65m）</button>
+    <button type="button" data-preset="high">高い塀（10段・2.05m）</button>
+  </div>
+</div>
+
+<div class="result" aria-live="polite">
+  <div>必要なブロックの個数（ロス込み・概算）</div>
+  <p class="big" id="blocks">— <small>個</small></p>
+  <p class="sub2" id="summary">寸法を入力してください。</p>
+
+  <div class="split">
+    <div class="stat">
+      <p class="k">塀の高さ（地盤面から）</p>
+      <p class="v" id="height">—</p>
+    </div>
+    <div class="stat">
+      <p class="k">1段あたり × 段数</p>
+      <p class="v" id="layout">—</p>
+    </div>
+    <div class="stat">
+      <p class="k">壁の面積</p>
+      <p class="v" id="area">—</p>
+    </div>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>項目</th><th>本数・個数</th><th>1本あたり</th><th>合計</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <div class="verdict" id="verdict">—</div>
+  <ul class="checks" id="checks"></ul>
+
+  <p class="sub2" id="notes"></p>
+</div>
+
+<div class="note">
+  <strong>この結果は概算です。</strong>
+  数量はブロックのモジュール寸法（1個 400mm × 200mm）から機械的に割り出したもので、
+  現場の納まり・開口・高低差・既存構造との取り合いは含んでいません。
+  適合の確認も、入力された寸法を条文の数値と突き合わせただけの<strong>形式的なもの</strong>です。
+  実際の安全性は地盤・施工・経年劣化に左右されます。
+  <strong>新設するときは特定行政庁（市区町村の建築指導課）と施工者に、
+  既存の塀が心配なときは建築士などの専門家にご確認ください。</strong>
+</div>
+
+<h2>この計算の根拠</h2>
+
+<h3>ブロック1個は「400mm × 200mm」で数える</h3>
+<p>
+  ブロック塀に使う基本形ブロックは、製品の寸法が <strong>長さ390mm・高さ190mm</strong>、
+  これに<strong>標準の目地幅10mm</strong>が加わります。
+  規格ではこの「製品寸法＋目地幅」を<strong>モデュール呼び寸法</strong>と呼び、
+  積み上がったときに1個が占める大きさがこれにあたります。
+</p>
+<div class="formula">1個が占める大きさ ＝ 400mm（390＋10） × 200mm（190＋10）</div>
+<p>
+  つまり <strong>1㎡ あたり 12.5個</strong>、<strong>1m の長さに 2.5個</strong>、
+  <strong>1段で 200mm</strong> 高くなります。段数から高さがすぐ出るのはこのためです。
+</p>
+<p>
+  この 200mm という縦のモジュールは、別の資料からも裏づけが取れます。
+  工業会の基礎の表は塀の高さを「5段＝1.15m」「6段＝1.35m」「10段＝2.15m」と書いており、
+  <span class="formula" style="display:inline-block;margin:0;padding:2px 8px">0.05（基礎の地上部）＋ 段数 × 0.20 ＋ 0.10（笠木）</span>
+  で全部の欄がぴたりと一致します。
+</p>
+
+<h3>塀の高さは「地盤面から」測る</h3>
+<p>
+  法令がいう塀の高さは、ブロックを積んだ部分だけではありません。
+  <strong>基礎の地上部の立ち上がり＋ブロック＋笠木</strong>の合計を、
+  <strong>低いほうの地盤面から</strong>測ります。
+  敷地の内と外に高低差があるときは、低いほうが基準です。
+</p>
+<p>
+  ここを取り違えると、<strong>高さの上限（2.2m）にも、厚さの分岐点（2m）にも、
+  控え壁の要否（1.2m）にも、すべて影響します。</strong>
+  本ツールが基礎の立ち上がりと笠木を別々に入力させているのはこのためです。
+</p>
+
+<h2>建築基準法施行令 第62条の8（そのまま）</h2>
+<div class="law">
+  <p>補強コンクリートブロック造の塀は、次の各号（<strong>高さ一・二メートル以下の塀にあつては、第五号及び第七号を除く。</strong>）に定めるところによらなければならない。ただし、国土交通大臣が定める基準に従つた構造計算によつて構造耐力上安全であることが確かめられた場合においては、この限りでない。</p>
+  <p>一　高さは、二・二メートル以下とすること。</p>
+  <p>二　壁の厚さは、十五センチメートル（高さ二メートル以下の塀にあつては、十センチメートル）以上とすること。</p>
+  <p>三　壁頂及び基礎には横に、壁の端部及び隅角部には縦に、それぞれ径九ミリメートル以上の鉄筋を配置すること。</p>
+  <p>四　壁内には、径九ミリメートル以上の鉄筋を縦横に八十センチメートル以下の間隔で配置すること。</p>
+  <p>五　長さ三・四メートル以下ごとに、径九ミリメートル以上の鉄筋を配置した控壁で基礎の部分において壁面から高さの五分の一以上突出したものを設けること。</p>
+  <p>六　第三号及び第四号の規定により配置する鉄筋の末端は、かぎ状に折り曲げて、縦筋にあつては壁頂及び基礎の横筋に、横筋にあつてはこれらの縦筋に、それぞれかぎ掛けして定着すること。ただし、縦筋をその径の四十倍以上基礎に定着させる場合にあつては、縦筋の末端は、基礎の横筋にかぎ掛けしないことができる。</p>
+  <p>七　基礎の丈は、三十五センチメートル以上とし、根入れの深さは三十センチメートル以上とすること。</p>
+</div>
+
+<h3>見落とされやすいのは冒頭の括弧書き</h3>
+<p>
+  この条文でいちばん読み飛ばされるのは、各号ではなく<strong>柱書きの括弧の中</strong>です。
+  <strong>高さ1.2m以下の塀には、第五号（控え壁）と第七号（基礎の丈35cm・根入れ30cm）が
+  そもそも適用されません。</strong>
+</p>
+<p>
+  そのため、境界の目隠しに使うような低い塀に「控え壁が無いから違反だ」と書かれることがありますが、
+  高さが1.2m以下なら条文上そうはなりません
+  （基礎そのものが要らないという意味ではありません。第四号までは掛かります）。
+  本ツールは1.2mを境に第五号・第七号の判定を
+  <span class="tag na">対象外</span> に切り替えます。
+</p>
+
+<h2>施行令は「最低基準」で、設計規準はもっと厳しい</h2>
+<p>
+  工業会の資料は、施行令の数値について
+  <strong>「建築基準法施行令の規定値はブロック塀に対する最低基準である」</strong>
+  とはっきり書いています。実務では日本建築学会の設計規準に沿うのが一般的で、
+  いくつかの項目は施行令より厳しくなります。
+</p>
+<div class="tablewrap">
+  <table>
+    <thead><tr><th>項目</th><th>施行令（最低基準）</th><th>設計規準（推奨）</th></tr></thead>
+    <tbody>
+      <tr><td>壁の厚さ</td><td>10cm以上（高さ2m以下）</td><td>12cm以上</td></tr>
+      <tr><td>控え壁の突き出し</td><td>高さの1/5以上</td><td>40cm以上・厚さは壁以上</td></tr>
+      <tr><td>塀の端部と控え壁</td><td>定めなし</td><td>端から80cm以下</td></tr>
+      <tr><td>横筋の間隔</td><td>80cm以下</td><td>80cm以下（通常60cm）</td></tr>
+      <tr><td>縦筋の間隔</td><td>80cm以下</td><td>高さと控え壁で40〜80cm</td></tr>
+      <tr><td>縦筋の定着</td><td>かぎ掛け（または径の40倍）</td><td>基礎に40d以上・壁頂まで1本</td></tr>
+      <tr><td>継ぎ目</td><td>定めなし</td><td>30m以内ごとに縁を切る</td></tr>
+      <tr><td>基礎の立ち上がり</td><td>定めなし</td><td>地盤面より5cm以上</td></tr>
+    </tbody>
+  </table>
+</div>
+<p>
+  本ツールは<strong>この二つを混ぜていません。</strong>
+  上の「適合の確認」は施行令だけで判定し、設計規準は
+  <span class="tag warn">推奨</span> として別に並べます。
+  混ぜてしまうと「法には適合しているのに不適合と出る」ことになり、
+  逆に判断を誤らせるからです。
+</p>
+
+<h2>既にある塀が心配なときは</h2>
+<p>
+  国土交通省が、既設の塀を所有者自身が点検するためのチェックポイントを公開しています。
+  外観で確かめる5項目と、専門家に見てもらう1項目です。
+</p>
+<div class="law">
+  <p>１．塀は高すぎないか — 塀の高さは地盤から2.2m以下か。</p>
+  <p>２．塀の厚さは十分か — 10cm以上か（高さが2m超2.2m以下の場合は15cm以上）。</p>
+  <p>３．控え壁はあるか（塀の高さが1.2m超の場合）— 塀の長さ3.4m以下ごとに、塀の高さの1/5以上突出した控え壁があるか。</p>
+  <p>４．基礎があるか — コンクリートの基礎があるか。</p>
+  <p>５．塀は健全か — 塀に傾き、ひび割れはないか。</p>
+  <p>６．塀に鉄筋は入っているか（専門家に相談）— 径9mm以上の鉄筋が縦横とも80cm間隔以下で配筋され、かぎ掛けされているか。基礎の根入れ深さは30cm以上か（塀の高さが1.2m超の場合）。</p>
+</div>
+<p>
+  <strong>ひとつでも不適合があれば危険です。</strong>
+  上の1〜5は外から見て分かりますが、6は中を見ないと分かりません。
+  ひび割れや傾きがある、鉄筋が入っているか分からない、といった場合は、
+  市区町村の建築指導課か建築士にご相談ください。
+  なお、れんが造・石造・鉄筋の入っていないブロック造の塀は
+  <strong>別の基準（施行令 第61条）</strong>で、高さは1.2m以下、控え壁は4m以下ごと、
+  根入れは20cm以上となります。
+</p>
+
+<h2>よくある質問</h2>
+
+<h3>控え壁の本数が2種類出るのはなぜですか</h3>
+<p>
+  施行令は「長さ3.4m以下ごとに」としか書いておらず、<strong>端の扱いを定めていません。</strong>
+  条文どおりに区間を3.4m以下へ割るだけなら、10mの塀で内側に2本です。
+  一方、設計規準は<strong>塀の端から80cm以下</strong>にも控え壁を求めるため、同じ10mで4本になります。
+  どちらか一方だけを見せると誤解を招くので、両方を出しています。
+</p>
+
+<h3>控え壁のブロックの個数は出ないのですか</h3>
+<p>
+  出していません。控え壁の形は長方形とは限らず（上に向かって細くする形が多い）、
+  段ごとの長さが設計で変わります。
+  <strong>根拠を示せない仮定を置いて個数を出すより、必要な本数と突き出し長さまでを
+  確かなものとして出すほうが役に立つ</strong>と考えました。
+</p>
+
+<h3>目地モルタルの量は出ませんか</h3>
+<p>
+  出していません。モルタルの必要量は配合（セメントと砂の容積比）と充填の仕方で変わりますが、
+  ブロック塀向けの配合について公的な根拠を確認できませんでした。
+  <strong>裏取りできない数値は載せない</strong>方針のため、見送っています。
+</p>
+
+<h3>設計規準の「高さの限度」や「根入れ深さの表」は使っていますか</h3>
+<p>
+  一部しか使っていません。設計規準には、基礎の形（I形・L形・逆T形）と埋め戻す土の質によって
+  高さの限度や根入れ深さが変わる表があります。
+  <strong>ただし公開されている資料からこの表を読み取ると、行によって値の数が列の数に足りず、
+  どの列の値なのかを復元できませんでした。</strong>
+  推定で埋めれば判定を増やせますが、その推定が安全側と危険側のどちらに外れるかを
+  こちらが言えない以上、載せるべきではないと判断しました。
+  高い塀を計画するときは規準書そのものか設計者にあたってください。
+</p>
+
+<h3>構造計算をすれば基準を超えられますか</h3>
+<p>
+  条文のただし書きに「国土交通大臣が定める基準に従つた構造計算によつて構造耐力上安全であることが
+  確かめられた場合においては、この限りでない」とあり、その基準が平成12年建設省告示第1355号です。
+  風圧力と地震力について計算することになります。
+  <strong>本ツールは仕様規定だけを扱い、この構造計算は行いません。</strong>
+</p>
+
+<h3>ほかの材料の数量も出せますか</h3>
+<p>
+  外まわりと内装の数量計算をそろえています。
+  屋根の面積は<a href="../roof-area/">屋根面積の計算</a>、
+  塗る量は<a href="../paint-quantity/">ペンキ・塗料の必要量</a>、
+  室内の壁は<a href="../wallpaper-quantity/">壁紙・クロスの必要量</a>と
+  <a href="../gypsum-board-quantity/">石膏ボードの必要枚数</a>で計算できます。
+</p>
+
+<h2>出典</h2>
+<ul class="src">
+  <li>建築基準法施行令 第62条の8（塀）— e-Gov 法令検索の法令APIから条文を取得
+    <a href="https://laws.e-gov.go.jp/document?lawid=325CO0000000338" rel="nofollow noopener" target="_blank">laws.e-gov.go.jp</a>。
+    高さ2.2m以下・厚さ・鉄筋径9mm・間隔80cm・控壁3.4m・基礎の丈35cmと根入れ30cm、
+    および高さ1.2m以下での第五号・第七号の適用除外の根拠</li>
+  <li>国土交通省 住宅局建築指導課「建築物の既設の塀の安全点検について」（平成30年6月21日 国住指第1130号）
+    <a href="https://www.mlit.go.jp/common/001239762.pdf" rel="nofollow noopener" target="_blank">mlit.go.jp (PDF)</a>
+    — 別紙1「ブロック塀の点検のチェックポイント」、および別紙2に再掲された
+    施行令 第61条・第62条の6・第62条の8 の条文。組積造の塀の基準もここから</li>
+  <li>一般社団法人 全国建築コンクリートブロック工業会「設計者のためのCB塀」
+    <a href="https://www.jcba-jp.com/useful/" rel="nofollow noopener" target="_blank">jcba-jp.com</a>
+    — 基本形ブロックの寸法（長さ390mm・高さ190mm・標準目地幅10mm）、
+    日本建築学会「コンクリートブロック塀設計規準」から抜粋された推奨値
+    （壁厚12cm以上、控え壁の突き出し40cm以上、端部80cm以下、縦筋の間隔、
+    横筋80cm以下・通常60cm、縦筋の定着40d、基礎の張り出し寸法、
+    エキスパンションジョイント30m以内、基礎は地盤面より5cm以上立ち上げ）</li>
+  <li>平成12年建設省告示第1355号（補強コンクリートブロック造の塀の構造計算の基準）
+    <a href="https://www.mlit.go.jp/notice/noticedata/pdf/201703/00006447.pdf" rel="nofollow noopener" target="_blank">mlit.go.jp (PDF)</a>
+    — 施行令 第62条の8 ただし書の内容。本ツールは扱いません</li>
+  <li>計算式そのものは上記の数値から機械的に導いたものです。
+    導出は<a href="./calc.js">計算コード</a>のコメントに、
+    境界値の確認は<a href="./calc.test.mjs">テスト</a>に残してあります</li>
+</ul>
+<p class="src">最終確認日: 2026年9月18日</p>
+
+</main>
+
+<footer class="wrap">
+  <a href="../../">トップ</a>
+  <a href="../../privacy.html">プライバシーポリシー</a>
+  <a href="../../contact.html">お問い合わせ</a>
+  <p>&copy; 2026 くらしの計算室</p>
+</footer>
+
+<script type="module">
+import { calculate } from "./calc.js";
+
+const PRESETS = {
+  low:  { length: 6000,  courses: 5,  thickness: "120", buttress: "no",  coping: 0 },
+  mid:  { length: 10000, courses: 8,  thickness: "150", buttress: "yes", coping: 0 },
+  high: { length: 14000, courses: 10, thickness: "150", buttress: "yes", coping: 0 },
+};
+
+const $ = (id) => document.getElementById(id);
+const fields = ["length", "courses", "thickness", "buttress", "rebar", "vspacing",
+  "hspacing", "ftype", "fdepth", "fembed", "frise", "coping", "loss"];
+
+const TAGS = { ok: "適合", ng: "不適合", na: "対象外", info: "要確認", warn: "推奨" };
+
+function render() {
+  const res = calculate({
+    lengthMm: Number($("length").value),
+    courses: Number($("courses").value),
+    thicknessMm: Number($("thickness").value),
+    footingRiseMm: Number($("frise").value),
+    copingMm: Number($("coping").value),
+    hasButtress: $("buttress").value === "yes",
+    rebarDiaMm: Number($("rebar").value),
+    vSpacingMm: Number($("vspacing").value),
+    hSpacingMm: Number($("hspacing").value),
+    footingType: $("ftype").value,
+    footingDepthMm: Number($("fdepth").value),
+    footingEmbedMm: Number($("fembed").value),
+    lossPercent: Number($("loss").value),
+  });
+
+  if (!res.ok) {
+    $("blocks").innerHTML = '— <small>個</small>';
+    for (const id of ["height", "layout", "area"]) $(id).textContent = "—";
+    $("rows").innerHTML = "";
+    $("checks").innerHTML = "";
+    $("verdict").textContent = "—";
+    $("verdict").className = "verdict";
+    $("summary").textContent = res.errors[0];
+    $("notes").textContent = "";
+    return;
+  }
+
+  const d = res.dimensions;
+  $("blocks").innerHTML = `${res.blocks.withLoss.toLocaleString("ja-JP")} <small>個</small>`;
+  $("height").textContent = `${d.heightM} m`;
+  $("layout").textContent = `${res.blocks.perCourse} 個 × ${d.courses} 段`;
+  $("area").textContent = `${d.wallAreaM2} ㎡`;
+  $("summary").textContent =
+    `長さ ${d.lengthM}m ／ 厚さ ${d.thicknessMm}mm ／ ` +
+    `ロスを除くと ${res.blocks.total.toLocaleString("ja-JP")}個（ロス ${res.blocks.lossPercent}%）`;
+
+  const b = res.buttress;
+  const r = res.rebar;
+  const f = res.footing;
+  const rows = [
+    ["ブロック（本体）", `${res.blocks.perCourse} × ${d.courses}`, "—", `${res.blocks.total.toLocaleString("ja-JP")} 個`],
+    ["縦筋（D" + r.diaMm + "・定着40d込み）", `${r.vCount} 本`, `${r.vEachM} m`, `${r.vTotalM} m`],
+    ["横筋（D" + r.diaMm + "・" + r.hEveryCourses + "段ごと）", `${r.hCount} 本`, `${r.hEachM} m`, `${r.hTotalM} m`],
+    ["鉄筋の合計", "—", "—", `${r.totalM} m`],
+  ];
+  if (b.required || b.count > 0) {
+    rows.push(["控え壁（施行令どおりなら）", `${b.countByRei} 本`, `突出 ${b.projectionReiMm} mm 以上`, "—"]);
+    rows.push(["控え壁（設計規準に沿うなら）", `${b.countByGakkai} 本`, `突出 ${b.projectionGakkaiMm} mm 以上`, "—"]);
+  }
+  rows.push([`基礎（${f.typeLabel}）`, `幅 ${f.baseWidthMm} mm`, `断面 ${f.sectionM2} ㎡`, `${f.volumeM3} ㎥`]);
+  $("rows").innerHTML = rows.map(([k, n, each, tot]) =>
+    `<tr><td>${k}</td><td>${n}</td><td>${each}</td><td>${tot}</td></tr>`).join("");
+
+  const ok = res.ngCount === 0;
+  $("verdict").className = `verdict ${ok ? "ok" : "ng"}`;
+  $("verdict").textContent = ok
+    ? "施行令 第62条の8 の各号に適合しています（入力した寸法の範囲で）"
+    : `施行令 第62条の8 に適合しない項目が ${res.ngCount} 件あります`;
+
+  const item = (status, title, detail) =>
+    `<li><p class="hd"><span class="tag ${status}">${TAGS[status]}</span>${title}</p>` +
+    `<p class="dt">${detail}</p></li>`;
+  $("checks").innerHTML =
+    res.checks.map((c) => item(c.status, `第${c.no}号　${c.title}`, c.detail)).join("") +
+    res.advice.map((a) => item(a.status === "ok" ? "ok" : "warn", `設計規準　${a.title}`, a.detail)).join("");
+
+  $("notes").textContent = res.notes.join(" ");
+}
+
+for (const id of fields) {
+  const el = $(id);
+  el.addEventListener("input", render);
+  el.addEventListener("change", render);
+}
+for (const btn of document.querySelectorAll("[data-preset]")) {
+  btn.addEventListener("click", () => {
+    const p = PRESETS[btn.dataset.preset];
+    $("length").value = p.length;
+    $("courses").value = p.courses;
+    $("thickness").value = p.thickness;
+    $("buttress").value = p.buttress;
+    $("coping").value = p.coping;
+    render();
+  });
+}
+render();
+</script>
+
+</body>
+</html>

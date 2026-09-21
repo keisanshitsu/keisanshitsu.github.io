@@ -17,6 +17,19 @@ logs/
 # リポジトリは public なので入れない。判定結果の要約は decisions.md 側に残す。
 state/notify_receipt.json
 
+# 一次情報の取得作業で落とす一時ファイル（2026-09-21 追加）。
+# 法令XMLやPDFは出典URLを pipeline.json の basis に記録してあり、いつでも取り直せる。
+# リポジトリに十数MBのバイナリを積む理由が無く、OneDrive 配下では同期コストにもなる。
+# ⚠ ただし「取り直せる」は出典URLが生きているあいだの話なので、
+# 数値は必ず basis の values に【書き写して】おくこと。ファイルを残すことで代用しない。
+tmp_src/
+tmp_*.xml
+tmp_*.html
+tmp_*.js
+tmp_*.py
+shikourei.xml
+mhlw_tmp.html
+
 # OS / エディタ
 Thumbs.db
 desktop.ini

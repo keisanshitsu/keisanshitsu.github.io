@@ -166,18 +166,19 @@
     "published_url": "https://keisanshitsu.github.io/",
     "published_on": "2026-09-09",
     "org_created_at": "2026-09-09T13:07:08Z",
-    "verified_live_on": "2026-09-16",
-    "verified_live_note": "8URL すべてを GET して 200 と <title> を実測した。/tools/gypsum-board-quantity/ は同じ朝の最初の観測では 404 で、push 後に 200 へ変わった。⚠ push から配信反映までに数分の遅れがある（本日実測）。したがって push 直後の1回の GET が 404 でも失敗とは限らないが、逆に『push したから公開された』と観測せずに決めつけてもいけない",
+    "verified_live_on": "2026-09-21",
+    "verified_live_note": "10URL すべてを GET して 200 と <title> を実測した（トップ・ツール5本・privacy・contact・sitemap・robots）。/tools/block-wall/ は push 直後は 404 で、約40秒後に 200 へ変わった。さらに本番の配信物で発見経路2本（sitemap への収録・トップからのリンク）を確認している。⚠ これはサイト【内部】の到達性であって、Google がこのホストに到達する経路ではない。外部からの発見経路は依然0本であり、sitemap 未送信は47日目である。混同しないこと。",
     "verified_live": [
       "/ 200",
       "/tools/wallpaper-quantity/ 200",
       "/tools/paint-quantity/ 200",
-      "/tools/gypsum-board-quantity/ 200（2026-09-16 に追加。同日の push 前は 404 だった）",
+      "/tools/gypsum-board-quantity/ 200",
+      "/tools/roof-area/ 200（2026-09-21 に初めて実測。公開自体は 9/17 の push で成立していた）",
+      "/tools/block-wall/ 200（2026-09-21 に追加。同日の push 前は 404 だった）",
       "/privacy.html 200",
       "/contact.html 200",
       "/robots.txt 200",
-      "/sitemap.xml 200",
-      "docs の外（CLAUDE.md・state/・scripts/）は 404 で非配信であることを確認"
+      "/sitemap.xml 200（block-wall の収録を本番の配信物で確認）"
     ],
     "human_steps_remaining": 0,
     "days_blocked": 33,
@@ -712,8 +713,7 @@
       "score_was_retroactive": "⚠ 採点は 2026-09-21 に【事後】で付けた。実装は 9/18 のセッションで、そのセッションは research/niches.md にも pipeline.json にも1行も残さずに落ちている。本ドクトリンは『採点 → 着手』の順を定めており、今回はそれを踏んでいない。結果的に AND条件を満たしたが、それは運であって手順の正しさではない。2点台のテーマだったら、完成したツールを捨てるか基準を曲げるかの二択になっていた。",
       "built_on": "2026-09-18",
       "recovered_on": "2026-09-21",
-      "published_on": null,
-      "published_on_note": "⚠ ここは push して実際に GET 200 を見た日だけを入れる。書き終えた日を入れてはならない（publication_record_defect_2026-09-15 の教訓。verify.mjs 3.9 が origin/main と突き合わせて ERROR で止める）。",
+      "published_on": "2026-09-21",
       "gate_passed": {
         "verify": true,
         "assertions": 114,
@@ -791,7 +791,8 @@
         "score_note": "収益導線は4/5。在庫5本のうち3点以上は T005 に次いで2本目。実在案件と単価（2026-09-21 に Affisearch のカテゴリ一覧で確認）: ガーデンプラス（TGアフィリエイト）5,000円・成果条件は現場調査フォームの送信完了 / 外装工事ヒカーク（レントラックス）7,040円・新規見積もり依頼の完了 / お庭マスター（レントラックス）1,738円 / 庭革命（afb）845円税込 / お庭マスター（バナーブリッジ）525円。上位2件は登録型で、CLAUDE.md の逆算前提（単価1,500円）の3.3〜4.7倍にあたる。",
         "caveat": "⚠ 導線は利用者の半分にしか効かない。『既存の塀が危ないかもしれない』層は見積もりへ向かうが、『自分で積む』DIY層に見積もり案件は刺さらず、そちらは物販しかない。単価だけを見て T005 と同列に扱わないこと。5点ではなく4点にしたのはこのため"
       },
-      "published_url": "https://keisanshitsu.github.io/tools/block-wall/"
+      "published_url": "https://keisanshitsu.github.io/tools/block-wall/",
+      "published_verified_live": "2026-09-21 に GET 200・title=『ブロック塀の計算 — ブロック数・鉄筋・控え壁と基準の確認』を実測。push 直後の1回目と2回目は 404 で、3回目（約40秒後）に 200 へ変わった。⚠ push から配信反映まで遅れがあるので、1回の 404 を失敗と決めつけないこと。逆に『push したから公開された』と観測せずに決めつけてもいけない（9/16 の教訓）。あわせて本番の配信物そのもので、sitemap.xml に /tools/block-wall/ が載っていることと、トップに href=\"tools/block-wall/\" が存在することを確認した（＝発見経路2本が【ローカルではなく本番で】成立している）。"
     }
   ],
   "backlog": [

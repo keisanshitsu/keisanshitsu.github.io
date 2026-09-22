@@ -549,6 +549,39 @@ let orphanStatus = "対象外";
   }
 }
 
+// ── 3.11. インフラのテスト（IndexNow の送信） ────────────────────────
+// 2026-09-22 追加。submit_indexnow.mjs は「発見経路が開いたか」を判定する。
+// これは 3.5 の fetch_metrics.py と同じ種類のスクリプト——つまり
+// **意思決定の入力そのもの**であり、2026-09-09 の教訓に照らしてテストが要る。
+//
+// とくに固定したいのは 202 の扱いである。IndexNow の 202 は仕様上
+// "URL received. IndexNow key validation pending." であって、鍵の検証すら
+// 終わっていない。これを 200 と同じ「成功」に畳むと「送った＝届いた」と
+// 記録してしまい、**私を黙らせる向き**に誤る（9/08 の判定器と同じ壊れ方）。
+//
+// あわせて pipeline.json の鍵と docs/<key>.txt の中身の一致も検査する。
+// 片方だけ書き換えると本番は 403 を返すが、その原因はログからは読み取れない。
+let indexnowStatus = "未実行";
+{
+  const t = join(ROOT, "scripts", "submit_indexnow.test.mjs");
+  const rel = relative(ROOT, t).replaceAll("\\", "/");
+  if (!existsSync(t)) {
+    err(rel, "IndexNow のテストが見つからない");
+    indexnowStatus = "欠落";
+  } else {
+    const r = spawnSync(process.execPath, [t], { cwd: ROOT, encoding: "utf8" });
+    const out = `${r.stdout ?? ""}${r.stderr ?? ""}`;
+    const m = out.match(/(\d+)\/(\d+) PASS/);
+    if (r.status === 0) {
+      indexnowStatus = `アサーション ${m ? m[2] : "?"}件`;
+    } else {
+      const fails = out.split(/\r?\n/).filter((l) => l.includes("[FAIL]")).map((l) => l.trim());
+      err(rel, `失敗: ${fails.join(" / ") || out.trim().slice(0, 300)}`);
+      indexnowStatus = `失敗 ${fails.length || 1}件`;
+    }
+  }
+}
+
 // ── 4. 実レンダリング検証（puppeteer があるときだけ） ────────────────
 let rendered = false;
 try {
@@ -572,6 +605,7 @@ try {
 console.log(`検査: HTML ${pages.length}枚 / ツール ${toolDirs.length}本 / アサーション ${assertions}件`);
 console.log(`インフラ検査: fetch_metrics.py — ${infraStatus}`);
 console.log(`インフラ検査: notify_human.ps1 — ${notifyStatus}`);
+console.log(`インフラ検査: submit_indexnow.mjs — ${indexnowStatus}`);
 console.log(`人間キューの整合: SETUP_HUMAN.md — ${queueStatus}`);
 console.log(`状態ファイルの整合: state/pipeline.json — ${stateStatus}`);
 console.log(`「公開済み」の実体: origin/main と突き合わせ — ${publishStatus}`);

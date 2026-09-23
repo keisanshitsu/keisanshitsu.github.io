@@ -64,6 +64,22 @@ export function partitionByHost(urls, host) {
   return { same, other };
 }
 
+// --probe 用。送るのはトップ1件だけにする。
+//
+// なぜ1件か（2026-09-23）: probe の目的は索引の催促ではなく、
+// **鍵が検証済みかどうかを応答コードから読むこと**である。仕様上
+// 200 = "URL submitted successfully"（鍵は検証済み）、
+// 202 = "URL received. IndexNow key validation pending."。
+// そして鍵の検証は "search engines will crawl the key file to verify ownership" で行われる。
+// つまり 200 に変われば、**参加エンジンが当ホストへ実際に取りに来た**ことの証拠になる。
+//   一次情報: https://www.indexnow.org/documentation
+// 変更の無いURLを毎日全件送るのは仕様上スパム扱い（429）に向かう行為なので、
+// 観測のための送信は最小の1件に絞る。
+export function selectProbeUrls(urls, origin) {
+  const hit = urls.find((u) => u === origin || u === `${origin}/`);
+  return hit ? [hit] : urls.slice(0, 1);
+}
+
 export function buildPayload({ host, key, keyLocation, urlList }) {
   const body = { host, key, urlList };
   // keyLocation はホスト直下に置いた場合は不要。空文字を送ると 403 の原因になる。
@@ -116,6 +132,7 @@ async function verifyKeyFileLive(origin, key) {
 
 async function main() {
   const dryRun = process.argv.includes("--dry-run");
+  const probe = process.argv.includes("--probe");
   const pipeline = JSON.parse(readFileSync(join(ROOT, "state", "pipeline.json"), "utf8"));
 
   const origin = pipeline.site?.published_url;
@@ -133,13 +150,15 @@ async function main() {
 
   const host = hostOf(origin);
   const xml = readFileSync(join(ROOT, "docs", "sitemap.xml"), "utf8");
-  const { same: urlList, other } = partitionByHost(urlsFromSitemap(xml), host);
-  if (urlList.length === 0) throw new Error("sitemap.xml から送信対象のURLが取れない");
+  const { same: allUrls, other } = partitionByHost(urlsFromSitemap(xml), host);
+  if (allUrls.length === 0) throw new Error("sitemap.xml から送信対象のURLが取れない");
+  const urlList = probe ? selectProbeUrls(allUrls, origin.replace(/\/$/, "")) : allUrls;
 
   const result = {
     ran_at: new Date().toISOString(),
     endpoint: ENDPOINT,
     host,
+    mode: probe ? "probe（鍵の検証状態を読むための最小送信）" : "full",
     url_count: urlList.length,
     urls: urlList,
     skipped_other_host: other,

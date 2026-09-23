@@ -13,7 +13,7 @@ import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   validateKey, hostOf, urlsFromSitemap, partitionByHost,
-  buildPayload, classifyResponse, PROVES,
+  buildPayload, classifyResponse, selectProbeUrls, PROVES,
 } from "./submit_indexnow.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -61,6 +61,23 @@ eq("E3 202 も accepted ではある", classifyResponse(202).accepted, true);
 eq("E4 403 は不受理", classifyResponse(403).accepted, false);
 eq("E5 422 は不受理", classifyResponse(422).accepted, false);
 eq("E6 未知コードは不受理側へ倒す", classifyResponse(500).accepted, false);
+
+// ── probe の送信対象（2026-09-23 追加） ──
+// probe は「鍵が検証されたか」を応答コードから読むためのもので、催促ではない。
+// 変更の無いURLを毎日全件送るのは仕様上スパム（429）へ向かう行為なので1件に絞る。
+{
+  const urls = [
+    "https://keisanshitsu.github.io/",
+    "https://keisanshitsu.github.io/tools/roof-area/",
+    "https://keisanshitsu.github.io/tools/block-wall/",
+  ];
+  eq("H1 probe はトップ1件だけを選ぶ",
+    selectProbeUrls(urls, "https://keisanshitsu.github.io"),
+    ["https://keisanshitsu.github.io/"]);
+  eq("H2 送信件数は必ず1件", selectProbeUrls(urls, "https://keisanshitsu.github.io").length, 1);
+  eq("H3 トップが sitemap に無くても1件に絞る（全件送りに化けない）",
+    selectProbeUrls(urls.slice(1), "https://other.example").length, 1);
+}
 
 // ── 「受理」を「索引」と読み替えさせない ──
 eq("F1 索引の証明ではない", PROVES.proves_indexed, false);

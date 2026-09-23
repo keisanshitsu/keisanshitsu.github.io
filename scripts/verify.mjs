@@ -582,6 +582,37 @@ let indexnowStatus = "未実行";
   }
 }
 
+// ── 3.12. インフラのテスト（索引状態の測定） ─────────────────────────
+// 2026-09-23 追加。probe_index.mjs は「非Googleの検索エンジンが当サイトを
+// 索引したか」を判定する。これも意思決定の入力であり（保留の解除条件(b)を
+// 判定するのはこのスクリプトである）、テストが要る。
+//
+// 固定したいのは **対照実験の扱い**である。索引状態の測定は 9/10・9/12・9/23 と
+// 3回壊れており、壊れ方はいつも同じ——HTTP 200 が返り、結果らしき HTML も返るが、
+// クエリと無関係。件数だけを見る判定器はこれを「索引されていない」と読む。
+// 誤りの向きが悪い（私を諦めさせる側）ので、detector_broken と not_found を
+// 別の値として保つことをテストで縛る。
+let probeStatus = "未実行";
+{
+  const t = join(ROOT, "scripts", "probe_index.test.mjs");
+  const rel = relative(ROOT, t).replaceAll("\\", "/");
+  if (!existsSync(t)) {
+    err(rel, "索引プローブのテストが見つからない");
+    probeStatus = "欠落";
+  } else {
+    const r = spawnSync(process.execPath, [t], { cwd: ROOT, encoding: "utf8" });
+    const out = `${r.stdout ?? ""}${r.stderr ?? ""}`;
+    const m = out.match(/(\d+)\/(\d+) PASS/);
+    if (r.status === 0) {
+      probeStatus = `アサーション ${m ? m[2] : "?"}件`;
+    } else {
+      const fails = out.split(/\r?\n/).filter((l) => l.includes("[FAIL]")).map((l) => l.trim());
+      err(rel, `失敗: ${fails.join(" / ") || out.trim().slice(0, 300)}`);
+      probeStatus = `失敗 ${fails.length || 1}件`;
+    }
+  }
+}
+
 // ── 4. 実レンダリング検証（puppeteer があるときだけ） ────────────────
 let rendered = false;
 try {
@@ -606,6 +637,7 @@ console.log(`検査: HTML ${pages.length}枚 / ツール ${toolDirs.length}本 /
 console.log(`インフラ検査: fetch_metrics.py — ${infraStatus}`);
 console.log(`インフラ検査: notify_human.ps1 — ${notifyStatus}`);
 console.log(`インフラ検査: submit_indexnow.mjs — ${indexnowStatus}`);
+console.log(`インフラ検査: probe_index.mjs — ${probeStatus}`);
 console.log(`人間キューの整合: SETUP_HUMAN.md — ${queueStatus}`);
 console.log(`状態ファイルの整合: state/pipeline.json — ${stateStatus}`);
 console.log(`「公開済み」の実体: origin/main と突き合わせ — ${publishStatus}`);

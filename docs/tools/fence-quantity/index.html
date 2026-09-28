@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>フェンスの枚数・柱の本数の計算 — コーナー・強風・ブロック上の高さに対応</title>
+<meta name="description" content="フェンスを張る辺の長さを入れるだけで、アルミフェンス本体の枚数・切詰め寸法・柱の本数・連結とコーナーの箇所数を算出します。強風地域の柱間隔1000mmと、ブロック塀の上に建てるときの総高さ2.2mも、メーカーの施工説明書を出典に確認できます。">
+<link rel="canonical" href="https://keisanshitsu.github.io/tools/fence-quantity/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="くらしの計算室">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="フェンスの枚数・柱の本数の計算 — コーナー・強風・ブロック上の高さに対応">
+<meta property="og:description" content="辺の長さから、フェンス本体の枚数・切詰め寸法・柱の本数・コーナーの箇所数を算出。強風時の柱間隔とブロック上の総高さもメーカー施工説明書を出典に確認します。">
+<meta property="og:url" content="https://keisanshitsu.github.io/tools/fence-quantity/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "フェンスの枚数・柱の本数の計算",
+  "description": "フェンスを張る辺の長さから、アルミフェンス本体の枚数・切詰め寸法・柱の本数・連結とコーナーの箇所数を算出し、強風時の柱間隔とブロック上の総高さを確認します。",
+  "url": "https://keisanshitsu.github.io/tools/fence-quantity/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (web browser)",
+  "inLanguage": "ja",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "くらしの計算室",
+    "url": "https://keisanshitsu.github.io/"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1b19; --muted:#6b6862;
+    --line:#e5e2dc; --card:#fff; --accent:#0f6cbd; --accent-soft:#eef5fc;
+    --ok:#1f7a45; --ok-soft:#eaf6ef; --ng:#b3261e; --ng-soft:#fdeeed;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#17181a; --fg:#e9e8e5; --muted:#a3a09a;
+           --line:#2e3033; --card:#1f2123; --accent:#6cb6f5; --accent-soft:#1b2733;
+           --ok:#5fd08a; --ok-soft:#16261d; --ng:#ff8a80; --ng-soft:#2a1a19; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  header{border-bottom:1px solid var(--line);padding:16px 0}
+  .site{font-size:.85rem;color:var(--muted);text-decoration:none}
+  h1{font-size:1.35rem;margin:28px 0 6px;line-height:1.5}
+  .sub{color:var(--muted);font-size:.92rem;margin:0 0 28px}
+  h2{font-size:1.05rem;margin:36px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
+  h3{font-size:.95rem;margin:22px 0 6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+  input,select{width:100%;padding:9px 10px;font-size:1rem;color:var(--fg);
+    background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--fg);padding:9px 14px}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:16px}
+  .fold{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+  .fold summary{cursor:pointer;font-size:.86rem;color:var(--muted)}
+  .result{margin-top:20px;border:1px solid var(--accent);background:var(--accent-soft);
+    border-radius:12px;padding:18px}
+  .big{font-size:2rem;font-weight:700;color:var(--accent);line-height:1.2;margin:2px 0 0}
+  .big small{font-size:1rem;font-weight:600;margin-left:2px}
+  .sub2{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+  .split{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:16px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .stat .k{font-size:.76rem;color:var(--muted);margin:0}
+  .stat .v{font-size:1.15rem;font-weight:700;margin:2px 0 0}
+  .checks{list-style:none;padding:0;margin:14px 0 0}
+  .checks li{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin-bottom:8px}
+  .checks .hd{font-size:.9rem;font-weight:600;margin:0}
+  .checks .dt{font-size:.82rem;color:var(--muted);margin:3px 0 0}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;border-radius:5px;
+    padding:1px 7px;margin-right:7px;vertical-align:2px}
+  .tag.ok{background:var(--ok-soft);color:var(--ok)}
+  .tag.ng{background:var(--ng-soft);color:var(--ng)}
+  .tag.info{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+  .tablewrap{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;white-space:nowrap}
+  th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:600}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:14px 16px;border-radius:0 8px 8px 0;font-size:.88rem;margin:24px 0}
+  .law{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;margin:14px 0;font-size:.86rem}
+  .law p{margin:0 0 6px;font-size:.86rem}
+  .law p:last-child{margin-bottom:0}
+  .formula{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:10px 14px;margin:12px 0;font-size:.9rem;overflow-x:auto;white-space:nowrap}
+  p,li{font-size:.94rem}
+  ul{padding-left:1.2em}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src li{font-size:.85rem;overflow-wrap:anywhere}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:20px 0 40px;
+    color:var(--muted);font-size:.85rem}
+  footer a{color:var(--muted);margin-right:14px}
+  a{color:var(--accent)}
+  @media (max-width:400px){
+    .big{font-size:1.7rem}
+  }
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><a class="site" href="../../">← くらしの計算室</a></div></header>
+
+<main class="wrap">
+
+<h1>フェンスの枚数・柱の本数の計算</h1>
+<p class="sub">
+  フェンスを張る辺の長さを入れると、<strong>本体の枚数・切詰め寸法・柱の本数・コーナーの箇所数</strong>を出します。
+  強風地域の<strong>柱間隔1000mm</strong>と、ブロック塀の上に建てるときの<strong>総高さ2.2m</strong>も、
+  メーカーの施工説明書を出典に確認します。
+</p>
+
+<div class="card">
+  <div class="opts" style="margin-top:0">
+    <div style="grid-column:1/-1">
+      <label for="sides">辺の長さ (m・カンマか空白で区切る。L字なら2つ、コの字なら3つ)</label>
+      <input id="sides" type="text" inputmode="decimal" value="10.5, 6.3, 10.5" autocomplete="off">
+    </div>
+    <div>
+      <label for="shape">辺のつながり方</label>
+      <select id="shape">
+        <option value="open" selected>端が2か所ある（直線・L字・コの字）</option>
+        <option value="closed">ぐるりと囲う（端がない）</option>
+      </select>
+    </div>
+    <div>
+      <label for="wind">柱間隔</label>
+      <select id="wind">
+        <option value="2000" selected>標準（2000mm以下）</option>
+        <option value="1000">強風地域・H1400（1000mm以下）</option>
+        <option value="custom">製品の説明書の値を入れる</option>
+      </select>
+    </div>
+    <div>
+      <label for="fh">フェンスの高さ (mm・任意)</label>
+      <input id="fh" type="number" inputmode="numeric" value="" min="0" step="100" placeholder="例: 1000">
+    </div>
+    <div>
+      <label for="bh">下のブロック塀の高さ (mm・地面に直接なら0)</label>
+      <input id="bh" type="number" inputmode="numeric" value="0" min="0" step="100">
+    </div>
+  </div>
+
+  <details class="fold">
+    <summary>パネル幅・柱間隔を製品に合わせる</summary>
+    <div class="opts">
+      <div>
+        <label for="pw">本体（パネル）の幅 (mm)</label>
+        <input id="pw" type="number" inputmode="numeric" value="2000" min="500" max="4000" step="10">
+      </div>
+      <div>
+        <label for="sp">柱間隔の上限 (mm)</label>
+        <input id="sp" type="number" inputmode="numeric" value="2000" min="300" max="4000" step="10">
+      </div>
+    </div>
+  </details>
+
+  <div class="actions">
+    <button type="button" data-preset="line">直線（境界 10m）</button>
+    <button type="button" data-preset="L">L字（8m＋5m）</button>
+    <button type="button" data-preset="U">コの字（10.5・6.3・10.5m）</button>
+    <button type="button" data-preset="block">ブロック3段の上に H1000</button>
+  </div>
+</div>
+
+<div class="result" aria-live="polite">
+  <div>必要な柱の本数（概算）</div>
+  <p class="big" id="posts">— <small>本</small></p>
+  <p class="sub2" id="summary">辺の長さを入力してください。</p>
+
+  <div class="split">
+    <div class="stat">
+      <p class="k">フェンス本体</p>
+      <p class="v" id="panels">—</p>
+    </div>
+    <div class="stat">
+      <p class="k">うち切詰めるもの</p>
+      <p class="v" id="cuts">—</p>
+    </div>
+    <div class="stat">
+      <p class="k">連結 ／ コーナー ／ 端部</p>
+      <p class="v" id="places">—</p>
+    </div>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>辺</th><th>長さ</th><th>本体</th><th>切詰め寸法</th><th>柱</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <ul class="checks" id="checks"></ul>
+  <p class="sub2" id="notes"></p>
+</div>
+
+<div class="note">
+  <strong>この結果は概算です。</strong>
+  柱の規則は<strong>LIXIL の自在柱式フェンスの施工説明書</strong>に基づく既定値で、
+  他社・他製品では値が異なることがあります。門扉や機能門柱が入る場所は、その幅を辺の長さから差し引いてください。
+  部品の品番・梱包数、柱の埋込み深さ、基礎の寸法は製品ごとに違うため出していません。
+  <strong>発注の前に、採用する製品の施工説明書と施工業者にご確認ください。</strong>
+  既存のブロック塀の上に建てる場合や風の強い場所では、塀の安全性について
+  <strong>施工業者や建築士などの専門家に最終判断を仰いでください。</strong>
+</div>
+
+<h2>この計算の根拠</h2>
+
+<h3>柱は「連結部と端部ごとに1本」、コーナーは2本</h3>
+<p>
+  自在柱式のアルミフェンスは、本体（パネル）の<strong>連結部と端部の近くに柱を立て</strong>、
+  そこへ本体を固定します。LIXIL の施工説明書は次のように定めています。
+</p>
+<div class="law">
+  <p>柱間隔　2000mm 以下</p>
+  <p>柱位置　本体の連結部・端部より 300mm 以下</p>
+  <p>コーナー部は柱２本建てとして施工してください。</p>
+</div>
+<p>
+  コーナーを柱2本で納めるということは、<strong>それぞれの辺が両端に自分の柱を持つ</strong>ということです。
+  そのため辺ごとに独立に数えて足し合わせられます。本体幅が2000mmで柱間隔も2000mmなら、次の式になります。
+</p>
+<div class="formula">柱の本数 ＝ 本体の枚数 ＋ 辺の数</div>
+<p>
+  販売店の解説でも同じ式が使われており、本ツールの既定条件と一致します。
+</p>
+
+<h3>強風地域・H1400 では柱が倍近くになる</h3>
+<div class="law">
+  <p>H1400 および風当りの強い場所にフェンスを設置する場合は、柱の間隔を 1000mm 以内で施工してください。</p>
+</div>
+<p>
+  本体は2000mm幅のままなので、<strong>1枚ごとに中間柱が1本ずつ増えます</strong>。
+  10mの直線なら標準で6本のところ、11本になります。
+  本ツールは1辺ごとに次のように数えます。
+</p>
+<div class="formula">柱 ＝ 1 ＋ Σ（各本体の長さ ÷ 柱間隔 を切り上げ）</div>
+
+<h3>端の1枚は切詰める</h3>
+<p>
+  辺の長さが本体幅で割り切れないとき、最後の1枚を現場で切詰めます。
+  本ツールは<strong>切詰め後の寸法</strong>を辺ごとに表示します。
+  ただし切詰められる位置はデザイン（格子・ルーバーなど）によって一定のピッチに限られることがあり、
+  その寸法は製品の説明書の表で確認する必要があります。
+</p>
+
+<h3>少なく数えないようにしている</h3>
+<p>
+  説明書は柱を連結部・端部から<strong>300mm以内</strong>に置くことを許しているので、
+  短い端材が出る辺では、柱を1本減らせる配置がありえます。
+  本ツールはその詰め方をせず、<strong>連結部と端部の真上に1本ずつ</strong>置く前提で数えます。
+  柱が足りないと施工当日に作業が止まりますが、余った柱は流用や返品の相談ができるためです。
+</p>
+
+<h2>ブロック塀の上に建てるとき</h2>
+<p>
+  2.2m という数字は二つの場所に出てきますが、<strong>意味が違います。</strong>
+</p>
+<div class="tablewrap">
+  <table>
+    <thead><tr><th>何の高さか</th><th>上限</th><th>根拠</th></tr></thead>
+    <tbody>
+      <tr><td>ブロック塀そのもの</td><td>2.2m 以下</td><td>建築基準法施行令 第62条の8 第一号（法令）</td></tr>
+      <tr><td>ブロック＋フェンスの合計</td><td>2.2m 以下</td><td>LIXIL 施工説明書（メーカーの施工条件）</td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="law">
+  <p>ブロック塀の総高さ（フェンス含む）は 2.2m を超えないように施工してください。</p>
+  <p>ブロック施工には重量ブロック JISA5406 区分 16（C 種）以上を使用してください。</p>
+  <p>フェンス柱はブロックの中心に設置してください。</p>
+</div>
+<p>
+  本ツールは二つを<strong>別々の項目として</strong>判定します。
+  ブロック塀そのものの厚さ・鉄筋・控え壁の確認は
+  <a href="../block-wall/">ブロック塀の計算</a>で、条文と突き合わせて行えます。
+</p>
+
+<h2>よくある質問</h2>
+
+<h3>門扉がある場合はどう入力しますか</h3>
+<p>
+  門扉や機能門柱の幅を差し引いた長さを、門扉の左右で<strong>別々の辺</strong>として入力してください。
+  柱と本体は辺ごとに独立に数えているので、<strong>本数と枚数はこれで正しく出ます。</strong>
+  ただし「連結／コーナー／端部」の内訳では、門扉の脇を<strong>コーナーとして数えてしまいます</strong>
+  （門扉1か所につき、コーナーが1多く・端部が2少なく出ます）。
+  エンドキャップなど端部の部品を選ぶときは、この分を読み替えてください。
+</p>
+
+<h3>エンドキャップや連結金具の個数は出ませんか</h3>
+<p>
+  出していません。部品の梱包数（1袋に何個入っているか）は製品ごとに違うためです。
+  代わりに、部品を選ぶのに必要な<strong>連結・コーナー・端部の箇所数</strong>を出しています。
+</p>
+
+<h3>YKK AP や三協アルミの製品でも使えますか</h3>
+<p>
+  パネル幅と柱間隔を、その製品の説明書の値に変えれば同じ考え方で数えられます。
+  既定値を LIXIL にしているのは、<strong>今回テキストとして確認できた施工説明書が LIXIL のものだけだった</strong>からです。
+  確認できていない値を既定値に混ぜることはしていません。
+</p>
+
+<h3>ほかの材料の数量も出せますか</h3>
+<p>
+  外まわりと内装の数量計算をそろえています。
+  <a href="../block-wall/">ブロック塀の計算</a>、
+  <a href="../roof-area/">屋根面積の計算</a>、
+  <a href="../paint-quantity/">ペンキ・塗料の必要量</a>、
+  <a href="../wallpaper-quantity/">壁紙・クロスの必要量</a>、
+  <a href="../gypsum-board-quantity/">石膏ボードの必要枚数</a>があります。
+</p>
+
+<h2>出典</h2>
+<ul class="src">
+  <li>LIXIL「フェンスJ型 施工説明書（自在柱式）」
+    <a href="https://assets.lixil.com/content/dam/lixil-assets/manual/oldext/201607/J13707C.pdf" rel="nofollow noopener" target="_blank">assets.lixil.com (PDF)</a>
+    — 柱間隔2000mm以下、柱位置は本体の連結部・端部より300mm以下、コーナー部は柱2本建て</li>
+  <li>LIXIL「形材フェンス（自在柱式）施工説明書」ME-2143
+    <a href="https://assets.lixil.com/content/dam/lixil-assets/manual/oldext/201607/J16407C.pdf" rel="nofollow noopener" target="_blank">assets.lixil.com (PDF)</a>
+    — H1400 と風当りの強い場所での柱間隔1000mm以内、ブロック塀の総高さ（フェンス含む）2.2m以下、
+    重量ブロック JIS A 5406 C種以上、柱はブロックの中心に設置</li>
+  <li>LIXIL ニュースリリース「フェンスAB」（2020年2月6日）
+    <a href="https://newsrelease.lixil.co.jp/news/pdf/2020020601.pdf" rel="nofollow noopener" target="_blank">newsrelease.lixil.co.jp (PDF)</a>
+    — 「すべてのデザインで本体W 寸法を 2000mm に統一」</li>
+  <li>建築基準法施行令 第62条の8 第一号 — e-Gov 法令検索
+    <a href="https://laws.e-gov.go.jp/document?lawid=325CO0000000338" rel="nofollow noopener" target="_blank">laws.e-gov.go.jp</a>
+    — 補強コンクリートブロック造の塀の高さは2.2m以下</li>
+  <li>計算式は上記の規則から機械的に導いたものです。
+    導出は<a href="./calc.js">計算コード</a>のコメントに、
+    境界値と配置の検証は<a href="./calc.test.mjs">テスト</a>に残してあります</li>
+</ul>
+<p class="src">最終確認日: 2026年9月28日</p>
+
+</main>
+
+<footer class="wrap">
+  <a href="../../">トップ</a>
+  <a href="../../privacy.html">プライバシーポリシー</a>
+  <a href="../../contact.html">お問い合わせ</a>
+  <p>&copy; 2026 くらしの計算室</p>
+</footer>
+
+<script type="module">
+import { calculate, parseSidesM } from "./calc.js";
+
+const PRESETS = {
+  line:  { sides: "10", shape: "open", fh: "", bh: 0 },
+  L:     { sides: "8, 5", shape: "open", fh: "", bh: 0 },
+  U:     { sides: "10.5, 6.3, 10.5", shape: "open", fh: "", bh: 0 },
+  block: { sides: "10", shape: "open", fh: 1000, bh: 600 },
+};
+
+const $ = (id) => document.getElementById(id);
+const TAGS = { ok: "適合", ng: "超過", info: "要確認" };
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const m = (mm) => `${(mm / 1000).toLocaleString("ja-JP", { maximumFractionDigits: 3 })} m`;
+
+function syncSpacing() {
+  const w = $("wind").value;
+  if (w !== "custom") $("sp").value = w;
+}
+
+function render() {
+  const res = calculate({
+    sidesMm: parseSidesM($("sides").value),
+    closed: $("shape").value === "closed",
+    panelWMm: Number($("pw").value),
+    spacingMm: Number($("sp").value),
+    fenceHeightMm: Number($("fh").value) || 0,
+    blockHeightMm: Number($("bh").value) || 0,
+  });
+
+  if (!res.ok) {
+    $("posts").innerHTML = '— <small>本</small>';
+    for (const id of ["panels", "cuts", "places"]) $(id).textContent = "—";
+    $("rows").innerHTML = "";
+    $("checks").innerHTML = "";
+    $("summary").textContent = res.errors[0];
+    $("notes").textContent = "";
+    return;
+  }
+
+  const t = res.totals;
+  $("posts").innerHTML = `${t.posts.toLocaleString("ja-JP")} <small>本</small>`;
+  $("panels").textContent = `${t.panels} 枚`;
+  $("cuts").textContent = `${t.cutPanels} 枚`;
+  $("places").textContent = `${t.joints} ／ ${t.corners} ／ ${t.openEnds}`;
+  $("summary").textContent =
+    `総延長 ${m(t.lengthMm)} ／ 本体幅 ${res.input.panelWMm}mm ／ 柱間隔 ${res.input.spacingMm}mm 以下` +
+    (t.intermediatePosts > 0 ? ` ／ うち中間柱 ${t.intermediatePosts}本` : "") +
+    (t.corners > 0 ? ` ／ コーナー柱 ${t.cornerPosts}本を含む` : "");
+
+  $("rows").innerHTML = res.perSide.map((s, i) =>
+    `<tr><td>${i + 1}</td><td>${m(s.lengthMm)}</td><td>${s.panels} 枚</td>` +
+    `<td>${s.cutMm === null ? "なし" : s.cutMm.toLocaleString("ja-JP") + " mm"}</td><td>${s.posts} 本</td></tr>`).join("");
+
+  $("checks").innerHTML = res.checks.map((c) =>
+    `<li><p class="hd"><span class="tag ${c.status}">${TAGS[c.status]}</span>${esc(c.title)}</p>` +
+    `<p class="dt">${esc(c.detail)}</p></li>`).join("");
+  $("notes").textContent = res.notes.join(" ");
+}
+
+$("wind").addEventListener("change", () => { syncSpacing(); render(); });
+$("sp").addEventListener("input", () => {
+  const v = $("sp").value;
+  $("wind").value = v === "2000" || v === "1000" ? v : "custom";
+  render();
+});
+for (const id of ["sides", "shape", "fh", "bh", "pw"]) {
+  $(id).addEventListener("input", render);
+  $(id).addEventListener("change", render);
+}
+for (const btn of document.querySelectorAll("[data-preset]")) {
+  btn.addEventListener("click", () => {
+    const p = PRESETS[btn.dataset.preset];
+    $("sides").value = p.sides;
+    $("shape").value = p.shape;
+    $("fh").value = p.fh;
+    $("bh").value = p.bh;
+    render();
+  });
+}
+render();
+</script>
+
+</body>
+</html>

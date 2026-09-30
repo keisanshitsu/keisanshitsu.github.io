@@ -13,7 +13,7 @@ import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   validateKey, hostOf, urlsFromSitemap, partitionByHost,
-  buildPayload, classifyResponse, selectProbeUrls, PROVES,
+  buildPayload, classifyResponse, selectProbeUrls, PROVES, parseArgs,
 } from "./submit_indexnow.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -78,6 +78,22 @@ eq("E6 未知コードは不受理側へ倒す", classifyResponse(500).accepted,
   eq("H3 トップが sitemap に無くても1件に絞る（全件送りに化けない）",
     selectProbeUrls(urls.slice(1), "https://other.example").length, 1);
 }
+
+// ── 引数（2026-09-29 追加）。--help で全件送信された 9/28 の事故を固定する ──
+eq("I1 引数なしは送らない（既定で送信に倒れない）", parseArgs([]).mode, null);
+eq("I2 引数なしはエラーになる", parseArgs([]).error !== null, true);
+eq("I3 --help は送信モードにならない", parseArgs(["--help"]).mode, null);
+eq("I4 --help はエラーにせず help を立てる", parseArgs(["--help"]).help, true);
+eq("I5 未知のフラグは拒否する", parseArgs(["--hepl"]).error?.startsWith("未知の引数"), true);
+eq("I6 未知のフラグが --probe と並んでも拒否する", parseArgs(["--probe", "--x"]).mode, null);
+eq("I7 --probe は probe", parseArgs(["--probe"]).mode, "probe");
+eq("I8 --full を明示すれば full", parseArgs(["--full"]).mode, "full");
+eq("I9 モードの重複は拒否する", parseArgs(["--probe", "--full"]).mode, null);
+eq("I10 --url は値を取る", parseArgs(["--url", "https://h/a/"]).url, "https://h/a/");
+eq("I11 --url の値が無ければ拒否する", parseArgs(["--url"]).mode, null);
+eq("I12 --url の値にフラグを取らない", parseArgs(["--url", "--dry-run"]).mode, null);
+eq("I13 --dry-run は併用できる", parseArgs(["--full", "--dry-run"]).dryRun, true);
+eq("I14 --dry-run 単独は送信モードにならない", parseArgs(["--dry-run"]).mode, null);
 
 // ── 「受理」を「索引」と読み替えさせない ──
 eq("F1 索引の証明ではない", PROVES.proves_indexed, false);

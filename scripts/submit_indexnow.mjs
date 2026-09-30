@@ -80,6 +80,41 @@ export function selectProbeUrls(urls, origin) {
   return hit ? [hit] : urls.slice(0, 1);
 }
 
+// 引数の解釈。**送信モードは明示されたときだけ成立させる。**
+//
+// なぜ（2026-09-28 の事故）: 旧実装は未知のフラグを黙って無視し、フラグ無しを
+// 「全件送信」と解釈していた。`--help` で使い方を見ようとしただけで、
+// 変更の無い6URLが全件送られた（9/23 に「以後は --probe だけ」と決めていたのに）。
+// 送信は外部への副作用であり、取り消せない。**既定値を「送る」側に置かない。**
+//   --probe          トップ1件だけ送る（鍵の検証状態を読む）
+//   --full           sitemap の全URLを送る
+//   --url <URL>      指定した1件だけ送る（新規公開ページ用。sitemap に載っていること）
+//   --dry-run        上のどれとも併用可。POST しない
+//   --help           使い方を出して終わる。送信しない
+export const USAGE = "usage: node scripts/submit_indexnow.mjs (--probe | --full | --url <URL>) [--dry-run]";
+
+export function parseArgs(argv) {
+  const out = { mode: null, url: null, dryRun: false, help: false, error: null };
+  const modes = [];
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === "--dry-run") out.dryRun = true;
+    else if (a === "--help" || a === "-h") out.help = true;
+    else if (a === "--probe") modes.push("probe");
+    else if (a === "--full") modes.push("full");
+    else if (a === "--url") {
+      const v = argv[i + 1];
+      if (!v || v.startsWith("--")) { out.error = "--url の後に URL が無い"; return out; }
+      modes.push("url"); out.url = v; i++;
+    } else { out.error = `未知の引数: ${a}`; return out; }
+  }
+  if (out.help) return out;
+  if (modes.length === 0) { out.error = "送信モードが指定されていない（既定では送らない）"; return out; }
+  if (modes.length > 1) { out.error = `送信モードが複数指定されている: ${modes.join(", ")}`; return out; }
+  out.mode = modes[0];
+  return out;
+}
+
 export function buildPayload({ host, key, keyLocation, urlList }) {
   const body = { host, key, urlList };
   // keyLocation はホスト直下に置いた場合は不要。空文字を送ると 403 の原因になる。
@@ -131,8 +166,15 @@ async function verifyKeyFileLive(origin, key) {
 }
 
 async function main() {
-  const dryRun = process.argv.includes("--dry-run");
-  const probe = process.argv.includes("--probe");
+  const args = parseArgs(process.argv.slice(2));
+  if (args.help) { console.log(USAGE); return; }
+  if (args.error) {
+    console.error(`[ERROR] ${args.error}\n${USAGE}`);
+    process.exitCode = 2;
+    return;
+  }
+  const { dryRun } = args;
+  const probe = args.mode === "probe";
   const pipeline = JSON.parse(readFileSync(join(ROOT, "state", "pipeline.json"), "utf8"));
 
   const origin = pipeline.site?.published_url;
@@ -152,13 +194,20 @@ async function main() {
   const xml = readFileSync(join(ROOT, "docs", "sitemap.xml"), "utf8");
   const { same: allUrls, other } = partitionByHost(urlsFromSitemap(xml), host);
   if (allUrls.length === 0) throw new Error("sitemap.xml から送信対象のURLが取れない");
-  const urlList = probe ? selectProbeUrls(allUrls, origin.replace(/\/$/, "")) : allUrls;
+  let urlList;
+  if (args.mode === "url") {
+    // sitemap に無いURLは送らない。出典を sitemap の1つに保つ（urlsFromSitemap の注記）
+    if (!allUrls.includes(args.url)) throw new Error(`sitemap.xml に無いURLは送らない: ${args.url}`);
+    urlList = [args.url];
+  } else {
+    urlList = probe ? selectProbeUrls(allUrls, origin.replace(/\/$/, "")) : allUrls;
+  }
 
   const result = {
     ran_at: new Date().toISOString(),
     endpoint: ENDPOINT,
     host,
-    mode: probe ? "probe（鍵の検証状態を読むための最小送信）" : "full",
+    mode: probe ? "probe（鍵の検証状態を読むための最小送信）" : args.mode,
     url_count: urlList.length,
     urls: urlList,
     skipped_other_host: other,

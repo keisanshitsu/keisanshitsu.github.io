@@ -6,9 +6,9 @@
 // 実行できない規則を憲法に書くと、毎晩破られて憲法全体が形骸化する。
 // そこで目視を、機械が実行できる検査に置き換えたのが本スクリプト。
 //
-// puppeteer が入っていれば 375px の実レンダリングまで検証する（任意）:
-//   npm i -D puppeteer
-// 入っていない場合は静的検査のみで続行し、その旨を明示する。
+// 375px の実レンダリングは、インストール済みの Chrome / Edge を DevTools Protocol で
+// 直接操作して検証する（scripts/render_check.mjs・依存ゼロ）。
+// ブラウザが無い場合は静的検査のみで続行し、「測定不能」と明示する。
 //
 // 終了コード: 0 = 公開可 / 1 = ERROR あり（push 禁止）
 
@@ -613,24 +613,44 @@ let probeStatus = "未実行";
   }
 }
 
-// ── 4. 実レンダリング検証（puppeteer があるときだけ） ────────────────
-let rendered = false;
-try {
-  const { default: puppeteer } = await import("puppeteer");
-  const browser = await puppeteer.launch();
-  for (const page of pages) {
-    const rel = relative(ROOT, page).replaceAll("\\", "/");
-    const tab = await browser.newPage();
-    await tab.setViewport({ width: 375, height: 812 });
-    await tab.goto(pathToFileURL(page).href, { waitUntil: "load" });
-    const over = await tab.evaluate(() =>
-      document.documentElement.scrollWidth - document.documentElement.clientWidth);
-    if (over > 1) err(rel, `375px で ${over}px 横に溢れている`);
-    await tab.close();
+// ── 4. 実レンダリング検証（インストール済み Chrome / Edge を直接操作） ──
+// 2026-10-01 置き換え。旧実装は puppeteer 前提で、node_modules を作らない方針のため
+// 一度も実行されなかった（6本すべて静的検査のみで公開）。render_check.mjs は依存ゼロ。
+// 先に検査器のテスト（欠陥注入）を走らせ、検査器が壊れている日は結果を信用しない。
+// ブラウザが無い環境では WARN で続行する（測れなかった、を溢れていない、と書かない）。
+let renderStatus = "未実行";
+{
+  const t = join(ROOT, "scripts", "render_check.test.mjs");
+  const rel = relative(ROOT, t).replaceAll("\\", "/");
+  const r = existsSync(t) ? spawnSync(process.execPath, [t], { cwd: ROOT, encoding: "utf8", timeout: 120000 }) : null;
+  const out = r ? `${r.stdout ?? ""}${r.stderr ?? ""}` : "";
+  if (!r) {
+    err(rel, "実レンダリング検査器のテストが見つからない");
+    renderStatus = "欠落";
+  } else if (r.status === 2) {
+    warn(rel, `測定不能: ${out.trim().slice(0, 200)}`);
+    renderStatus = "スキップ（ブラウザ無し・測定不能。溢れていないとは読まない）";
+  } else if (r.status !== 0) {
+    const fails = out.split(/\r?\n/).filter((l) => l.includes("[FAIL]")).map((l) => l.trim());
+    err(rel, `検査器が欠陥を検出できない: ${fails.join(" / ") || out.trim().slice(0, 300)}`);
+    renderStatus = "検査器が壊れている";
+  } else {
+    const { measureOverflow, VIEWPORT } = await import(pathToFileURL(join(ROOT, "scripts", "render_check.mjs")).href);
+    const m = await measureOverflow(pages);
+    if (!m.available) {
+      warn("scripts/render_check.mjs", `測定不能: ${m.reason}`);
+      renderStatus = "スキップ（測定不能）";
+    } else {
+      for (const x of m.results) {
+        const prel = relative(ROOT, x.file).replaceAll("\\", "/");
+        if (x.clientWidth !== VIEWPORT.width) err(prel, `375px 端末で表示幅が ${x.clientWidth}px になる（viewport 宣言の欠落か誤り）`);
+        else if (x.overflow > 1) err(prel, `375px で ${x.overflow}px 横に溢れている`);
+      }
+      const am = out.match(/(\d+)\/(\d+) PASS/);
+      renderStatus = `実施 ${m.results.length}枚（検査器の欠陥注入テスト ${am ? am[2] : "?"}件 PASS）・初期表示のみ`;
+    }
   }
-  await browser.close();
-  rendered = true;
-} catch { /* 未導入なら静的検査のみで続行 */ }
+}
 
 // ── 結果 ─────────────────────────────────────────────────────────────
 console.log(`検査: HTML ${pages.length}枚 / ツール ${toolDirs.length}本 / アサーション ${assertions}件`);
@@ -642,9 +662,7 @@ console.log(`人間キューの整合: SETUP_HUMAN.md — ${queueStatus}`);
 console.log(`状態ファイルの整合: state/pipeline.json — ${stateStatus}`);
 console.log(`「公開済み」の実体: origin/main と突き合わせ — ${publishStatus}`);
 console.log(`サイト内の到達性: トップ＋sitemap と突き合わせ — ${orphanStatus}`);
-console.log(rendered
-  ? "375px 実レンダリング検証: 実施"
-  : "375px 実レンダリング検証: スキップ（npm i -D puppeteer で有効化）");
+console.log(`375px 実レンダリング検証: ${renderStatus}`);
 
 for (const w of warns) console.log(`  WARN  ${w}`);
 for (const e of errors) console.log(`  ERROR ${e}`);

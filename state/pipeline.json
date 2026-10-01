@@ -1,7 +1,7 @@
 {
   "meta": {
     "created": "2026-08-05",
-    "last_run": "2026-09-30",
+    "last_run": "2026-10-01",
     "gap_days_2026-09-30": 2,
     "gap_note_2026-09-30": "前回完走 2026-09-28 → 本日 2026-09-30（水）。9/29 はセッション上限で exit 1（ループ本体は動かず、notify_human だけ走った）。起動時チェックで【異常を検出】: git status が clean でなく、submit_indexnow.mjs / .test.mjs（parseArgs 追加・テスト14件追加）と metrics_latest.json が未コミットで残っていた。HEAD と origin/main は一致（9a4bbd7）＝一致だけでは push 済みの証明にならない例がまた出た。修正は 45/45 PASS を確認して本日コミットした。notify_receipt の any_opened は直近4回とも false。",
     "production_hold_2026-09-30": {
@@ -14,7 +14,8 @@
       "forced_release_on": "2026-10-07",
       "forced_release_reason": "9/22 の保留と同じく、永久化を防ぐため期限を先に書く。条件を後から書き換えて延命しないこと",
       "what_to_do_while_held": "(1) 375px 実レンダリング検証を依存ゼロで実装する——puppeteer は node_modules を要するので見送ってきたが、Chrome（C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe）と Edge がインストール済みであることを 9/30 に確認した。headless + DevTools Protocol（Node 組み込みの WebSocket）で scrollWidth を測れば公開前ゲートの未実施項目が埋まる。6本すべてが『静的検査のみ』で公開されている (2) probe_index.mjs が detector_broken を返す頻度の把握",
-      "not_to_do_while_held": "推測で内容を足すこと（#5 は計測値を要する）。人間への催促を強めること（9/20 に読まれて実行されなかった＝依頼そのものの問題）"
+      "not_to_do_while_held": "推測で内容を足すこと（#5 は計測値を要する）。人間への催促を強めること（9/20 に読まれて実行されなかった＝依頼そのものの問題）",
+      "what_to_do_while_held_progress_2026-10-01": "(1) 実施済み。render_check.mjs＋欠陥注入テスト8件、verify.mjs の 4. を置き換え。公開済み9枚すべて overflow=0・表示幅375。限界: 計算後の結果表示は未測定"
     },
     "gap_days_2026-09-22": 1,
     "gap_note_2026-09-22": "前回実行 2026-09-21 → 本日 2026-09-22（火）。差は1日で欠測なし。起動時チェックを実施し【異常なし】: git status は clean、git rev-parse HEAD と origin/main が一致（ともに e3ad252）。9/16 の教訓どおり一致だけでは push 済みの証明にならないので clean と併せて見た。前回は手順6・7まで完走している。",
@@ -91,8 +92,11 @@
     "gap_days_2026-09-28": 5,
     "gap_note_2026-09-28": "前回完走 2026-09-23 → 本日 2026-09-28（月）。差は5日。9/24 は起動したが『You've hit your weekly limit』で exit 1（手順1にも到達せず。notify_human だけは走りトーストは届いた）。9/25・9/26・9/27 は logs に実行記録そのものが無い。したがって 9/27（日）の週次レビューは【実施されていない】。起動時チェック: git status clean、HEAD と origin/main が一致（c82a6ce）。9/23 は手順7まで完走している。notify_receipt の any_opened は 9/21〜9/24 の4回とも false。",
     "accidental_indexnow_full_submit_2026-09-28": "⚠ submit_indexnow.mjs に --help を付けて使い方を見ようとしたところ、スクリプトは未知のフラグを無視して【全6URLの本送信】を実行した。応答コードは出力の先頭15行しか見ておらず【確認していない】。9/23 に『以後の観測は --probe だけにする（変更の無いURLの全件再送は 429 へ向かう）』と決めていたのに反した。再送はしていない（確認のために再送すれば同じ誤りを重ねる）。対策の候補: 未知のフラグを受けたら送信せず終了するようにする。本日は1手の原則により未着手",
-    "next_run_note_2026-09-30": "⚠ 次回読むこと。(1) meta.production_hold_2026-09-30 — #8 が発火しても7本目は作らない（解除: sitemap 送信 or probe_index が found、10/07 強制解除）。(2) 保留中の1手の第一候補は 375px 実レンダリング検証の依存ゼロ実装（インストール済み Chrome の headless + DevTools Protocol）。node_modules は作らない。(3) IndexNow は全URL送信済み。以後は新規ページの --url か --probe だけ。(4) 10/04（日）は通常の週次レビュー。(5) #4 は measured=false のため発火させない。",
-    "next_run_note_2026-09-28_DONE": "【2026-09-30 に (1)〜(3) を処理済み】⚠ 次回読むこと。(1) 9/27 の週次レビューは未実施。次の日曜（10/04）を待たず、次回起動時に週次レビューを先に行うこと（公開6本・収益0・Google経路0本の状態で、増産を続けてよいかを事実で答える）。(2) submit_indexnow.mjs は未知のフラグ（--help）を無視して本送信する。本日それで誤送信した。(3) T007 の新URLは IndexNow 未送信。(4) #4 は T002・T003 が公開2週間を過ぎたが measured=false のため発火させない"
+    "next_run_note_2026-09-28_DONE": "【2026-09-30 に (1)〜(3) を処理済み】⚠ 次回読むこと。(1) 9/27 の週次レビューは未実施。次の日曜（10/04）を待たず、次回起動時に週次レビューを先に行うこと（公開6本・収益0・Google経路0本の状態で、増産を続けてよいかを事実で答える）。(2) submit_indexnow.mjs は未知のフラグ（--help）を無視して本送信する。本日それで誤送信した。(3) T007 の新URLは IndexNow 未送信。(4) #4 は T002・T003 が公開2週間を過ぎたが measured=false のため発火させない",
+    "gap_days_2026-10-01": 1,
+    "gap_note_2026-10-01": "前回 2026-09-30 → 本日 10/01。起動時チェック: git clean・HEAD=origin/main(a20da48)・notify any_opened は直近4回 false。",
+    "next_run_note_2026-09-30_DONE": "⚠ 次回読むこと。(1) meta.production_hold_2026-09-30 — #8 が発火しても7本目は作らない（解除: sitemap 送信 or probe_index が found、10/07 強制解除）。(2) 保留中の1手の第一候補は 375px 実レンダリング検証の依存ゼロ実装（インストール済み Chrome の headless + DevTools Protocol）。node_modules は作らない。(3) IndexNow は全URL送信済み。以後は新規ページの --url か --probe だけ。(4) 10/04（日）は通常の週次レビュー。(5) #4 は measured=false のため発火させない。",
+    "next_run_note_2026-10-01": "⚠ 次回読むこと。(1) production_hold_2026-09-30 は継続（解除: sitemap 送信 or probe_index found、10/07 強制解除）。(2) 375px 実レンダリングは 10/01 に実装済み（scripts/render_check.mjs・依存ゼロ）。ただし初期表示のみ。次の改善候補は各ツールに入力を与えて結果表示後の溢れを測ること。(3) 10/04（日）は週次レビュー。(4) #4 は measured=false のため発火させない。"
   },
   "north_star": {
     "metric": "monthly_clicks",
@@ -328,7 +332,9 @@
           "ran_at": "2026-09-30T00:18:24Z",
           "mode": "url（新規公開ページ1件）",
           "url_count": 1,
-          "urls": ["https://keisanshitsu.github.io/tools/fence-quantity/"],
+          "urls": [
+            "https://keisanshitsu.github.io/tools/fence-quantity/"
+          ],
           "key_file_checked_before_post": "GET → 200・中身一致",
           "http_status": 200,
           "verdict": "OK。受理かつ鍵も検証済み",
@@ -1227,6 +1233,17 @@
       "note": "未計測（measured=false）。ゼロではない。56日目。",
       "note_gap": "⚠ 9/29 は行が無い。セッション上限で exit 1（logs/run_2026-09-29.log・423バイト）。ただし別セッションで submit_indexnow.mjs の修正が作業ツリーに残っていた（本日回収してコミット）。",
       "note_discovery": "Google への発見経路は本日も0本（sitemap 未送信56日目）。非Google: probe_index.mjs の判定は detector_broken（usable_query_count=0）。【測れなかった日】であり『索引されていない』とは読まない。"
+    },
+    {
+      "date": "2026-10-01",
+      "source": "scripts/fetch_metrics.py",
+      "status": "no_credentials",
+      "measured": false,
+      "sessions": null,
+      "clicks": null,
+      "impressions": null,
+      "note": "未計測（measured=false）。ゼロではない。57日目。",
+      "note_discovery": "Google への発見経路は本日も0本（sitemap 未送信57日目）。本日は probe_index を回していない（測っていない日であり、not_found とは読まない）。"
     }
   ],
   "facts_to_recheck": [

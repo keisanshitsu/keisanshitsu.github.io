@@ -636,18 +636,25 @@ let renderStatus = "未実行";
     renderStatus = "検査器が壊れている";
   } else {
     const { measureOverflow, VIEWPORT } = await import(pathToFileURL(join(ROOT, "scripts", "render_check.mjs")).href);
-    const m = await measureOverflow(pages);
+    // 2026-10-02: 初期表示に加え、select 全選択肢・ボタン・数値の大きい値を操作した後も測る
+    const m = await measureOverflow(pages, { exercise: true });
     if (!m.available) {
       warn("scripts/render_check.mjs", `測定不能: ${m.reason}`);
       renderStatus = "スキップ（測定不能）";
     } else {
+      let steps = 0;
       for (const x of m.results) {
         const prel = relative(ROOT, x.file).replaceAll("\\", "/");
+        const e = x.exercised;
+        steps += e.steps;
         if (x.clientWidth !== VIEWPORT.width) err(prel, `375px 端末で表示幅が ${x.clientWidth}px になる（viewport 宣言の欠落か誤り）`);
         else if (x.overflow > 1) err(prel, `375px で ${x.overflow}px 横に溢れている`);
+        else if (e.worst.overflow > 1) err(prel, `375px で操作後に ${e.worst.overflow}px 横に溢れる（${e.worst.action}）`);
+        // ツールなのに操作しても表示が変わらない＝運動させられていない。溢れていないとは読まない
+        if (prel.startsWith("docs/tools/") && e.distinct < 2) warn(prel, `操作しても表示が変わらず、結果表示の幅を測れていない（操作 ${e.steps}回）`);
       }
       const am = out.match(/(\d+)\/(\d+) PASS/);
-      renderStatus = `実施 ${m.results.length}枚（検査器の欠陥注入テスト ${am ? am[2] : "?"}件 PASS）・初期表示のみ`;
+      renderStatus = `実施 ${m.results.length}枚・操作後 ${steps}状態（検査器の欠陥注入テスト ${am ? am[2] : "?"}件 PASS）`;
     }
   }
 }

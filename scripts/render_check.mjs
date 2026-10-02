@@ -90,8 +90,43 @@ function cdp(ws) {
   };
 }
 
-// files: 絶対パスの配列。戻り値 { available, browser, results: [{file, overflow, scrollWidth, clientWidth}], reason }
-export async function measureOverflow(files) {
+// 2026-10-02 追加。初期表示だけでは結果表・内訳を測れない（溢れが最も起きやすいのはそこ）。
+// ページ内で select の全選択肢・各ボタン・数値入力の大きい値を1つずつ試し、その都度測る。
+// 「操作したつもりで何も変わっていない」を見分けるため、表示テキストの異なり数（distinct）も返す。
+const EXERCISE = `(async () => {
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const de = document.documentElement;
+  const ov = () => de.scrollWidth - de.clientWidth;
+  const states = new Set([document.body.innerText]);
+  let worst = { overflow: ov(), action: "初期表示" }, steps = 0;
+  const fire = (el) => { el.dispatchEvent(new Event("input", { bubbles: true })); el.dispatchEvent(new Event("change", { bubbles: true })); };
+  const rec = (action) => { steps++; states.add(document.body.innerText); const o = ov(); if (o > worst.overflow) worst = { overflow: o, action }; };
+  const name = (el) => el.id ? "#" + el.id : (el.getAttribute("aria-label") || el.className || el.tagName).toString().slice(0, 30);
+  for (const s of [...document.querySelectorAll("select")]) {
+    const orig = s.value;
+    for (const o of [...s.options]) {
+      if (o.disabled) continue;
+      s.value = o.value; fire(s); await sleep(30); rec("select " + name(s) + "=" + o.value);
+    }
+    s.value = orig; fire(s); await sleep(30);
+  }
+  for (const i of [...document.querySelectorAll('input[type="number"]')]) {
+    if (!i.isConnected) continue;
+    const orig = i.value;
+    const big = i.max !== "" ? i.max : String((Number(orig) || 999) * 100);
+    i.value = big; fire(i); await sleep(30); rec("input " + name(i) + "=" + big);
+    i.value = orig; fire(i); await sleep(30);
+  }
+  for (const b of [...document.querySelectorAll('button:not([type="submit"]):not([type="reset"])')]) {
+    if (!b.isConnected || b.disabled) continue;
+    b.click(); await sleep(30); rec("button " + (b.id ? "#" + b.id : b.textContent.trim().slice(0, 20)));
+  }
+  return JSON.stringify({ steps, distinct: states.size, worst });
+})()`;
+
+// files: 絶対パスの配列。戻り値 { available, browser, results: [{file, overflow, scrollWidth, clientWidth, exercised?}], reason }
+// exercise: true なら初期表示の測定に加えて操作後の最大溢れを exercised に入れる
+export async function measureOverflow(files, { exercise = false } = {}) {
   const browser = findBrowser();
   if (!browser) return { available: false, reason: "Chrome / Edge が見つからない", results: [] };
   if (typeof WebSocket !== "function") return { available: false, reason: "WebSocket が無い（Node 22+ が要る）", results: [] };
@@ -129,7 +164,13 @@ export async function measureOverflow(files) {
         returnByValue: true,
       }, sessionId);
       const m = JSON.parse(result.value);
-      results.push({ file, scrollWidth: m.sw, clientWidth: m.cw, innerWidth: m.iw, overflow: m.sw - m.cw });
+      const row = { file, scrollWidth: m.sw, clientWidth: m.cw, innerWidth: m.iw, overflow: m.sw - m.cw };
+      if (exercise) {
+        const ex = await c.send("Runtime.evaluate", { expression: EXERCISE, awaitPromise: true, returnByValue: true }, sessionId);
+        if (ex.exceptionDetails) throw new Error(`操作スクリプトが例外: ${ex.exceptionDetails.text}`);
+        row.exercised = JSON.parse(ex.result.value);
+      }
+      results.push(row);
       await c.send("Target.closeTarget", { targetId });
     }
     return { available: true, browser, results };
@@ -148,8 +189,12 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
   const walk = (d, acc = []) => { for (const n of readdirSync(d)) { const p = join(d, n); statSync(p).isDirectory() ? walk(p, acc) : n.endsWith(".html") && acc.push(p); } return acc; };
   const files = process.argv.length > 2 ? process.argv.slice(2).map((f) => resolve(f)) : walk(join(ROOT, "docs"));
-  const r = await measureOverflow(files);
+  const r = await measureOverflow(files, { exercise: true });
   if (!r.available) { console.log(`測定不能: ${r.reason}`); process.exit(2); }
-  for (const x of r.results) console.log(`${x.overflow > 1 ? "NG" : "OK"}  overflow=${x.overflow}px  cw=${x.clientWidth}  ${x.file}`);
-  process.exit(r.results.some((x) => x.overflow > 1) ? 1 : 0);
+  const worstOf = (x) => Math.max(x.overflow, x.exercised?.worst.overflow ?? 0);
+  for (const x of r.results) {
+    const e = x.exercised;
+    console.log(`${worstOf(x) > 1 ? "NG" : "OK"}  overflow=${x.overflow}px  操作後最大=${e.worst.overflow}px（${e.worst.action}）  操作${e.steps}回・表示${e.distinct}通り  cw=${x.clientWidth}  ${x.file}`);
+  }
+  process.exit(r.results.some((x) => worstOf(x) > 1) ? 1 : 0);
 }

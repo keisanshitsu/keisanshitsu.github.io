@@ -25,7 +25,7 @@
 // → DuckDuckGo に出れば「Bing か DuckDuckBot のどちらかが当ホストに到達した」ことになる。
 //   Bing は IndexNow 参加エンジンである。ただし **IndexNow が原因だとは証明できない**。
 
-import { readFileSync } from "node:fs";
+import { readFileSync, appendFileSync, existsSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -133,6 +133,39 @@ export const PROVES = {
     "DuckDuckGo の web 結果は largely Bing 由来（＋自社 DuckDuckBot）。Bing は IndexNow 参加エンジンだが、索引の原因が IndexNow かどうかは区別できない。Google は別物であり、ここで何が出ても Google の索引状態は1ミリも分からない",
 };
 
+// 測定の履歴（state/probe_history.jsonl、1行1回）を集計する。
+// なぜ（2026-10-03）: 判定は毎回 stdout に出るだけで、どこにも積まれていなかった。
+// 「detector_broken がどれくらいの頻度で出るか」を知りたくても、
+// decisions.md の文章から拾い直すしかなかった。測定器の故障率は、測定器の出力を
+// 信じてよいかの前提なので、文章ではなく機械可読で残す。
+// broken_rate の分母は「回した回数」。回さなかった日は数えない（測っていない日を壊れた日にしない）。
+export function summarizeHistory(rows) {
+  const by_state = { found: 0, not_found: 0, detector_broken: 0 };
+  for (const r of rows) {
+    if (r && r.state in by_state) by_state[r.state] += 1;
+  }
+  const runs = by_state.found + by_state.not_found + by_state.detector_broken;
+  return {
+    runs,
+    by_state,
+    broken_rate: runs === 0 ? null : Math.round((by_state.detector_broken / runs) * 100) / 100,
+    last_found_at: rows.filter((r) => r?.state === "found").map((r) => r.ran_at).pop() ?? null,
+  };
+}
+
+export function parseHistory(text) {
+  return text.split(/\r?\n/).filter((l) => l.trim()).map((l) => {
+    try { return JSON.parse(l); } catch { return null; }
+  }).filter(Boolean);
+}
+
+// HTTP 202 は DuckDuckGo の流量制限（9/23・9/30・10/03 に当サイトのクエリだけで観測）。
+// 答えではなく「後で来い」なので、1回だけ間を空けて引き直す。
+// ⚠ 判定基準（isQueryUsable: 200 かつ結果>0）は緩めていない。引き直しても 202 なら測れなかった日のまま。
+export function shouldRetry(status) {
+  return status === 202;
+}
+
 // ── 副作用のある部分 ───────────────────────────────────────────────
 
 async function search(query) {
@@ -176,8 +209,14 @@ async function main() {
   const queries = [host, ...(process.argv.slice(2).filter((a) => !a.startsWith("--")))];
   const ours = [];
   for (const q of queries) {
-    const r = await search(q);
-    ours.push({ ...r, our_host_found: containsHost(r.urls, host) });
+    let r = await search(q);
+    let retried = false;
+    if (shouldRetry(r.status)) {
+      await sleep(20000);
+      r = await search(q);
+      retried = true;
+    }
+    ours.push({ ...r, retried, our_host_found: containsHost(r.urls, host) });
     await sleep(4000);
   }
 
@@ -185,7 +224,7 @@ async function main() {
   const negFound = containsHost(neg.urls, NEG_CONTROL_HOST);
   const ourFound = ours.some((r) => r.our_host_found);
   const queryRows = ours.map((r) => ({
-    query: r.query, http: r.status, result_count: r.urls.length,
+    query: r.query, http: r.status, result_count: r.urls.length, retried: r.retried,
     our_host_found: r.our_host_found, top_hosts: hostsOf(r.urls).slice(0, 5),
   }));
   const usable = queryRows.filter(isQueryUsable);
@@ -206,6 +245,22 @@ async function main() {
     }),
     ...PROVES,
   };
+
+  // --no-record はテストや試し打ち用。既定では毎回積む（積まない日を作ると頻度が歪む）
+  const historyPath = join(ROOT, "state", "probe_history.jsonl");
+  if (!process.argv.includes("--no-record")) {
+    appendFileSync(historyPath, JSON.stringify({
+      ran_at: result.ran_at,
+      state: result.verdict.state,
+      pos_http: pos.status, neg_http: neg.status,
+      our_http: queryRows.map((r) => r.http),
+      retried: queryRows.some((r) => r.retried),
+      usable_query_count: usable.length,
+    }) + "\n", "utf8");
+  }
+  result.history = summarizeHistory(
+    existsSync(historyPath) ? parseHistory(readFileSync(historyPath, "utf8")) : [],
+  );
 
   console.log(JSON.stringify(result, null, 2));
   // ⚠ process.exit() は使わない。fetch のハンドルを閉じる前に落とすと Windows の

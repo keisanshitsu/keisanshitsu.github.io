@@ -9,6 +9,7 @@
 
 import {
   extractResultUrls, normalizeHost, hostsOf, containsHost, verdict, isQueryUsable, PROVES,
+  summarizeHistory, parseHistory, shouldRetry,
 } from "./probe_index.mjs";
 
 const results = [];
@@ -93,6 +94,24 @@ eq("D1 見つかっても IndexNow が効いた証明にはならない", PROVES
 eq("D2 見つかっても Google の索引状態は分からない", PROVES.found_proves_google, false);
 eq("D3 見つからなくてもクロールされていない証明にはならない", PROVES.not_found_proves_not_crawled, false);
 eq("D4 見つかればクロールされた証明にはなる", PROVES.found_proves_crawled, true);
+
+// ── 履歴の集計（2026-10-03） ──
+eq("H1 履歴が空なら故障率は null（0 と書かない）", summarizeHistory([]).broken_rate, null);
+eq("H2 3回中1回壊れれば 0.33",
+  summarizeHistory([{ state: "not_found" }, { state: "detector_broken" }, { state: "not_found" }]).broken_rate, 0.33);
+eq("H3 未知の state は回数に数えない（回していない日を壊れた日にしない）",
+  summarizeHistory([{ state: "skipped" }, { state: "not_found" }]).runs, 1);
+eq("H4 最後に found した時刻を返す",
+  summarizeHistory([{ state: "found", ran_at: "a" }, { state: "not_found", ran_at: "b" }, { state: "found", ran_at: "c" }]).last_found_at, "c");
+eq("H5 壊れた行・空行・CRLF を飛ばして読む",
+  parseHistory('{"state":"found"}\r\n\r\nnot json\n{"state":"not_found"}\n').length, 2);
+
+// ── 引き直し ──
+eq("R1 202（流量制限）は引き直す", shouldRetry(202), true);
+eq("R2 200 は引き直さない", shouldRetry(200), false);
+eq("R3 通信失敗（null）は引き直さない", shouldRetry(null), false);
+eq("R4 引き直しても判定基準は緩めない（202 のままなら不成立）",
+  isQueryUsable({ http: 202, result_count: 10 }), false);
 
 const pass = results.filter((r) => r.ok).length;
 for (const r of results.filter((r) => !r.ok)) {

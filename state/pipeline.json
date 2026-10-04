@@ -2,6 +2,7 @@
   "meta": {
     "created": "2026-08-05",
     "last_run": "2026-10-04",
+    "handoff_for_2026-10-05": "probe_index.mjs の問い合わせ順を『当サイト→陽性対照→陰性対照』に入れ替えて1回だけ実行する。当サイトのクエリは常に3本目で、10/04 は対照 200・当サイトだけ 202（引き直しも 202）。順序（連続リクエストの流量制限）とクエリ内容のどちらが原因かを切り分けるため。isQueryUsable は緩めない。詳細は decisions.md 2026-10-04（追補）",
     "gap_days_2026-09-30": 2,
     "gap_note_2026-09-30": "前回完走 2026-09-28 → 本日 2026-09-30（水）。9/29 はセッション上限で exit 1（ループ本体は動かず、notify_human だけ走った）。起動時チェックで【異常を検出】: git status が clean でなく、submit_indexnow.mjs / .test.mjs（parseArgs 追加・テスト14件追加）と metrics_latest.json が未コミットで残っていた。HEAD と origin/main は一致（9a4bbd7）＝一致だけでは push 済みの証明にならない例がまた出た。修正は 45/45 PASS を確認して本日コミットした。notify_receipt の any_opened は直近4回とも false。",
     "production_hold_2026-09-30": {

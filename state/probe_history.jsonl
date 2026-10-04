@@ -4,3 +4,4 @@
 {"ran_at":"2026-10-02","state":"not_found","backfilled_from":"decisions.md 2026-10-02"}
 {"ran_at":"2026-10-03","state":"detector_broken","our_http":[202],"backfilled_from":"decisions.md 2026-10-03（改修前の1回目。当サイトのクエリだけ 202・0件）"}
 {"ran_at":"2026-10-03T00:19:58.141Z","state":"detector_broken","pos_http":202,"neg_http":202,"our_http":[202],"retried":true,"usable_query_count":0}
+{"ran_at":"2026-10-04T00:18:17.599Z","state":"detector_broken","pos_http":200,"neg_http":200,"our_http":[202],"retried":true,"usable_query_count":0}

@@ -201,24 +201,33 @@ async function main() {
   const NEG_CONTROL_QUERY = "zzqqxxnonexistentdomain12345.example";
   const NEG_CONTROL_HOST = "zzqqxxnonexistentdomain12345.example";
 
+  // --ours-first は順序の切り分け用（10/04 追補）。当サイトのクエリは常に3本目で、
+  // 対照 200・当サイトだけ 202 が続いた。順序（連続リクエストの流量制限）が原因かを見る。
+  const oursFirst = process.argv.includes("--ours-first");
+  const order = oursFirst ? "ours,pos,neg" : "pos,neg,ours";
+
+  const queries = [host, ...(process.argv.slice(2).filter((a) => !a.startsWith("--")))];
+  const ours = [];
+  const runOurs = async () => {
+    for (const q of queries) {
+      let r = await search(q);
+      let retried = false;
+      if (shouldRetry(r.status)) {
+        await sleep(20000);
+        r = await search(q);
+        retried = true;
+      }
+      ours.push({ ...r, retried, our_host_found: containsHost(r.urls, host) });
+      await sleep(4000);
+    }
+  };
+
+  if (oursFirst) await runOurs();
   const pos = await search(POS_CONTROL_QUERY);
   await sleep(4000);
   const neg = await search(NEG_CONTROL_QUERY);
   await sleep(4000);
-
-  const queries = [host, ...(process.argv.slice(2).filter((a) => !a.startsWith("--")))];
-  const ours = [];
-  for (const q of queries) {
-    let r = await search(q);
-    let retried = false;
-    if (shouldRetry(r.status)) {
-      await sleep(20000);
-      r = await search(q);
-      retried = true;
-    }
-    ours.push({ ...r, retried, our_host_found: containsHost(r.urls, host) });
-    await sleep(4000);
-  }
+  if (!oursFirst) await runOurs();
 
   const posFound = containsHost(pos.urls, POS_CONTROL_HOST);
   const negFound = containsHost(neg.urls, NEG_CONTROL_HOST);
@@ -233,6 +242,7 @@ async function main() {
     ran_at: new Date().toISOString(),
     engine: "DuckDuckGo(html) — web結果は largely Bing 由来",
     host,
+    order,
     controls: {
       positive: { query: POS_CONTROL_QUERY, expect_host: POS_CONTROL_HOST, found: posFound, http: pos.status, result_count: pos.urls.length },
       negative: { query: NEG_CONTROL_QUERY, expect_absent_host: NEG_CONTROL_HOST, found: negFound, http: neg.status, result_count: neg.urls.length },
@@ -252,6 +262,7 @@ async function main() {
     appendFileSync(historyPath, JSON.stringify({
       ran_at: result.ran_at,
       state: result.verdict.state,
+      order,
       pos_http: pos.status, neg_http: neg.status,
       our_http: queryRows.map((r) => r.http),
       retried: queryRows.some((r) => r.retried),

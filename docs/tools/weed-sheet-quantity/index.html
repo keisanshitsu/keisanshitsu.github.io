@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>防草シートの必要量と固定ピンの本数の計算 — メーカー施工基準どおりに数える</title>
+<meta name="description" content="敷く場所の幅と奥行きを入れるだけで、防草シートのロール本数・使う面積・継ぎ目の接続テープの長さと、固定ピンの本数を算出します。外周・継ぎ目500mm、内側1m、砂利下1mというメーカー技術資料の打ち方どおりに配置して数え、敷く向きも自動で選びます。">
+<link rel="canonical" href="https://keisanshitsu.github.io/tools/weed-sheet-quantity/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="くらしの計算室">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="防草シートの必要量と固定ピンの本数の計算 — メーカー施工基準どおりに数える">
+<meta property="og:description" content="幅と奥行きから、防草シートのロール本数・面積・接続テープの長さと固定ピンの本数を算出。メーカー技術資料の打ち方どおりに配置して数えます。">
+<meta property="og:url" content="https://keisanshitsu.github.io/tools/weed-sheet-quantity/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "防草シートの必要量と固定ピンの本数の計算",
+  "description": "敷く場所の幅と奥行きから、防草シートのロール本数・使う面積・接続テープの長さと固定ピンの本数を、メーカー技術資料の打ち方どおりに配置して算出します。",
+  "url": "https://keisanshitsu.github.io/tools/weed-sheet-quantity/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (web browser)",
+  "inLanguage": "ja",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "くらしの計算室",
+    "url": "https://keisanshitsu.github.io/"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1b19; --muted:#6b6862;
+    --line:#e5e2dc; --card:#fff; --accent:#0f6cbd; --accent-soft:#eef5fc;
+    --ok:#1f7a45; --ok-soft:#eaf6ef; --ng:#b3261e; --ng-soft:#fdeeed;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#17181a; --fg:#e9e8e5; --muted:#a3a09a;
+           --line:#2e3033; --card:#1f2123; --accent:#6cb6f5; --accent-soft:#1b2733;
+           --ok:#5fd08a; --ok-soft:#16261d; --ng:#ff8a80; --ng-soft:#2a1a19; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  header{border-bottom:1px solid var(--line);padding:16px 0}
+  .site{font-size:.85rem;color:var(--muted);text-decoration:none}
+  h1{font-size:1.35rem;margin:28px 0 6px;line-height:1.5}
+  .sub{color:var(--muted);font-size:.92rem;margin:0 0 28px}
+  h2{font-size:1.05rem;margin:36px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
+  h3{font-size:.95rem;margin:22px 0 6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+  input,select{width:100%;padding:9px 10px;font-size:1rem;color:var(--fg);
+    background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--fg);padding:9px 14px}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:16px}
+  .fold{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+  .fold summary{cursor:pointer;font-size:.86rem;color:var(--muted)}
+  .result{margin-top:20px;border:1px solid var(--accent);background:var(--accent-soft);
+    border-radius:12px;padding:18px}
+  .big{font-size:2rem;font-weight:700;color:var(--accent);line-height:1.2;margin:2px 0 0}
+  .big small{font-size:1rem;font-weight:600;margin-left:2px}
+  .sub2{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+  .split{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:16px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .stat .k{font-size:.76rem;color:var(--muted);margin:0}
+  .stat .v{font-size:1.15rem;font-weight:700;margin:2px 0 0}
+  .checks{list-style:none;padding:0;margin:14px 0 0}
+  .checks li{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin-bottom:8px}
+  .checks .hd{font-size:.9rem;font-weight:600;margin:0}
+  .checks .dt{font-size:.82rem;color:var(--muted);margin:3px 0 0}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;border-radius:5px;
+    padding:1px 7px;margin-right:7px;vertical-align:2px}
+  .tag.ok{background:var(--ok-soft);color:var(--ok)}
+  .tag.ng{background:var(--ng-soft);color:var(--ng)}
+  .tag.info{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+  .tablewrap{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;white-space:nowrap}
+  th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:600}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:14px 16px;border-radius:0 8px 8px 0;font-size:.88rem;margin:24px 0}
+  .law{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;margin:14px 0;font-size:.86rem}
+  .law p{margin:0 0 6px;font-size:.86rem}
+  .law p:last-child{margin-bottom:0}
+  .formula{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:10px 14px;margin:12px 0;font-size:.9rem;overflow-x:auto;white-space:nowrap}
+  p,li{font-size:.94rem}
+  ul{padding-left:1.2em}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src li{font-size:.85rem;overflow-wrap:anywhere}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:20px 0 40px;
+    color:var(--muted);font-size:.85rem}
+  footer a{color:var(--muted);margin-right:14px}
+  a{color:var(--accent)}
+  @media (max-width:400px){
+    .big{font-size:1.7rem}
+  }
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><a class="site" href="../../">← くらしの計算室</a></div></header>
+
+<main class="wrap">
+
+<h1>防草シートの必要量と固定ピンの本数の計算</h1>
+<p class="sub">
+  敷く場所の幅と奥行きを入れると、<strong>ロールの本数・使う面積・接続テープの長さ・固定ピンの本数</strong>を出します。
+  ピンは「1㎡あたり何本」の目安ではなく、<strong>メーカー技術資料の打ち方どおりに配置して</strong>数えます。
+</p>
+
+<div class="card">
+  <div class="opts" style="margin-top:0">
+    <div>
+      <label for="w">幅 (m)</label>
+      <input id="w" type="number" inputmode="decimal" value="4" min="0.1" max="200" step="0.1">
+    </div>
+    <div>
+      <label for="l">奥行き (m)</label>
+      <input id="l" type="number" inputmode="decimal" value="6" min="0.1" max="200" step="0.1">
+    </div>
+    <div>
+      <label for="mode">使い方（ピンの打ち方）</label>
+      <select id="mode">
+        <option value="exposed" selected>むき出しで使う（外周・継ぎ目50cm／内側1m）</option>
+        <option value="gravel">砂利・人工芝の下（全体1m）</option>
+        <option value="dense">法面・風の強い場所（全体50cm）</option>
+      </select>
+    </div>
+    <div>
+      <label for="roll">ロールの寸法（幅×長さ）</label>
+      <select id="roll">
+        <option value="1000x30000">1m × 30m</option>
+        <option value="2000x30000" selected>2m × 30m</option>
+        <option value="1000x50000">1m × 50m</option>
+        <option value="2000x50000">2m × 50m</option>
+        <option value="3000x20000">3m × 20m</option>
+        <option value="custom">ほかの寸法を入れる</option>
+      </select>
+    </div>
+  </div>
+
+  <details class="fold">
+    <summary>敷く向き・重ね・立ち上げ・ロール寸法を変える</summary>
+    <div class="opts">
+      <div>
+        <label for="dir">シートを流す向き</label>
+        <select id="dir">
+          <option value="auto" selected>自動（ロールとピンが少ないほう）</option>
+          <option value="length">奥行きの方向に流す</option>
+          <option value="width">幅の方向に流す</option>
+        </select>
+      </div>
+      <div>
+        <label for="ov">シート同士の重ね (cm)</label>
+        <input id="ov" type="number" inputmode="numeric" value="10" min="5" max="50" step="1">
+      </div>
+      <div>
+        <label for="up">壁・縁石への立ち上げ (cm・全周)</label>
+        <input id="up" type="number" inputmode="numeric" value="0" min="0" max="30" step="1">
+      </div>
+      <div>
+        <label for="rw">ロール幅 (m)</label>
+        <input id="rw" type="number" inputmode="decimal" value="2" min="0.3" max="5" step="0.1">
+      </div>
+      <div>
+        <label for="rl">ロール長 (m)</label>
+        <input id="rl" type="number" inputmode="decimal" value="30" min="1" max="200" step="1">
+      </div>
+    </div>
+  </details>
+
+  <div class="actions">
+    <button type="button" data-preset="inubashiri">犬走り（0.8m × 10m）</button>
+    <button type="button" data-preset="niwa">庭（4m × 6m）</button>
+    <button type="button" data-preset="parking">駐車場の砂利下（5m × 6m）</button>
+    <button type="button" data-preset="sample">メーカーの例（10m × 10m）</button>
+  </div>
+</div>
+
+<div class="result" aria-live="polite">
+  <div>必要な固定ピンの本数（概算）</div>
+  <p class="big" id="pins">— <small>本</small></p>
+  <p class="sub2" id="summary">幅と奥行きを入力してください。</p>
+
+  <div class="split">
+    <div class="stat">
+      <p class="k">ロール</p>
+      <p class="v" id="rolls">—</p>
+    </div>
+    <div class="stat">
+      <p class="k">使うシートの面積</p>
+      <p class="v" id="area">—</p>
+    </div>
+    <div class="stat">
+      <p class="k">継ぎ目（接続テープ）</p>
+      <p class="v" id="tape">—</p>
+    </div>
+    <div class="stat">
+      <p class="k">ピンの袋（50本入り）</p>
+      <p class="v" id="packs">—</p>
+    </div>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>敷く向き</th><th>列</th><th>ロール</th><th>使う長さ</th><th>ピン</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <ul class="checks" id="checks"></ul>
+  <p class="sub2" id="notes"></p>
+</div>
+
+<div class="note">
+  <strong>この結果は概算です。</strong>
+  ピンの打ち方と重ねは<strong>ザバーン（株式会社グリーンフィールド）の技術資料</strong>に基づく既定値で、
+  他社の製品では値が異なることがあります。土の固さや風の強さによって、メーカーも
+  「ピンの長さ・種類・間隔を変えて施工」するとしています。
+  植木・配管・建物の角などを避ける切り欠きは計算に入れていません。
+  <strong>購入の前に、採用する製品の施工説明と販売店にご確認ください。</strong>
+  法面（斜面）や広い面積、土が流れやすい場所では、施工方法そのものを
+  <strong>施工業者などの専門家に最終判断を仰いでください。</strong>
+</div>
+
+<h2>この計算の根拠</h2>
+
+<h3>ピンは「外周と継ぎ目は50cm、内側は1m」</h3>
+<p>
+  ザバーンの技術資料は、むき出しで使う基本の打ち方を次のように定めています。
+</p>
+<div class="law">
+  <p>シート外周・ジョイント部は500mm、内側は1mピッチでピンを打ちます。</p>
+  <p>ザバーンの幅によりピンの止め位置は変わりますが、シート外周はすべて500mm間隔で固定してください。</p>
+</div>
+<p>
+  本ツールは、外周の4辺とシートの継ぎ目の線の上に50cm以下の間隔で、
+  継ぎ目と外周で区切られた区画の内側に1m以下の格子で、実際にピンを置いて数えます。
+  線が交わる点は1本として数えます。
+</p>
+<div class="formula">ピン ＝ 外周の線 ＋ 継ぎ目の線（交点は1本） ＋ 各区画の内側の格子</div>
+
+<h3>「1㎡あたり3本」は100㎡以下では使えない</h3>
+<p>
+  同じ資料には「参考必要ピン数量3本／㎡」と書かれていますが、
+  すぐ後に<strong>「但し100㎡以下の場合は除く」</strong>とあります。
+  面積が小さいほど外周の割合が大きくなり、1㎡あたりの本数が増えるためです。
+  たとえば<strong>幅0.8m×長さ10mの犬走り</strong>では、外周だけで44本、1㎡あたり5.5本になります。
+  家庭の庭の多くは100㎡以下なので、本ツールは目安ではなく配置で数えています。
+</p>
+
+<h3>砂利の下は1mピッチ、法面は全体50cm</h3>
+<div class="law">
+  <p>（砂利下）スミ付け箇所に専用ピンを1mピッチで打ち、シートを固定します。（1～2本/㎡）</p>
+  <p>（法面）シート全体、500mmピッチでピンを打ちます。</p>
+</div>
+<p>
+  砂利の重みでシートが押さえられるので、ピンは少なくて済みます。
+  その代わり<strong>継ぎ目に接続テープを貼り</strong>、継ぎ目に砂利が入り込まないように敷きならすよう資料は求めています。
+</p>
+
+<h3>シート同士は10cm重ねる</h3>
+<div class="law">
+  <p>シート同士の重ねは100mmとります。</p>
+  <p>シート同士は必ず10cm以上ラップしてください。</p>
+</div>
+<p>
+  2m幅のロールなら、2列目以降は1列あたり1.9mずつ進みます。
+  ロールより長い場所では長手方向にも10cm重ねて継ぎます。
+  使うシートの面積は「地面の面積＋重ねの分」になり、
+  <strong>重ねの部分は接続テープの長さ</strong>とも一致します。
+</p>
+
+<h3>メーカーの例と突き合わせた結果</h3>
+<p>
+  技術資料には「100㎡の正方形に2m幅で敷く」例が載っています。本ツールで同じ条件を計算した結果です。
+</p>
+<div class="tablewrap">
+  <table>
+    <thead><tr><th>項目</th><th>メーカーの例</th><th>本ツール</th></tr></thead>
+    <tbody>
+      <tr><td>シートの面積</td><td>105㎡</td><td>105㎡</td></tr>
+      <tr><td>接続テープ</td><td>50m</td><td>50m</td></tr>
+      <tr><td>ピン（むき出し）</td><td>222本</td><td>228本</td></tr>
+      <tr><td>ピン（全体500mm）</td><td>462本</td><td>468本</td></tr>
+    </tbody>
+  </table>
+</div>
+<p>
+  ピンは本ツールのほうが<strong>6本（約3%）多く</strong>出ます。
+  継ぎ目の線の端（外周から1.9m、3.8m…の位置）は外周の50cm刻みに乗らないため、
+  本ツールは<strong>継ぎ目の端にも1本ずつ</strong>打つ前提で数えているからです。
+  継ぎ目の端は2枚のシートを同時に押さえる位置なので、ここを省く配置にはしていません。
+  <strong>足りなくなる側には寄せていません。</strong>
+</p>
+
+<h3>敷く向きで、ロールもピンも変わる</h3>
+<p>
+  同じ場所でも、シートを奥行き方向に流すか幅方向に流すかで、継ぎ目の本数とロールの使い方が変わります。
+  本ツールは両方を計算し、<strong>ロールの本数が少ないほう、同じならピンが少ないほう</strong>を選びます。
+  もう一方の結果も表に並べています。
+</p>
+
+<h2>よくある質問</h2>
+
+<h3>L字や複雑な形の場所はどうしますか</h3>
+<p>
+  長方形に分けて、それぞれ計算して足してください。
+  分けた区画どうしの境目は外周として数えられるので、ピンは実際より少し多めに出ます。
+</p>
+
+<h3>ロールの残りで最後の1列を作れませんか</h3>
+<p>
+  作れることがあります。本ツールは各列をロールの長さ方向から切り出す前提で、
+  細い最後の1列もロールの長さを1列分使うものとして数えています（多めの側）。
+  残りの長さは結果の下に表示しています。
+</p>
+
+<h3>ほかの材料の数量も出せますか</h3>
+<p>
+  外まわりと内装の数量計算をそろえています。
+  <a href="../fence-quantity/">フェンスの枚数・柱の本数</a>、
+  <a href="../block-wall/">ブロック塀の計算</a>、
+  <a href="../roof-area/">屋根面積の計算</a>、
+  <a href="../paint-quantity/">ペンキ・塗料の必要量</a>、
+  <a href="../wallpaper-quantity/">壁紙・クロスの必要量</a>、
+  <a href="../gypsum-board-quantity/">石膏ボードの必要枚数</a>があります。
+</p>
+
+<h2>出典</h2>
+<ul class="src">
+  <li>株式会社グリーンフィールド「ザバーン® 技術資料」
+    <a href="https://sg-news.sungreen.co.jp/sgnews-cms/wp-content/uploads/2024/07/xavan_gijutu.pdf" rel="nofollow noopener" target="_blank">sg-news.sungreen.co.jp (PDF)</a>
+    — 重ね100mm、外周・ジョイント部500mm・内側1mピッチ、全体500mmピッチ、砂利下1mピッチ（1～2本/㎡）、
+    100㎡の施工例（シート105㎡・ピン222本／462本・接続テープ50m）、参考必要ピン数量（100㎡以下は除く）、固定ピン50本入り</li>
+  <li>株式会社グリーンフィールド「防草シートの施工方法」
+    <a href="https://gfield.co.jp/feature/bousou-sheet/" rel="nofollow noopener" target="_blank">gfield.co.jp</a>
+    — 「シート同士は必ず10cm以上ラップ」「縁石やブロック等の端部の立ち上げは5cm以上を推奨」</li>
+  <li>株式会社グリーンフィールド「ザバーン®・プランテックス®製防草シート」
+    <a href="https://gfield.co.jp/product/xavan/" rel="nofollow noopener" target="_blank">gfield.co.jp</a>
+    — ロール寸法（1m×30m・2m×30m・1m×50m・2m×50m・3m×20m）</li>
+  <li>計算式は上記の規則から機械的に導いたものです。
+    導出は<a href="./calc.js">計算コード</a>のコメントに、
+    メーカーの例との照合と境界値の検証は<a href="./calc.test.mjs">テスト</a>に残してあります</li>
+</ul>
+<p class="src">最終確認日: 2026年10月7日</p>
+
+</main>
+
+<footer class="wrap">
+  <a href="../../">トップ</a>
+  <a href="../../privacy.html">プライバシーポリシー</a>
+  <a href="../../contact.html">お問い合わせ</a>
+  <p>&copy; 2026 くらしの計算室</p>
+</footer>
+
+<script type="module">
+import { calculate, MODES } from "./calc.js";
+
+const PRESETS = {
+  inubashiri: { w: 0.8, l: 10, mode: "exposed", roll: "1000x30000" },
+  niwa:       { w: 4, l: 6, mode: "exposed", roll: "2000x30000" },
+  parking:    { w: 5, l: 6, mode: "gravel", roll: "2000x30000" },
+  sample:     { w: 10, l: 10, mode: "exposed", roll: "2000x30000" },
+};
+
+const $ = (id) => document.getElementById(id);
+const TAGS = { ok: "適合", ng: "基準外", info: "参考" };
+const DIR = { length: "奥行き方向", width: "幅方向" };
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const n = (v, d = 2) => Number(v).toLocaleString("ja-JP", { maximumFractionDigits: d });
+const mm = (id) => Math.round(Number($(id).value) * 1000);
+
+function syncRoll() {
+  const v = $("roll").value;
+  if (v === "custom") return;
+  const [w, l] = v.split("x").map(Number);
+  $("rw").value = w / 1000;
+  $("rl").value = l / 1000;
+}
+
+function render() {
+  const res = calculate({
+    widthMm: mm("w"),
+    lengthMm: mm("l"),
+    rollWMm: mm("rw"),
+    rollLMm: mm("rl"),
+    overlapMm: Math.round(Number($("ov").value) * 10),
+    upturnMm: Math.round(Number($("up").value) * 10),
+    mode: $("mode").value,
+    direction: $("dir").value,
+  });
+
+  if (!res.ok) {
+    $("pins").innerHTML = '— <small>本</small>';
+    for (const id of ["rolls", "area", "tape", "packs"]) $(id).textContent = "—";
+    $("rows").innerHTML = "";
+    $("checks").innerHTML = "";
+    $("summary").textContent = res.errors[0];
+    $("notes").textContent = "";
+    return;
+  }
+
+  const c = res.chosen;
+  const i = res.input;
+  $("pins").innerHTML = `${c.pins.toLocaleString("ja-JP")} <small>本</small>`;
+  $("rolls").textContent = `${c.rolls} 本`;
+  $("area").textContent = `${n(c.sheetAreaM2)} ㎡`;
+  $("tape").textContent = `${n(c.tapeM)} m`;
+  $("packs").textContent = `${c.pinPacks} 袋（${(c.pinPacks * 50).toLocaleString("ja-JP")}本）`;
+  $("summary").textContent =
+    `地面 ${n(res.areaM2)}㎡ ／ ${MODES[i.mode].label} ／ ロール ${n(i.rollWMm / 1000)}m×${n(i.rollLMm / 1000)}m を${DIR[c.direction]}に${c.strips}列` +
+    (c.piecesPerStrip > 1 ? `（1列を${c.piecesPerStrip}枚で継ぐ）` : "") +
+    ` ／ 1㎡あたり ${n(c.pins / res.areaM2, 1)} 本`;
+
+  $("rows").innerHTML = [c, res.other].map((x, k) =>
+    `<tr><td>${DIR[x.direction]}${k === 0 ? "（採用）" : ""}</td><td>${x.strips} 列</td><td>${x.rolls} 本</td>` +
+    `<td>${n(x.rollLengthUsedMm / 1000)} m</td><td>${x.pins.toLocaleString("ja-JP")} 本</td></tr>`).join("");
+
+  $("checks").innerHTML = res.checks.map((x) =>
+    `<li><p class="hd"><span class="tag ${x.status}">${TAGS[x.status]}</span>${esc(x.title)}</p>` +
+    `<p class="dt">${esc(x.detail)}</p></li>`).join("");
+  $("notes").textContent = res.notes.join(" ");
+}
+
+$("roll").addEventListener("change", () => { syncRoll(); render(); });
+for (const id of ["rw", "rl"]) {
+  $(id).addEventListener("input", () => {
+    const v = `${Math.round(Number($("rw").value) * 1000)}x${Math.round(Number($("rl").value) * 1000)}`;
+    $("roll").value = [...$("roll").options].some((o) => o.value === v) ? v : "custom";
+    render();
+  });
+}
+for (const id of ["w", "l", "mode", "dir", "ov", "up"]) {
+  $(id).addEventListener("input", render);
+  $(id).addEventListener("change", render);
+}
+for (const btn of document.querySelectorAll("[data-preset]")) {
+  btn.addEventListener("click", () => {
+    const p = PRESETS[btn.dataset.preset];
+    $("w").value = p.w;
+    $("l").value = p.l;
+    $("mode").value = p.mode;
+    $("roll").value = p.roll;
+    syncRoll();
+    render();
+  });
+}
+render();
+</script>
+
+</body>
+</html>

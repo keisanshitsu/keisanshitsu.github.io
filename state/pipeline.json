@@ -1,7 +1,7 @@
 {
   "meta": {
     "created": "2026-08-05",
-    "last_run": "2026-10-06",
+    "last_run": "2026-10-07",
     "handoff_for_2026-10-05": "probe_index.mjs の問い合わせ順を『当サイト→陽性対照→陰性対照』に入れ替えて1回だけ実行する。当サイトのクエリは常に3本目で、10/04 は対照 200・当サイトだけ 202（引き直しも 202）。順序（連続リクエストの流量制限）とクエリ内容のどちらが原因かを切り分けるため。isQueryUsable は緩めない。詳細は decisions.md 2026-10-04（追補）",
     "gap_days_2026-09-30": 2,
     "gap_note_2026-09-30": "前回完走 2026-09-28 → 本日 2026-09-30（水）。9/29 はセッション上限で exit 1（ループ本体は動かず、notify_human だけ走った）。起動時チェックで【異常を検出】: git status が clean でなく、submit_indexnow.mjs / .test.mjs（parseArgs 追加・テスト14件追加）と metrics_latest.json が未コミットで残っていた。HEAD と origin/main は一致（9a4bbd7）＝一致だけでは push 済みの証明にならない例がまた出た。修正は 45/45 PASS を確認して本日コミットした。notify_receipt の any_opened は直近4回とも false。",
@@ -20,7 +20,10 @@
       "what_to_do_while_held_progress_2026-10-02": "(1) の限界『計算後の結果表示は未測定』を解消。render_check.mjs に操作モード（select 全選択肢・数値入力の大きい値・各ボタン）を追加し、verify.mjs の 4. で操作後の溢れも ERROR にした。公開9枚・操作後160状態すべて overflow=0。欠陥注入テスト 8→16件、verify 経由の注入でも exit 1 を確認。保留の解除条件は未成立（sitemap 未送信・probe_index は本日 not_found）。強制解除 10/07 は変更しない",
       "what_to_do_while_held_progress_2026-10-03": "(2) 実施。probe_index.mjs が判定を state/probe_history.jsonl に追記し、集計（runs・by_state・broken_rate・last_found_at）を出力に含めるようにした。HTTP 202 は20秒空けて1回だけ引き直す（isQueryUsable は不変）。履歴: not_found 3 / detector_broken 3 / found 0、broken_rate 0.5（うち 4件は decisions.md からの再構成）。本日2回目は陽性・陰性対照まで 202＝同日の再実行が流量制限を招いた。【1日1回まで】。これで保留中の作業 (1)(2) はどちらも尽きた",
       "weekly_review_2026-10-04": "保留中の作業 (1)(2) が尽きたことを事実として扱い、強制解除を【前倒ししない・延長もしない】と決めた。10/07 のまま。理由: 保留の根拠（本数は制約ではない＝6本が1本も見つけられていない）は1週間で何も変わっていない（sitemap 未送信60日目・probe は found 0）。前倒しする根拠が無い。一方、条件を書き換えて延命するのは 9/05〜9/13 の失敗と同じ形なので行わない。10/07〜は #8 を通常どおり実行し、AND条件（項目2≥3 かつ 項目4≥3）を必須とする。10/05・10/06 は「本日は打つ手が無い。待ちである」と書いてよい日である（CLAUDE.md 3日ルール末尾）",
-      "what_to_do_while_held_progress_2026-10-06": "10/04 追補の順序切り分けを実行。--ours-first で当サイトのクエリが 200（10件）→ not_found。直前2回（10/03・10/04、当サイト3本目）はいずれも当サイトだけ 202。順序が効いている可能性が高いが n=1。解除条件(b)（found）は未成立。強制解除 10/07 は変更しない"
+      "what_to_do_while_held_progress_2026-10-06": "10/04 追補の順序切り分けを実行。--ours-first で当サイトのクエリが 200（10件）→ not_found。直前2回（10/03・10/04、当サイト3本目）はいずれも当サイトだけ 202。順序が効いている可能性が高いが n=1。解除条件(b)（found）は未成立。強制解除 10/07 は変更しない",
+      "released_on": "2026-10-07",
+      "released_by": "forced_release_on（期限到達）。条件(a) sitemap 未送信・条件(b) probe_index は本日も not_found で、どちらも未成立のまま。条件を書き換えての延命はしなかった",
+      "release_caveat": "解除は「増産してよい」であって「流入が始まった」ではない。保留の根拠（Google 経路0本・索引0件・収益0円）は1つも解消していない。保留中の仮説『制作日の翌日に利用上限で落ちる』への備えとして、本日は採点コミット→実装コミットの区切りごとに push した"
     },
     "gap_days_2026-09-22": 1,
     "gap_note_2026-09-22": "前回実行 2026-09-21 → 本日 2026-09-22（火）。差は1日で欠測なし。起動時チェックを実施し【異常なし】: git status は clean、git rev-parse HEAD と origin/main が一致（ともに e3ad252）。9/16 の教訓どおり一致だけでは push 済みの証明にならないので clean と併せて見た。前回は手順6・7まで完走している。",
@@ -39,9 +42,9 @@
       "release_evidence": "IndexNow への最小送信の応答が 202（鍵の検証は保留中）から 200（受理かつ鍵も検証済み）に変わった。仕様上、鍵の検証はエンジンが鍵ファイルをクロールすることで行われる（一次情報: https://www.indexnow.org/documentation \"Once you submit your URLs to search engines, search engines will crawl the key file to verify ownership\"）。したがって参加エンジンのいずれかが当ホストの鍵ファイルを実際に取得した。",
       "release_caveat": "⚠ 条件(b)は文字どおり満たされたので解除するが、【証拠は鍵ファイルへの到達であって、ツールページのクロールではない】。同日の索引プローブ（probe_index.mjs、対照2本とも通過）では当ホストは検索結果に1件も出ていない＝コンテンツはまだ索引されていない。解除は『増産してよい』であって『流入が始まった』ではない。6本目を作るときも AND条件（項目2≥3 かつ 項目4≥3）は必須のままである。⚠ 条件を後から書き換えて保留を延命することはしなかった。それは 9/05〜9/13 の8日間と同じ失敗になるため。"
     },
-    "decision_rules_reached_count": 11,
-    "decision_rules_reached_note": "2026-09-15 に 0 → 1、以降 9/16・9/17・9/21・9/22 と続き、本日 9/23 で通算6回。到達した行は #3（9/15）・#3（9/16）・#8（9/17）・#8（9/21）・#8（9/22・ただし保留）・#8（9/23・ただし保留中のため打ち手は保留中の作業＝発見経路の検証）。 2026-09-28 に #8（保留は 9/23 に解除済み）で通算7回目。6本目 T007 を作った。 2026-10-02 に #8 で通算9回目（保留中のため打ち手は保留中の作業）。 2026-10-04 に #8 で通算10回目（保留中・保留中の作業は尽きたため打ち手は週次レビューのみ）。 2026-10-06 に #8 で通算11回目（保留中・打ち手は 10/04 追補の handoff＝probe の順序切り分け）。",
-    "last_run_type": "【日次ループ】。前提ゲート全行通過（3日連続該当なし／remote あり／未公開在庫0／計測未接続は人間待ちのみで落ちる——blocked_on_human に STEP1.5-5・STEP1.6 実在、notify toast_reached=true、代替手段の否定は 9/12・10/04 実測／L2 起点未成立）。意思決定ルール #1〜#7 不発火（#4 は measured=false のため発火させない）、#8 は production_hold_2026-09-30 により作らない（強制解除は明日 10/07）。打ち手: 10/05 に落ちた handoff を実行——probe_index.mjs に --ours-first を追加し、当サイトのクエリを先頭にして1回だけ実行。結果は対照・当サイトとも 200 で not_found（測れた日）。順序仮説を支持する観測1件（n=1、因果は未確定）。fetch_metrics は no_credentials（62日目）。decisions.md 2026-10-06 参照",
+    "decision_rules_reached_count": 12,
+    "decision_rules_reached_note": "2026-09-15 に 0 → 1、以降 9/16・9/17・9/21・9/22 と続き、本日 9/23 で通算6回。到達した行は #3（9/15）・#3（9/16）・#8（9/17）・#8（9/21）・#8（9/22・ただし保留）・#8（9/23・ただし保留中のため打ち手は保留中の作業＝発見経路の検証）。 2026-09-28 に #8（保留は 9/23 に解除済み）で通算7回目。6本目 T007 を作った。 2026-10-02 に #8 で通算9回目（保留中のため打ち手は保留中の作業）。 2026-10-04 に #8 で通算10回目（保留中・保留中の作業は尽きたため打ち手は週次レビューのみ）。 2026-10-06 に #8 で通算11回目（保留中・打ち手は 10/04 追補の handoff＝probe の順序切り分け）。 2026-10-07 に #8 で通算12回目（production_hold_2026-09-30 を期限で強制解除）。7本目 T008 を作った。",
+    "last_run_type": "【日次ループ】。前提ゲート全行通過（3日連続該当なし／remote あり／未公開在庫0／計測未接続は人間待ちのみで落ちる——blocked_on_human に STEP1.5-5・STEP1.6 実在、notify toast_reached=true、代替手段の否定は 9/12・10/04 実測／L2 起点未成立）。意思決定ルール #1〜#7 不発火（#4 は measured=false のため発火させない）、#8 発火。production_hold_2026-09-30 を期限（10/07）で強制解除し、7本目 T008『防草シートの必要量と固定ピンの本数』を作った。採点 27/35・AND条件 3/3 を先にコミット・push（b4d7f6f）→実装・ゲート exit 0（434アサーション・WARN 0・375px 実レンダリング 10枚/182状態）→push（6a505f9）→本番 GET 200 → IndexNow --url 200。probe_index は --ours-first で not_found（n=2 で当サイト先頭は2回とも 200）。fetch_metrics は no_credentials（63日目）。decisions.md 2026-10-07 参照",
     "last_run_type_previous_2026-09-28": "【日次ループ】。前提ゲートは全行通過（3日連続該当なし／remote あり／未公開在庫0／計測は人間待ちのみで落ちる／L2 起点未成立）。意思決定ルール #1〜#7 不発火（#4 は measured=false のため『表示回数0』と読まない）。#8 に到達し、production_hold は 9/23 に解除済みのため新規ツールを1本作った: T007 フェンスの枚数・柱の本数（26/35、AND条件 項目2=3・項目4=4）。採点を research/niches.md に書いてコミット・push してから実装に入った（#006 の手順違反を繰り返さないため）。",
     "last_run_type_previous_2026-09-21": "【日次ループ】。前提ゲートは全行を通過した（1行目=同じ行への3日連続該当なし／2行目=remote設定済／3行目=未公開在庫は block-wall の1本で3本未満／4行目=計測基盤は未接続だが残りは人間作業のみで『人間待ちの行は日を消費しない』の3条件を満たして落ちた（実在=真: blocked_on_human に STEP1.5-5 と STEP1.6／通知経路=真: notify_receipt.json の task_ids に両方が載り pending_count=2・reached_store=true／代替手段の否定=真: 9/12 実測）／5行目=L2期限は null で起点未成立）。意思決定ルールに到達し通算4回目。#1 は人間作業のみにつき不発火、#2 は L2 期限が null、#3 は公開済み4本を本番の GET 200 で実測したため不発火、#4 は T002・T003 の公開から2週間の境界が 2026-09-23 で未到達かつ measured=false、#5〜#7 はいずれも計測値を要するため不発火。よって【#8 新規ツールを1本作る】が本日の1手。⚠ ただし新規に作ってはいない。9/18 に作られて未回収のまま残っていた T006（ブロック塀）が在庫にあり、『在庫は1円も生まない』以上、6本目を作る前にこれを公開するのが #8 の意図に最も近いと判断した（9/16 に T004 で同じ判断をしている）。実行: (1) 9/18 の3ファイルを検査し、e-Gov 法令API から施行令を【再取得して sha256 一致】を確認したうえで 令62条の8 の全定数を逐語照合、工業会PDFを pypdf で開いて学会規準の全定数を照合（すべて一致） (2) 控え壁の区間長に欠陥を発見し修正——学会の本数を等間隔で割っており、どちらの配置とも一致しない 2.0m を施行令の判定欄に表示していた（正しくは施行令の配置で3.33m、学会の配置で2.8m）。テスト5件追加 (3) research/niches.md に #006 を事後採点（29/35・項目2=3・項目4=4・AND条件成立）。項目4の根拠はガーデンプラス5,000円（TGアフィリエイト）と外装工事ヒカーク7,040円（レントラックス）で、どちらも登録型 (4) 直接競合 gojikara.com を実際に開き、建築基準法への言及が一切ないことを確認（差別化の実在を確かめた） (5) トップ・sitemap・兄弟ツール3本から導線を張った (6) 恒久対策として verify.mjs に『3.10 孤立したツールページの検出』を追加。9/18 のツールは【ゲートを exit 0 で通過しながら、サイトのどこからも辿り着けない】状態だった (7) T005（屋根面積）が 9/17 の push で実際に公開されていたことを GET 200 で実測し published_on を確定した。公開前ゲート exit 0（HTML8枚・ツール5本・アサーション331件・WARN 0）。欠陥を3種類注入して両方向検証済み、復元後ハッシュ一致。⚠ 事業の数字は本日も動いていない（収益0円・流入未計測・発見経路0本・sitemap 未送信47日目）。増えたのは公開済みツールが4本から5本になったことだけである。詳細は tools[T006] と unrecovered_work_defect_2026-09-18、decisions.md 2026-09-21 を参照。",
     "next_run_note_2026-09-17": "⚠ 次回の意思決定ルールは #3 を通過する（公開済み3本が実測で成立したため）。#4 は『公開2週間以上かつ表示回数0』だが T002・T003 の公開日は 2026-09-09 で2週間の境界は 2026-09-23、かつ measured=false のため表示回数を読めない（未計測を『表示回数0』と解釈する禁止は生きている）。#5・#6・#7 はいずれも計測値を必要とするため発火しない。したがって #8『上記なし → 新規ツールを1本作る』に落ちる見込み。⚠ ただし4本目からは最初の3本への免除が切れ、AND条件『項目2（勝てる競合か）≥3 かつ 項目4（収益導線）≥3』が必須になる。現在の在庫3本はすべて項目4=2（物販）であり、このまま同種を足すと狙ったニッチで全勝しても10万円に届かないポートフォリオになる。4本目は収益導線から逆算して選ぶこと。項目4に3点以上を付けるときは実在する案件名とおおよその単価を research/niches.md に書く（『アフィリがありそう』で3点を付けない）",
@@ -112,7 +115,11 @@
     "gap_days_2026-10-06": 2,
     "gap_note_2026-10-06": "前回完走 2026-10-04 → 本日 10/06（火）。10/05 はセッション上限で exit 1（logs/run_2026-10-05.log・ループ本体は動かず notify_human だけ走った）。起動時チェック【異常なし】: git status clean・HEAD と origin/main 一致（a6ae98b）。10/05 の handoff は未実行のまま残っていたので本日実行した。notify_receipt の any_opened は直近も false。",
     "last_run_type_previous_2026-10-04": "【週次レビュー（日曜・定例）＋日次ループ】。前提ゲート全行通過（3日連続該当なし／remote あり／未公開在庫0／計測未接続は人間待ちのみで落ちる——3条件を本日再実測: blocked_on_human に STEP1.5-5・STEP1.6 実在、notify_receipt toast_reached=true、Google 資格情報は 9/12 と同じく0（gcloud なし・%APPDATA%gcloud なし・GOOGLE_APPLICATION_CREDENTIALS なし・secrets は README のみ）／L2 起点未成立）。意思決定ルール #1〜#7 不発火、#8 は production_hold により作らない。週次レビュー: 本番7URL 200・title 一致、鍵ファイル・robots.txt 200。probe_index は detector_broken（broken_rate 4/7）。fetch_metrics は no_credentials（60日目）。ゲート exit 0（379アサーション・WARN 0）。強制解除 10/07 は据え置き。decisions.md 2026-10-04 参照",
-    "next_run_note_2026-10-07": "⚠ 次回読むこと。(1) 10/07 は production_hold_2026-09-30 の強制解除日。条件を書き換えて延命しない。#8 で7本目を作る。AND条件（項目2≥3 かつ 項目4≥3）必須、項目4≥3 なら実在案件名と単価を research/niches.md に書き、採点をコミット・push してから実装（#006 の教訓）。利用上限で落ちやすいので、採点コミット→実装→ゲート→コミットの区切りごとに push すること。(2) probe_index は1日1回、--ours-first で回す（10/06 に当サイト先頭で初めて 200 が出た。n を増やして順序仮説を確かめる。既定順は変えていない）。(3) #4 は measured=false のため発火させない。"
+    "gap_days_2026-10-07": 1,
+    "gap_note_2026-10-07": "前回完走 2026-10-06 → 本日 10/07（水）。空白なし。起動時チェック【異常なし】: git status clean・HEAD と origin/main 一致（6dcf14a）。notify_receipt の any_opened は直近3回（10/04〜10/06 の記録）とも false。",
+    "last_run_type_previous_2026-10-06": "【日次ループ】。前提ゲート全行通過（3日連続該当なし／remote あり／未公開在庫0／計測未接続は人間待ちのみで落ちる——blocked_on_human に STEP1.5-5・STEP1.6 実在、notify toast_reached=true、代替手段の否定は 9/12・10/04 実測／L2 起点未成立）。意思決定ルール #1〜#7 不発火（#4 は measured=false のため発火させない）、#8 は production_hold_2026-09-30 により作らない（強制解除は明日 10/07）。打ち手: 10/05 に落ちた handoff を実行——probe_index.mjs に --ours-first を追加し、当サイトのクエリを先頭にして1回だけ実行。結果は対照・当サイトとも 200 で not_found（測れた日）。順序仮説を支持する観測1件（n=1、因果は未確定）。fetch_metrics は no_credentials（62日目）。decisions.md 2026-10-06 参照",
+    "next_run_note_2026-10-07_DONE": "⚠ 次回読むこと。(1) 10/07 は production_hold_2026-09-30 の強制解除日。条件を書き換えて延命しない。#8 で7本目を作る。AND条件（項目2≥3 かつ 項目4≥3）必須、項目4≥3 なら実在案件名と単価を research/niches.md に書き、採点をコミット・push してから実装（#006 の教訓）。利用上限で落ちやすいので、採点コミット→実装→ゲート→コミットの区切りごとに push すること。(2) probe_index は1日1回、--ours-first で回す（10/06 に当サイト先頭で初めて 200 が出た。n を増やして順序仮説を確かめる。既定順は変えていない）。(3) #4 は measured=false のため発火させない。",
+    "next_run_note_2026-10-08": "⚠ 次回読むこと。(1) 保留は解除済み。#8 は再び毎日発火する。だが【保留の根拠は1つも解消していない】（Google 経路0本・索引0件・収益0円）。次の1本を作る前に、(a) 制作日翌日に利用上限で落ちる仮説を 10/08 の完走可否で1件確かめる (b) 8本目も AND条件必須・採点を先にコミット。(2) probe_index は1日1回 --ours-first。(3) #4 は measured=false のため発火させない。(4) T008 のピンは実例より6本多い（安全側）。差の原因を説明する一次情報が見つかれば calc.js のコメントと本文を直す"
   },
   "north_star": {
     "metric": "monthly_clicks",
@@ -1016,6 +1023,62 @@
       "published_verified_live": "push（8d4ffe5）後に GET。404 が4回（約60秒）続いたあと 200、<title> 一致。トップ・/tools/block-wall/・sitemap.xml の本番配信物に fence-quantity への参照があることも GET で確認した。published_on は GET 200 を見てから書いた（9/16 の教訓）",
       "indexnow_submitted_on": "2026-09-30",
       "indexnow_submitted_note": "--url で1件だけ送信し HTTP 200（受理・鍵検証済み）。受理であって索引ではない。9/28 は誤送信と同日に重ねないため見送っていた"
+    },
+    {
+      "id": "T008",
+      "slug": "weed-sheet-quantity",
+      "title": "防草シートの必要量と固定ピンの本数（メーカー施工基準どおり）",
+      "path": "docs/tools/weed-sheet-quantity/",
+      "score": 27,
+      "score_scale": "35点満点（7項目）。内訳は項目1=4 / 項目2=3 / 項目3=5 / 項目4=3 / 項目5=4 / 項目6=5 / 項目7=3",
+      "score_and_condition": "7本目なので AND条件『項目2≥3 かつ 項目4≥3』が適用される。3 と 3 で成立（ぎりぎり）。足切り該当なし。",
+      "score_order": "採点（research/niches.md #008）を先にコミット・push（b4d7f6f）してから実装した",
+      "built_on": "2026-10-07",
+      "published_on": "2026-10-07",
+      "gate_passed": "node scripts/verify.mjs exit 0（HTML10枚・ツール7本・434アサーション・WARN 0）。T008 単体は55ケース。1列のときの閉じた式と配置計数の独立照合270通り、自動の向き選択50通り、単調性237通りを含む。欠陥2種（線の等分 ceil→floor／内側のピンを数えない）を注入して 2件・9件の FAIL を確認し、復元はハッシュ一致",
+      "gate_caught": "初回の verify で『最終判断を専門家に委ねる旨の記載が無い』ERROR。検査を緩めず、法面・広い面積では施工業者などの専門家に判断を仰ぐ旨を本文に足した。実装中にも自分のテストが2件の誤りを捕まえた: (1) 自動の向き選択が『使う長さ』を先に比べ、犬走りを横11本の細切れで敷く案を選んでいた (2) 実例との照合で 228本が出た原因（継ぎ目の端が外周の500mm刻みに乗らない）を突き止め、220本と思い込んでいた手計算のほうが誤りだった",
+      "visual_check_375px": "実施（render_check.mjs・依存ゼロ）。初期表示と操作後の状態すべて overflow=0",
+      "basis": [
+        {
+          "fact": "重ね100mm／10cm以上",
+          "source": "https://sg-news.sungreen.co.jp/sgnews-cms/wp-content/uploads/2024/07/xavan_gijutu.pdf",
+          "verbatim": "シー ト同士の重ねは100mmと り ます（P.2）／シート同士は必ず10cm以上ラップしてください（gfield.co.jp/feature/bousou-sheet/）",
+          "checked_on": "2026-10-07"
+        },
+        {
+          "fact": "むき出し: 外周・ジョイント500mm、内側1m。100㎡・2m幅でシート105㎡・ピン222本・テープ50m",
+          "source": "https://sg-news.sungreen.co.jp/sgnews-cms/wp-content/uploads/2024/07/xavan_gijutu.pdf",
+          "verbatim": "シー ト外周 ・ ジ ョイン ト部は500mm、 内側は1m ピ ッ チでピンを打ちます（P.3）／参考必要ピン数量3本／㎡ ※但し100㎡以下の場合は除く",
+          "checked_on": "2026-10-07"
+        },
+        {
+          "fact": "全体500mm（法面）。同条件で462本",
+          "source": "https://sg-news.sungreen.co.jp/sgnews-cms/wp-content/uploads/2024/07/xavan_gijutu.pdf",
+          "verbatim": "シー ト全体、 500mm ピッチでピンを打ちます（P.4）",
+          "checked_on": "2026-10-07"
+        },
+        {
+          "fact": "砂利下 1mピッチ",
+          "source": "https://sg-news.sungreen.co.jp/sgnews-cms/wp-content/uploads/2024/07/xavan_gijutu.pdf",
+          "verbatim": "スミ付け箇所に専用ピンを1m ピッチで打ち、 シー トを固定 します （1～2本/㎡）（P.8）",
+          "checked_on": "2026-10-07"
+        },
+        {
+          "fact": "ロール寸法 1×30・2×30・1×50・2×50・3×20m",
+          "source": "https://gfield.co.jp/product/xavan/",
+          "verbatim": "1m×30m / 2m×30m / 3ｍ×20ｍ / 1m×50m / 2m×50m",
+          "checked_on": "2026-10-07"
+        }
+      ],
+      "basis_caveat": "メーカー1社（グリーンフィールド／ザバーン）の施工基準であって法令でも業界共通規格でもない。技術資料PDFは pypdf でテキスト抽出して逐語確認した（WebFetch では本文を読めなかった）。他社値は入力で変更可",
+      "error_direction": "実例 222本・462本 に対し 228本・468本（+6・約3%）。継ぎ目の端にも1本打つため。少なく数える向きには倒れない（テストで固定）。最後の細い列もロール長1列分を消費するものとして数える（多め）",
+      "deliberately_omitted": "接続テープの巻数（規格と品目の対応が本文から確定できない）、法面勾配の自動判定、切り欠き（植木・配管）、他社の既定値",
+      "cluster": "T006・T007（外構）と同じ群。T007 から相互リンク",
+      "monetization": "ガーデンプラス 現場調査フォーム送信 5,000円・外装工事ヒカーク 7,040円（#006/#007 で確認）、草刈り・庭工事系（庭匠／庭革命／お庭110番）は単価非公開。DIY 層が主なので項目4は3点。未提携（ASP登録は人間作業）",
+      "published_url": "https://keisanshitsu.github.io/tools/weed-sheet-quantity/",
+      "published_verified_live": "push（6a505f9）後に GET。404 が3回（約30秒）続いたあと 200、<title> 一致。トップ・sitemap.xml の本番配信物に weed-sheet-quantity への参照があることも GET で確認した。published_on は GET 200 を見てから書いた",
+      "indexnow_submitted_on": "2026-10-07",
+      "indexnow_submitted_note": "--url で1件だけ送信し HTTP 200（受理・鍵検証済み）。受理であって索引ではない"
     }
   ],
   "backlog": [
@@ -1304,6 +1367,17 @@
       "impressions": null,
       "note": "未計測（measured=false）。ゼロではない。62日目。",
       "note_discovery": "Google への発見経路は本日も0本（sitemap 未送信62日目）。probe_index.mjs を --ours-first（当サイト→陽性→陰性）で1回実行し not_found（対照2本とも 200 で通過・当サイトのクエリも初回で 200・10件・引き直しなし）。測れた日であり、非Google でも当ホストは未索引。履歴 runs 8 / not_found 4 / detector_broken 4 / found 0。"
+    },
+    {
+      "date": "2026-10-07",
+      "source": "scripts/fetch_metrics.py",
+      "status": "no_credentials",
+      "measured": false,
+      "sessions": null,
+      "clicks": null,
+      "impressions": null,
+      "note": "未計測（measured=false）。ゼロではない。63日目。",
+      "note_discovery": "Google への発見経路は本日も0本（sitemap 未送信63日目）。probe_index.mjs を --ours-first で1回実行し not_found（対照2本とも 200・当サイトのクエリも初回で 200・引き直しなし）。当サイト先頭の順では2回とも 200（n=2）。履歴 runs 9 / not_found 5 / detector_broken 4 / found 0。"
     }
   ],
   "facts_to_recheck": [

@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>土間コンクリートの材料計算 — 生コン・砕石・ワイヤーメッシュ・残土を一度に</title>
+<meta name="description" content="土間の幅・奥行き・厚さを入れるだけで、生コンの立米数、砕石の量、ワイヤーメッシュの枚数（重ね200mmで割付け）、掘った土の運び出し量を一度に算出します。国土交通省の公共建築工事標準仕様書と土量変化率の標準値を出典にしています。">
+<link rel="canonical" href="https://keisanshitsu.github.io/tools/doma-concrete/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="くらしの計算室">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="土間コンクリートの材料計算 — 生コン・砕石・ワイヤーメッシュ・残土を一度に">
+<meta property="og:description" content="幅・奥行き・厚さから、生コンの立米数・砕石・ワイヤーメッシュの枚数・残土の量を一度に算出。国交省の標準仕様書を出典にしています。">
+<meta property="og:url" content="https://keisanshitsu.github.io/tools/doma-concrete/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "土間コンクリートの材料計算",
+  "description": "土間の幅・奥行き・厚さから、生コンの立米数・砕石の量・ワイヤーメッシュの枚数・残土の量を、国土交通省の公共建築工事標準仕様書と土量変化率の標準値に基づいて算出します。",
+  "url": "https://keisanshitsu.github.io/tools/doma-concrete/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (web browser)",
+  "inLanguage": "ja",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "くらしの計算室",
+    "url": "https://keisanshitsu.github.io/"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1b19; --muted:#6b6862;
+    --line:#e5e2dc; --card:#fff; --accent:#0f6cbd; --accent-soft:#eef5fc;
+    --ok:#1f7a45; --ok-soft:#eaf6ef; --ng:#b3261e; --ng-soft:#fdeeed;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#17181a; --fg:#e9e8e5; --muted:#a3a09a;
+           --line:#2e3033; --card:#1f2123; --accent:#6cb6f5; --accent-soft:#1b2733;
+           --ok:#5fd08a; --ok-soft:#16261d; --ng:#ff8a80; --ng-soft:#2a1a19; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  header{border-bottom:1px solid var(--line);padding:16px 0}
+  .site{font-size:.85rem;color:var(--muted);text-decoration:none}
+  h1{font-size:1.35rem;margin:28px 0 6px;line-height:1.5}
+  .sub{color:var(--muted);font-size:.92rem;margin:0 0 28px}
+  h2{font-size:1.05rem;margin:36px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
+  h3{font-size:.95rem;margin:22px 0 6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+  input,select{width:100%;padding:9px 10px;font-size:1rem;color:var(--fg);
+    background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  input[type=checkbox]{width:auto;margin-right:6px}
+  .chk{display:flex;align-items:center;font-size:.9rem;color:var(--fg);margin-top:8px}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--fg);padding:9px 14px}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:16px}
+  .fold{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+  .fold summary{cursor:pointer;font-size:.86rem;color:var(--muted)}
+  .result{margin-top:20px;border:1px solid var(--accent);background:var(--accent-soft);
+    border-radius:12px;padding:18px}
+  .big{font-size:2rem;font-weight:700;color:var(--accent);line-height:1.2;margin:2px 0 0}
+  .big small{font-size:1rem;font-weight:600;margin-left:2px}
+  .sub2{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+  .split{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:16px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .stat .k{font-size:.76rem;color:var(--muted);margin:0}
+  .stat .v{font-size:1.15rem;font-weight:700;margin:2px 0 0}
+  .stat .s{font-size:.76rem;color:var(--muted);margin:2px 0 0}
+  .checks{list-style:none;padding:0;margin:14px 0 0}
+  .checks li{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin-bottom:8px}
+  .checks .hd{font-size:.9rem;font-weight:600;margin:0}
+  .checks .dt{font-size:.82rem;color:var(--muted);margin:3px 0 0}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;border-radius:5px;
+    padding:1px 7px;margin-right:7px;vertical-align:2px}
+  .tag.ok{background:var(--ok-soft);color:var(--ok)}
+  .tag.ng{background:var(--ng-soft);color:var(--ng)}
+  .tag.info{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+  .tablewrap{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;white-space:nowrap}
+  th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:600}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:14px 16px;border-radius:0 8px 8px 0;font-size:.88rem;margin:24px 0}
+  .law{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;margin:14px 0;font-size:.86rem}
+  .law p{margin:0 0 6px;font-size:.86rem}
+  .law p:last-child{margin-bottom:0}
+  .formula{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:10px 14px;margin:12px 0;font-size:.9rem;overflow-x:auto;white-space:nowrap}
+  p,li{font-size:.94rem}
+  ul{padding-left:1.2em}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src li{font-size:.85rem;overflow-wrap:anywhere}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:20px 0 40px;
+    color:var(--muted);font-size:.85rem}
+  footer a{color:var(--muted);margin-right:14px}
+  a{color:var(--accent)}
+  @media (max-width:400px){
+    .big{font-size:1.7rem}
+  }
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><a class="site" href="../../">← くらしの計算室</a></div></header>
+
+<main class="wrap">
+
+<h1>土間コンクリートの材料計算</h1>
+<p class="sub">
+  土間の幅・奥行き・厚さを入れると、<strong>生コンの立米数・砕石の量・ワイヤーメッシュの枚数・掘った土の運び出し量</strong>を一度に出します。
+  メッシュは面積で割らず、<strong>重ね200mmを取って実際に並べて</strong>数えます。
+</p>
+
+<div class="card">
+  <div class="opts" style="margin-top:0">
+    <div>
+      <label for="w">幅 (m)</label>
+      <input id="w" type="number" inputmode="decimal" value="5" min="0.1" max="100" step="0.1">
+    </div>
+    <div>
+      <label for="l">奥行き (m)</label>
+      <input id="l" type="number" inputmode="decimal" value="6" min="0.1" max="100" step="0.1">
+    </div>
+    <div>
+      <label for="slab">コンクリートの厚さ (cm)</label>
+      <input id="slab" type="number" inputmode="decimal" value="10" min="5" max="30" step="0.5">
+    </div>
+    <div>
+      <label for="base">砕石の厚さ（締め固めた後・cm）</label>
+      <input id="base" type="number" inputmode="decimal" value="10" min="0" max="50" step="0.5">
+    </div>
+    <div>
+      <label for="use">使い方</label>
+      <select id="use">
+        <option value="parking" selected>駐車場（車が乗る）</option>
+        <option value="walkway">通路（人が歩くだけ）</option>
+      </select>
+    </div>
+    <div>
+      <label for="soil">掘る場所の土</label>
+      <select id="soil">
+        <option value="sand" selected>砂質土・砂（ふつうの土）</option>
+        <option value="clay">粘性土（粘土っぽい土）</option>
+        <option value="gravel">礫質土（砂利まじり）</option>
+      </select>
+    </div>
+  </div>
+  <label class="chk"><input id="mesh" type="checkbox" checked>ワイヤーメッシュを入れる</label>
+
+  <details class="fold">
+    <summary>メッシュの寸法・重ね、生コンの割増を変える</summary>
+    <div class="opts">
+      <div>
+        <label for="sheet">メッシュの寸法</label>
+        <select id="sheet">
+          <option value="1000x2000" selected>1m × 2m（φ6×150）</option>
+          <option value="2000x4000">2m × 4m（φ6×150）</option>
+          <option value="custom">ほかの寸法を入れる</option>
+        </select>
+      </div>
+      <div>
+        <label for="sw">メッシュの幅 (m)</label>
+        <input id="sw" type="number" inputmode="decimal" value="1" min="0.5" max="6" step="0.1">
+      </div>
+      <div>
+        <label for="sl">メッシュの長さ (m)</label>
+        <input id="sl" type="number" inputmode="decimal" value="2" min="0.5" max="6" step="0.1">
+      </div>
+      <div>
+        <label for="ov">メッシュの重ね (cm)</label>
+        <input id="ov" type="number" inputmode="numeric" value="20" min="0" max="50" step="1">
+      </div>
+      <div>
+        <label for="extra">生コンの割増 (%)</label>
+        <input id="extra" type="number" inputmode="numeric" value="0" min="0" max="50" step="1">
+      </div>
+    </div>
+  </details>
+
+  <div class="actions">
+    <button type="button" data-preset="car1">駐車場1台分（2.5m × 5m）</button>
+    <button type="button" data-preset="car2">駐車場2台分（5m × 6m）</button>
+    <button type="button" data-preset="path">通路（1m × 8m）</button>
+  </div>
+</div>
+
+<div class="result" aria-live="polite">
+  <div>生コンの量（設計数量）</div>
+  <p class="big" id="conc">— <small>㎥</small></p>
+  <p class="sub2" id="summary">幅・奥行き・厚さを入力してください。</p>
+
+  <div class="split">
+    <div class="stat">
+      <p class="k">注文する生コン（割増込み）</p>
+      <p class="v" id="order">—</p>
+      <p class="s" id="orderNote"></p>
+    </div>
+    <div class="stat">
+      <p class="k">砕石（締め固めた後）</p>
+      <p class="v" id="baseC">—</p>
+      <p class="s" id="baseL"></p>
+    </div>
+    <div class="stat">
+      <p class="k">ワイヤーメッシュ</p>
+      <p class="v" id="meshN">—</p>
+      <p class="s" id="meshS"></p>
+    </div>
+    <div class="stat">
+      <p class="k">掘った土の運び出し量</p>
+      <p class="v" id="soilL">—</p>
+      <p class="s" id="soilS"></p>
+    </div>
+  </div>
+
+  <div class="tablewrap" id="meshTable">
+    <table>
+      <thead><tr><th>メッシュの置き方</th><th>奥行き方向</th><th>幅方向</th><th>枚数</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <ul class="checks" id="checks"></ul>
+</div>
+
+<div class="note">
+  <strong>この結果は概算です。</strong>
+  計算は国土交通省「公共建築工事標準仕様書」と土量変化率の標準値に基づきますが、
+  これらは公共工事の基準であり、<strong>住宅の土間の厚さ・砕石の厚さ・強度は設計や施工業者の判断で決まります。</strong>
+  生コンは地面の凹凸や型枠のふくらみで設計数量より多く要るのが普通ですが、
+  割増の公的な目安は見つからなかったため、既定値は0%にしています。
+  <strong>注文量は生コン工場・施工業者にご確認ください。</strong>
+  駐車場のように車が乗る土間は、下地や厚さを誤ると割れや沈下につながります。
+  <strong>最終的な判断は施工業者などの専門家に仰いでください。</strong>
+</div>
+
+<h2>この計算の根拠</h2>
+
+<h3>生コンは「面積 × 厚さ」、注文は割増して</h3>
+<div class="formula">生コン(㎥) ＝ 幅(m) × 奥行き(m) × 厚さ(m)</div>
+<p>
+  たとえば駐車場1台分（2.5m×5m）を厚さ10cmで打つと 1.25㎥ です。
+  これは型枠の内側にちょうど入る量（設計数量）で、実際には下地の砕石のへこみや型枠のふくらみの分だけ多く要ります。
+  どれだけ足すかは現場の状態で変わり、住宅向けの公的な目安が見つからなかったため、本ツールは
+  <strong>割増を入力にして設計数量と分けて表示</strong>しています。
+</p>
+
+<h3>ワイヤーメッシュは重ねる分だけ枚数が増える</h3>
+<p>
+  公共建築工事標準仕様書は、コンクリート舗装に入れる溶接金網について次のように定めています。
+</p>
+<div class="law">
+  <p>溶接金網は、JIS G 3551（溶接金網及び鉄筋格子）に基づき、鉄線径６mm、網目寸法150mmとする。（22.5.3(6)）</p>
+  <p>下層のコンクリートを敷き均した後、長手方向に200mm程度重ね、要所を鉄線で結束して敷き込み、直ちに上層コンクリートの打込みを行う。（22.5.4(4)(ｳ)）</p>
+</div>
+<p>
+  1m×2mのシートを200mm重ねて並べると、2枚目からは1枚あたり1.8mしか進みません。
+  本ツールは1方向ごとに次の式で枚数を出し、シートを縦に置く場合と横に置く場合の<strong>少ないほう</strong>を採ります。
+</p>
+<div class="formula">枚数 ＝ 1 ＋ ⌈（長さ − シートの寸法）÷（シートの寸法 − 重ね）⌉　（長さがシート以下なら1）</div>
+<p>
+  5m×6mの駐車場では、面積で割ると15枚ですが、重ねを取って並べると<strong>24枚</strong>要ります。
+  仕様書が200mmを明記しているのは長手方向だけですが、本ツールは短手方向も同じだけ重ねる前提で数えています（多めに出る側）。
+  型枠から少し離して置く分は差し引いていません。端は切って合わせてください。
+</p>
+
+<h3>メッシュは地面に直置きしない</h3>
+<div class="law">
+  <p>溶接金網は、コンクリート版の厚さが150mmの場合は表面から1/2程度の位置に設ける。また、コンクリート版の厚さが200mmの場合は表面から1/3程度の位置に設ける。（22.5.2(3)）</p>
+</div>
+<p>
+  メッシュはコンクリートの厚さの途中にあって初めて効きます。地面に置いたまま打つと、ほとんど補強になりません。
+</p>
+
+<h3>掘った土は1.2倍に増える</h3>
+<p>
+  地面を掘ると土がほぐれて、かさが増えます。積算の基準では、この比を「土量変化率 L」と呼びます。
+</p>
+<div class="law">
+  <p>L ＝ ほぐした土量 ÷ 地山の土量</p>
+  <p>礫質土 1.20／砂質土及び砂 1.20／粘性土 1.25（林野庁 設計積算参考資料 表2.1）</p>
+</div>
+<p>
+  本ツールは、仕上がりを今の地面と同じ高さにする（掘り下げて打つ）前提で、
+  <strong>掘る深さ ＝ コンクリートの厚さ ＋ 砕石の厚さ</strong>とし、掘った量に L を掛けて運び出す量を出します。
+  5m×6mを20cm掘ると地山で6㎥、運び出すのは<strong>7.2㎥</strong>（砂質土）です。
+</p>
+
+<h3>砕石は敷く前の量で買う</h3>
+<p>
+  砕石は締め固めると縮みます。同じ表の注には「L／C は『締固め後の土量』を『ほぐした土量』に換算する場合」とあり、
+  本ツールは<strong>礫質土の値（L 1.20・C 0.90）を準用して</strong>締め固めた後の量に 1.20÷0.90（約1.33）を掛け、敷く前の量の目安を出しています。
+  砕石そのものの変化率ではないので、販売店の目安があればそちらを優先してください。
+</p>
+<p>
+  厚く敷くときは一度に締め固めず、層に分けます。仕様書は路盤について
+  「締固め後の仕上り厚さが200mmを超えないように敷き均し」としています。
+</p>
+
+<h3>強度と目地の目安</h3>
+<div class="tablewrap">
+  <table>
+    <thead><tr><th>使い方</th><th>設計基準強度</th><th>縦方向の目地</th><th>横方向の目地</th></tr></thead>
+    <tbody>
+      <tr><td>駐車場</td><td>24 N/mm²</td><td>5m程度ごと</td><td>3m程度ごと</td></tr>
+      <tr><td>歩行者用通路</td><td>18 N/mm²</td><td>3m程度ごと</td><td>4m程度ごと</td></tr>
+    </tbody>
+  </table>
+</div>
+<p>
+  公共建築工事標準仕様書の表22.5.1と表22.5.3の値です（スランプはどちらも8cm）。
+  歩行者用通路の厚さは、特記がなければ70mmとされています。駐車場の厚さには既定値がなく「特記による」です。
+</p>
+
+<h2>よくある質問</h2>
+
+<h3>駐車場1台分で生コンは何立米ですか</h3>
+<p>
+  2.5m×5mを厚さ10cmで打つなら設計数量は1.25㎥です。厚さ15cmなら約1.88㎥になります。
+  実際の注文量は、これに割増を足した量を生コン工場や施工業者と相談して決めてください。
+</p>
+
+<h3>L字の土間はどうしますか</h3>
+<p>
+  長方形に分けて、それぞれ計算して足してください。
+  メッシュは区画ごとに数えると境目でも重ねる計算になるので、少し多めに出ます。
+</p>
+
+<h3>ほかの材料の数量も出せますか</h3>
+<p>
+  外まわりと内装の数量計算をそろえています。
+  <a href="../block-wall/">ブロック塀の計算</a>、
+  <a href="../fence-quantity/">フェンスの枚数・柱の本数</a>、
+  <a href="../weed-sheet-quantity/">防草シートと固定ピンの本数</a>、
+  <a href="../roof-area/">屋根面積の計算</a>、
+  <a href="../paint-quantity/">ペンキ・塗料の必要量</a>、
+  <a href="../wallpaper-quantity/">壁紙・クロスの必要量</a>、
+  <a href="../gypsum-board-quantity/">石膏ボードの必要枚数</a>があります。
+</p>
+
+<h2>出典</h2>
+<ul class="src">
+  <li>国土交通省大臣官房官庁営繕部「公共建築工事標準仕様書（建築工事編）令和7年版」
+    <a href="https://www.mlit.go.jp/gobuild/content/001888816.pdf" rel="nofollow noopener" target="_blank">mlit.go.jp (PDF)</a>
+    — 22.5.2(1) 歩行者用通路の版厚70mm、22.5.2(3) 溶接金網の位置、表22.5.1 設計基準強度、22.5.3(6) 溶接金網 φ6・網目150mm、
+    22.5.4(4)(ｳ) 長手方向に200mm程度重ね、表22.5.3 目地の間隔、22.3.4(1) 一層の仕上り厚さ200mm以下、4.6.3 砂利地業</li>
+  <li>林野庁「森林整備保全事業 設計積算 参考資料」第1編 共通工 1-1-2 土量変化率
+    <a href="https://www.rinya.maff.go.jp/j/sekou/gijutu/attach/pdf/bugakarisankou-58.pdf" rel="nofollow noopener" target="_blank">rinya.maff.go.jp (PDF)</a>
+    — 表2.1 土量の変化率（礫質土・砂質土及び砂 L1.20 C0.90、粘性土 L1.25 C0.90）、L／C の換算</li>
+  <li>昭和産業株式会社「ワイヤーメッシュ（溶接金網）」
+    <a href="https://www.showasangyo.co.jp/product/16/" rel="nofollow noopener" target="_blank">showasangyo.co.jp</a>
+    — φ6.0×150 の寸法と重量（1×2m 6.22kg、2×4m 24.42kg）</li>
+  <li>計算式は上記の規則から機械的に導いたものです。
+    導出は<a href="./calc.js">計算コード</a>のコメントに、
+    境界値の検証は<a href="./calc.test.mjs">テスト</a>に残してあります</li>
+</ul>
+<p class="src">最終確認日: 2026年10月10日</p>
+
+</main>
+
+<footer class="wrap">
+  <a href="../../">トップ</a>
+  <a href="../../privacy.html">プライバシーポリシー</a>
+  <a href="../../contact.html">お問い合わせ</a>
+  <p>&copy; 2026 くらしの計算室</p>
+</footer>
+
+<script type="module">
+import { calculate, USES, SOILS } from "./calc.js";
+
+const PRESETS = {
+  car1: { w: 2.5, l: 5, slab: 10, base: 10, use: "parking" },
+  car2: { w: 5, l: 6, slab: 10, base: 10, use: "parking" },
+  path: { w: 1, l: 8, slab: 7, base: 6, use: "walkway" },
+};
+
+const $ = (id) => document.getElementById(id);
+const TAGS = { ok: "適合", ng: "基準外", info: "参考" };
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const n = (v, d = 2) => Number(v).toLocaleString("ja-JP", { maximumFractionDigits: d });
+const mmM = (id) => Math.round(Number($(id).value) * 1000);
+const mmCm = (id) => Math.round(Number($(id).value) * 10);
+
+function syncSheet() {
+  const v = $("sheet").value;
+  if (v === "custom") return;
+  const [w, l] = v.split("x").map(Number);
+  $("sw").value = w / 1000;
+  $("sl").value = l / 1000;
+}
+
+function render() {
+  const res = calculate({
+    widthMm: mmM("w"),
+    lengthMm: mmM("l"),
+    slabMm: mmCm("slab"),
+    baseMm: mmCm("base"),
+    use: $("use").value,
+    soil: $("soil").value,
+    extraPct: Number($("extra").value),
+    mesh: $("mesh").checked,
+    sheetWMm: mmM("sw"),
+    sheetLMm: mmM("sl"),
+    overlapMm: mmCm("ov"),
+  });
+
+  if (!res.ok) {
+    $("conc").innerHTML = '— <small>㎥</small>';
+    for (const id of ["order", "baseC", "meshN", "soilL"]) $(id).textContent = "—";
+    for (const id of ["orderNote", "baseL", "meshS", "soilS"]) $(id).textContent = "";
+    $("rows").innerHTML = "";
+    $("checks").innerHTML = "";
+    $("summary").textContent = res.errors[0];
+    return;
+  }
+
+  const i = res.input;
+  $("conc").innerHTML = `${n(res.concreteM3, 3)} <small>㎥</small>`;
+  $("summary").textContent =
+    `面積 ${n(res.areaM2)}㎡ ／ 厚さ ${n(i.slabMm / 10, 1)}cm ／ ${USES[i.use].label} ／ 掘る深さ ${n(res.digDepthMm / 10, 1)}cm`;
+  $("order").textContent = `${n(res.concreteOrderM3, 3)} ㎥`;
+  $("orderNote").textContent = i.extraPct > 0 ? `設計数量 ＋ ${i.extraPct}%` : "割増0%（詳細設定で変更）";
+  $("baseC").textContent = `${n(res.baseCompactedM3, 3)} ㎥`;
+  $("baseL").textContent = i.baseMm > 0 ? `敷く前の目安 約${n(res.baseLooseM3, 2)}㎥` : "砕石なし";
+  $("soilL").textContent = `${n(res.soilLooseM3, 2)} ㎥`;
+  $("soilS").textContent = `掘る量（地山）${n(res.excavationM3, 3)}㎥ × ${SOILS[i.soil].L}`;
+
+  if (res.mesh) {
+    const m = res.mesh;
+    $("meshN").textContent = `${m.sheets} 枚`;
+    $("meshS").textContent =
+      (m.weightKg !== null ? `約${n(m.weightKg, 1)}kg ／ ` : "") + `面積割りなら${m.naiveSheets}枚`;
+    const name = (x) => `${n(x.alongWidthMm / 1000, 1)}m を幅方向・${n(x.alongLengthMm / 1000, 1)}m を奥行き方向`;
+    $("rows").innerHTML = [m.chosen, m.other].map((x, k) =>
+      `<tr><td>${name(x)}${k === 0 ? "（採用）" : ""}</td><td>${x.nL} 枚</td><td>${x.nW} 枚</td><td>${x.sheets} 枚</td></tr>`).join("");
+    $("meshTable").hidden = false;
+  } else {
+    $("meshN").textContent = "なし";
+    $("meshS").textContent = "";
+    $("rows").innerHTML = "";
+    $("meshTable").hidden = true;
+  }
+
+  $("checks").innerHTML = res.checks.map((x) =>
+    `<li><p class="hd"><span class="tag ${x.status}">${TAGS[x.status]}</span>${esc(x.title)}</p>` +
+    `<p class="dt">${esc(x.detail)}</p></li>`).join("");
+}
+
+$("sheet").addEventListener("change", () => { syncSheet(); render(); });
+for (const id of ["sw", "sl"]) {
+  $(id).addEventListener("input", () => {
+    const v = `${mmM("sw")}x${mmM("sl")}`;
+    $("sheet").value = [...$("sheet").options].some((o) => o.value === v) ? v : "custom";
+    render();
+  });
+}
+for (const id of ["w", "l", "slab", "base", "use", "soil", "mesh", "ov", "extra"]) {
+  $(id).addEventListener("input", render);
+  $(id).addEventListener("change", render);
+}
+for (const btn of document.querySelectorAll("[data-preset]")) {
+  btn.addEventListener("click", () => {
+    const p = PRESETS[btn.dataset.preset];
+    $("w").value = p.w;
+    $("l").value = p.l;
+    $("slab").value = p.slab;
+    $("base").value = p.base;
+    $("use").value = p.use;
+    render();
+  });
+}
+render();
+</script>
+
+</body>
+</html>

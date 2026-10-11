@@ -1,7 +1,7 @@
 {
   "meta": {
     "created": "2026-08-05",
-    "last_run": "2026-10-10",
+    "last_run": "2026-10-11",
     "handoff_for_2026-10-05": "probe_index.mjs の問い合わせ順を『当サイト→陽性対照→陰性対照』に入れ替えて1回だけ実行する。当サイトのクエリは常に3本目で、10/04 は対照 200・当サイトだけ 202（引き直しも 202）。順序（連続リクエストの流量制限）とクエリ内容のどちらが原因かを切り分けるため。isQueryUsable は緩めない。詳細は decisions.md 2026-10-04（追補）",
     "gap_days_2026-09-30": 2,
     "gap_note_2026-09-30": "前回完走 2026-09-28 → 本日 2026-09-30（水）。9/29 はセッション上限で exit 1（ループ本体は動かず、notify_human だけ走った）。起動時チェックで【異常を検出】: git status が clean でなく、submit_indexnow.mjs / .test.mjs（parseArgs 追加・テスト14件追加）と metrics_latest.json が未コミットで残っていた。HEAD と origin/main は一致（9a4bbd7）＝一致だけでは push 済みの証明にならない例がまた出た。修正は 45/45 PASS を確認して本日コミットした。notify_receipt の any_opened は直近4回とも false。",
@@ -1453,6 +1453,17 @@
       "impressions": null,
       "note": "未計測（measured=false）。ゼロではない。66日目。",
       "note_discovery": "Google への発見経路は本日も0本（sitemap 未送信66日目）。probe_index.mjs を --ours-first で1回実行し not_found。履歴 runs 10 / not_found 6 / detector_broken 4 / found 0。T009 は IndexNow --url で 200（受理）"
+    },
+    {
+      "date": "2026-10-11",
+      "source": "scripts/fetch_metrics.py",
+      "status": "no_credentials",
+      "measured": false,
+      "sessions": null,
+      "clicks": null,
+      "impressions": null,
+      "note": "未計測（measured=false）。ゼロではない。67日目。",
+      "note_discovery": "Google への発見経路は本日も0本（sitemap 未送信67日目）。probe_index.mjs を --ours-first で1回実行し not_found（対照2本とも通過・当サイトのクエリも初回 200）。履歴 runs 11 / not_found 7 / detector_broken 4 / found 0。当サイト先頭の順では4回とも 200"
     }
   ],
   "facts_to_recheck": [
@@ -1829,6 +1840,37 @@
       "decision": "production_hold_2026-09-30 の強制解除 10/07 を据え置く（前倒しも延長もしない）",
       "w13_guard_check": "9/13 の宿題「人間待ちで飛ばした行に、叩いた記録が付いているか」を本日も実行。Google 資格情報の不在を本日再実測した（記録だけでなく実体で確認）",
       "honest_summary": "うまくいっていない。60日で収益0円、流入は一度も測れておらず、6本のツールはGoogleに1本も見つけられる経路が無い。今週やったことは測定器と検査器の改良（375px 実レンダリング・probe の履歴化）で、品質の穴は埋まったが事業の数字は動いていない。唯一の改善はループの完走率（2/7→6/7）で、制作を止めたことと関係しているかもしれない。次の1週間の問いは1つ: 10/07 に増産を再開したとき、再び利用上限で落ちるか。落ちるなら「制作は2日に1回まで」のような上限を週次で決める"
+    },
+    {
+      "date": "2026-10-11",
+      "day_of_week": "日曜",
+      "elapsed_days_since_start": 67,
+      "measured_state": {
+        "published_tools": 8,
+        "site_liveness": "本番9URL（トップ＋ツール8本）すべて GET 200・title 一致",
+        "clicks": null,
+        "impressions": null,
+        "sessions": null,
+        "metric_note": "未計測（measured=false・no_credentials）67日目。ゼロではない",
+        "revenue_jpy": 0,
+        "discovery_paths_to_google": 0,
+        "sitemap_unsubmitted_days": 67,
+        "non_google_index": "probe_index: found 0 / not_found 7 / detector_broken 4（runs 11）。--ours-first にしてから4回連続で測定可能（broken 0）＝10/04 の順序交絡の仮説は n=4 で支持",
+        "human_queue_opened": "notify_receipt の any_opened は直近6回すべて false（9/20 の1回だけ開封、未実行）",
+        "verify_gate": "exit 0（HTML11枚・ツール8本・488アサーション・375px 11枚＋操作後201状態）。⚠ 1回目は render_check が『CDP 応答なし: Page.enable』で測定不能 WARN、再実行で WARN 0。ゲートは測定不能を PASS と数えない設計どおりに働いた",
+        "loop_completion_last_7_days": "10/05〜10/11 で 10/06・10/07・10/10・10/11 の4回完走。落ちた3回は 10/05 セッション上限・10/08 と 10/09 ネットワーク不通（ENOTFOUND）"
+      },
+      "pace_to_100k": "届かない。流入は測れず、Google への経路は0本、非Google でも索引は未観測（found 0）。セッション目標（4〜6万/月・単価1,500円の登録型前提）との差は、流入が1件も観測されていないため算出不能",
+      "bottleneck": "STEP1.5-5（sitemap 送信・人間30秒）。67日目。9/20 に読まれ実行されなかった。本数（8本）は制約ではない",
+      "facts_rechecked": [
+        "106万円の壁（recheck_by 10/01）— 9/22 に支えるツール0本として再検証停止済み。8本とも建築・外構で制度値を使っていないことは変わらず。T001 に着手する日に必ず再取得する",
+        "所得税の年収の壁（12/01）・塗料（2027-02-06）は期限外"
+      ],
+      "question_from_last_week": "制作を再開した週に利用上限で落ちるか",
+      "answer": "落ちなかった。制作日は 10/07・10/10 の2回。翌日は 10/08 ネットワーク不通（利用量と無関係・判定に数えない）、10/11 は完走（反例1）。週内の利用上限による停止は 10/05 の1回だけで、その前日 10/04 は制作日ではなく週次レビュー（同日2回起動）だった。9/30 の仮説『制作日の翌日に利用上限で落ちる』は支持されない",
+      "decision": "制作頻度の上限は設けない（#8 が発火した日は作ってよい）。区切りごとの push（採点→実装）は、仮説ではなく途中で落ちたときの保険として継続する。CLAUDE.md は書き換えない",
+      "w13_guard_check": "人間待ちで飛ばした行（前提ゲート4行目・#1）の代替手段について、Google 資格情報の不在を本日も実体で確認（fetch_metrics が no_credentials・secrets に鍵なし）",
+      "honest_summary": "うまくいっていない。67日で収益0円、流入は一度も測れておらず、8本のツールは Google に1本も見つけられる経路が無い。今週は保留を期限で解き2本作った（T008・T009）が、事業の数字は1つも動いていない。8本すべてが建築・外構の同一クラスタなので、これは8回の試行ではなく1つの仮説の1回の試行である。増産はループの完走率を落とさないことが分かったので止める理由は無いが、増産が流入を生む根拠も無い。次の1週間の問い: 非Google の probe が初めて found を返すか（9/22 の IndexNow 開通から19日、9/23 の鍵検証から18日）"
     }
   ],
   "notification_channel": {

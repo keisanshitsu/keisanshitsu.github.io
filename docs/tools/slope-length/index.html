@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>スロープの長さ計算 — 段差から必要な長さ・踊場・幅を3つの基準で比較</title>
+<meta name="description" content="段差の高さを入れるだけで、スロープに必要な長さを建築基準法（1/8）・バリアフリー法の円滑化基準（1/12）・誘導基準（1/15）で比較。75cmごとの踊場、幅、手すりの要否、確保できる長さから逆算した解消できる段差まで出します。条文はe-Gov法令で確認しています。">
+<link rel="canonical" href="https://keisanshitsu.github.io/tools/slope-length/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="くらしの計算室">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="スロープの長さ計算 — 段差から必要な長さ・踊場・幅を3つの基準で比較">
+<meta property="og:description" content="段差の高さから、スロープの長さ・踊場の数・幅・手すりの要否を、建築基準法とバリアフリー法の3基準で一度に比較します。">
+<meta property="og:url" content="https://keisanshitsu.github.io/tools/slope-length/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "スロープの長さ計算",
+  "description": "段差の高さから、スロープに必要な長さ・踊場の数・幅・手すりの要否を、建築基準法施行令第26条とバリアフリー法の建築物移動等円滑化基準・誘導基準に基づいて算出し比較します。",
+  "url": "https://keisanshitsu.github.io/tools/slope-length/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (web browser)",
+  "inLanguage": "ja",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "くらしの計算室",
+    "url": "https://keisanshitsu.github.io/"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1b19; --muted:#6b6862;
+    --line:#e5e2dc; --card:#fff; --accent:#0f6cbd; --accent-soft:#eef5fc;
+    --ok:#1f7a45; --ok-soft:#eaf6ef; --ng:#b3261e; --ng-soft:#fdeeed;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#17181a; --fg:#e9e8e5; --muted:#a3a09a;
+           --line:#2e3033; --card:#1f2123; --accent:#6cb6f5; --accent-soft:#1b2733;
+           --ok:#5fd08a; --ok-soft:#16261d; --ng:#ff8a80; --ng-soft:#2a1a19; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  header{border-bottom:1px solid var(--line);padding:16px 0}
+  .site{font-size:.85rem;color:var(--muted);text-decoration:none}
+  h1{font-size:1.35rem;margin:28px 0 6px;line-height:1.5}
+  .sub{color:var(--muted);font-size:.92rem;margin:0 0 28px}
+  h2{font-size:1.05rem;margin:36px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
+  h3{font-size:.95rem;margin:22px 0 6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+  input,select{width:100%;padding:9px 10px;font-size:1rem;color:var(--fg);
+    background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--fg);padding:9px 14px}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:16px}
+  .fold{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+  .fold summary{cursor:pointer;font-size:.86rem;color:var(--muted)}
+  .result{margin-top:20px;border:1px solid var(--accent);background:var(--accent-soft);
+    border-radius:12px;padding:18px}
+  .big{font-size:2rem;font-weight:700;color:var(--accent);line-height:1.2;margin:2px 0 0}
+  .big small{font-size:1rem;font-weight:600;margin-left:2px}
+  .sub2{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+  .checks{list-style:none;padding:0;margin:14px 0 0}
+  .checks li{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin-bottom:8px}
+  .checks .hd{font-size:.9rem;font-weight:600;margin:0}
+  .checks .dt{font-size:.82rem;color:var(--muted);margin:3px 0 0}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;border-radius:5px;
+    padding:1px 7px;margin-right:7px;vertical-align:2px}
+  .tag.ok{background:var(--ok-soft);color:var(--ok)}
+  .tag.ng{background:var(--ng-soft);color:var(--ng)}
+  .tag.info{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+  .tablewrap{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;white-space:nowrap}
+  th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:600}
+  td.ok{color:var(--ok);font-weight:600}
+  td.ng{color:var(--ng);font-weight:600}
+  .cap{font-size:.85rem;font-weight:600;margin:18px 0 0}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:14px 16px;border-radius:0 8px 8px 0;font-size:.88rem;margin:24px 0}
+  .law{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;margin:14px 0;font-size:.86rem}
+  .law p{margin:0 0 6px;font-size:.86rem}
+  .law p:last-child{margin-bottom:0}
+  .formula{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:10px 14px;margin:12px 0;font-size:.9rem;overflow-x:auto;white-space:nowrap}
+  p,li{font-size:.94rem}
+  ul{padding-left:1.2em}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src li{font-size:.85rem;overflow-wrap:anywhere}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:20px 0 40px;
+    color:var(--muted);font-size:.85rem}
+  footer a{color:var(--muted);margin-right:14px}
+  a{color:var(--accent)}
+  @media (max-width:400px){
+    .big{font-size:1.7rem}
+  }
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><a class="site" href="../../">← くらしの計算室</a></div></header>
+
+<main class="wrap">
+
+<h1>スロープの長さ計算</h1>
+<p class="sub">
+  段差の高さを入れると、スロープに必要な長さを<strong>建築基準法（1/8）・バリアフリー法の円滑化基準（1/12）・誘導基準（1/15など）</strong>の3つで並べて出します。
+  <strong>75cmごとに要る踊場</strong>も長さに含め、幅・手すりの要否、<strong>確保できる長さから逆算して何cmの段差まで解消できるか</strong>も出します。
+</p>
+
+<div class="card">
+  <div class="opts" style="margin-top:0">
+    <div>
+      <label for="rise">段差の高さ（高低差・cm）</label>
+      <input id="rise" type="number" inputmode="decimal" value="30" min="1" max="300" step="0.5">
+    </div>
+    <div>
+      <label for="place">場所</label>
+      <select id="place">
+        <option value="site" selected>屋外（玄関アプローチなど敷地内の通路）</option>
+        <option value="building">建物の中</option>
+      </select>
+    </div>
+    <div>
+      <label for="beside">階段・段との関係</label>
+      <select id="beside">
+        <option value="0" selected>階段・段の代わりに設ける</option>
+        <option value="1">階段・段と並べて設ける</option>
+      </select>
+    </div>
+    <div>
+      <label for="avail">確保できる長さ（水平・m・任意）</label>
+      <input id="avail" type="number" inputmode="decimal" value="" min="0" max="100" step="0.1" placeholder="例: 4">
+    </div>
+  </div>
+
+  <details class="fold">
+    <summary>自分で決めた勾配で調べる（例: 1/20）</summary>
+    <div class="opts">
+      <div>
+        <label for="denom">勾配 1/□ の □（整数・空欄で使わない）</label>
+        <input id="denom" type="number" inputmode="numeric" value="" min="1" max="50" step="1" placeholder="例: 20">
+      </div>
+    </div>
+  </details>
+
+  <div class="actions">
+    <button type="button" data-preset="step">玄関の段差 15cm</button>
+    <button type="button" data-preset="porch">玄関ポーチ 45cm</button>
+    <button type="button" data-preset="high">高低差 1m（建物の中）</button>
+  </div>
+</div>
+
+<div class="result" aria-live="polite">
+  <div>円滑化基準（バリアフリー法）で必要な長さ</div>
+  <p class="big" id="headline">— <small>m</small></p>
+  <p class="sub2" id="summary">段差の高さを入力してください。</p>
+
+  <p class="cap">基準ごとの最小寸法（勾配を上限いっぱいにした場合）</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>項目</th><th>建築基準法</th><th>円滑化基準</th><th>誘導基準</th></tr></thead>
+      <tbody id="rowsMin"></tbody>
+    </table>
+  </div>
+
+  <div id="chosenBox" hidden>
+    <p class="cap" id="chosenCap">勾配 1/□ で作った場合</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>項目</th><th>建築基準法</th><th>円滑化基準</th><th>誘導基準</th></tr></thead>
+        <tbody id="rowsChosen"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <ul class="checks" id="checks"></ul>
+</div>
+
+<div class="note">
+  <strong>この結果は概算です。</strong>
+  計算は建築基準法施行令とバリアフリー法（高齢者、障害者等の移動等の円滑化の促進に関する法律）の政省令の条文に基づきますが、
+  <strong>バリアフリー法の基準は、一定の用途・規模の建築物に掛かるもので、戸建住宅には義務ではありません。</strong>
+  自治体の条例で基準が上乗せされている場合もあります。
+  また、条文の数値は「これより急にしてはいけない」上限であり、車椅子を自分でこぐ方や介助する方にとって楽に上れる勾配を示すものではありません。
+  上端・下端の平らな部分（乗り降りや方向転換の場所）は長さに含めていません。
+  <strong>実際の設計・工事は、建築士や施工業者などの専門家にご確認ください。</strong>
+</div>
+
+<h2>この計算の根拠</h2>
+
+<h3>長さは「段差 × 勾配の分母」</h3>
+<div class="formula">スロープの水平長さ ＝ 段差の高さ × 分母（勾配 1/分母）</div>
+<p>
+  勾配1/12は「12進んで1上がる」傾きです。段差30cmなら 30 × 12 ＝ 360cm、1/15なら450cm要ります。
+  この長さは<strong>水平に測った長さ</strong>で、斜面に沿って測るとわずかに長くなります（表の「斜面の長さ」）。
+</p>
+
+<h3>3つの基準の違い</h3>
+<div class="tablewrap">
+  <table>
+    <thead><tr><th>基準</th><th>勾配の上限</th><th>踊場</th><th>幅（代わり／併設）</th></tr></thead>
+    <tbody>
+      <tr><td>建築基準法施行令 第26条</td><td>1/8</td><td>高さの間隔の定めなし</td><td>（第23条を準用）</td></tr>
+      <tr><td>円滑化基準（建物の中）</td><td>1/12（高さ16cm以下は1/8）</td><td>75cmごと・踏幅150cm</td><td>120cm／90cm</td></tr>
+      <tr><td>円滑化基準（敷地内の通路）</td><td>1/12（高さ16cm以下は1/8）</td><td>75cmごと・踏幅150cm（勾配1/20超のとき）</td><td>120cm／90cm</td></tr>
+      <tr><td>誘導基準（建物の中）</td><td>1/12</td><td>75cmごと・踏幅150cm</td><td>150cm／120cm</td></tr>
+      <tr><td>誘導基準（敷地内の通路）</td><td>1/15</td><td>75cmごと・踏幅150cm（勾配1/20超のとき）</td><td>150cm／120cm</td></tr>
+    </tbody>
+  </table>
+</div>
+<p>
+  <strong>建築基準法施行令 第26条</strong>は、すべての建築物の「階段に代わる傾斜路」に掛かる最低限の規定です。
+  <strong>円滑化基準</strong>は、バリアフリー法で一定の用途・規模の建築物（店舗・病院・共同住宅など）が適合を義務または努力義務とされる基準、
+  <strong>誘導基準</strong>は、それより望ましい水準として国が定めた基準です。
+</p>
+<div class="law">
+  <p>勾配は、十二分の一を超えないこと。ただし、高さが十六センチメートル以下のものにあっては、八分の一を超えないこと。（バリアフリー法施行令 第19条第2項第4号ロ）</p>
+  <p>高さが七十五センチメートルを超えるものにあっては、高さ七十五センチメートル以内ごとに踏幅が百五十センチメートル以上の踊場を設けること。（同号ハ）</p>
+  <p>勾配は、十五分の一を超えないこと。（誘導基準 第11条第1項第6号ロ ― 敷地内の通路の傾斜路）</p>
+</div>
+
+<h3>踊場は「75cmごとに1か所・150cm以上」</h3>
+<div class="formula">踊場の数 ＝ ⌈段差 ÷ 75cm⌉ − 1　（75cmちょうどまでは0）</div>
+<p>
+  高低差が75cmを1mmでも超えると、途中に踏幅150cm以上の踊場が1か所要ります。
+  建物の中で円滑化基準どおり高低差1mを解消すると、傾斜部分 12m ＋ 踊場 1.5m ＝ <strong>13.5m</strong>です。
+  敷地内の通路では、勾配を<strong>1/20以下</strong>にすれば踊場の規定は掛かりません（「勾配が二十分の一を超えるものに限る」）。
+  緩くすると傾斜は長くなりますが、踊場の分だけ短くなる場合もあるので、表で比べてください。
+</p>
+
+<h3>手すり</h3>
+<ul>
+  <li>円滑化基準: 勾配が1/12を超えるか、高さが16cmを超える傾斜には手すりを設ける（施行令 第13条第1号）</li>
+  <li>誘導基準（建物の中）: 高さが16cmを超える傾斜には<strong>両側に</strong>手すり（第6条第1項第4号）</li>
+  <li>誘導基準（敷地内の通路）: 高さ16cm超 かつ 勾配1/20超の傾斜には<strong>両側に</strong>手すり（第11条第1項第6号ニ）</li>
+  <li>建築基準法: 第26条第2項で第25条（階段の手すり）を準用。高さ1m以下の部分には適用されません</li>
+</ul>
+
+<h2>よくある質問</h2>
+
+<h3>30cmの段差には何mのスロープが要りますか</h3>
+<p>
+  円滑化基準の1/12なら3.6m、屋外で誘導基準の1/15なら4.5mです。建築基準法の1/8なら2.4mですが、
+  これは車椅子で自力で上るには急な勾配です。
+</p>
+
+<h3>家の玄関にもバリアフリー法の基準は掛かりますか</h3>
+<p>
+  戸建住宅は、バリアフリー法の「特定建築物」（施行令第4条に列挙。共同住宅は含まれますが戸建住宅は含まれません）に当たらず、基準への適合は求められていません。
+  ただし国の基準は「この勾配なら多くの人が使える」という目安として広く参照されているので、本ツールでは比較のために並べています。
+</p>
+
+<h3>ほかの外まわりの計算もできますか</h3>
+<p>
+  <a href="../doma-concrete/">土間コンクリートの材料計算</a>、
+  <a href="../block-wall/">ブロック塀の計算</a>、
+  <a href="../fence-quantity/">フェンスの枚数・柱の本数</a>、
+  <a href="../weed-sheet-quantity/">防草シートと固定ピンの本数</a>があります。
+</p>
+
+<h2>出典</h2>
+<ul class="src">
+  <li>建築基準法施行令（昭和25年政令第338号）第23条・第25条・第26条
+    <a href="https://laws.e-gov.go.jp/law/325CO0000000338" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>高齢者、障害者等の移動等の円滑化の促進に関する法律施行令（平成18年政令第379号）第4条・第13条・第19条
+    <a href="https://laws.e-gov.go.jp/law/418CO0000000379" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>高齢者、障害者等が円滑に利用できるようにするために誘導すべき建築物特定施設の構造及び配置に関する基準を定める省令（平成18年国土交通省令第114号）第6条・第11条
+    <a href="https://laws.e-gov.go.jp/law/418M60000800114" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>条文は e-Gov 法令API で取得した現行版（2026年10月12日時点）を逐語で確認しています。
+    導出は<a href="./calc.js">計算コード</a>のコメントに、
+    境界値の検証は<a href="./calc.test.mjs">テスト</a>に残してあります</li>
+</ul>
+<p class="src">最終確認日: 2026年10月12日</p>
+
+</main>
+
+<footer class="wrap">
+  <a href="../../">トップ</a>
+  <a href="../../privacy.html">プライバシーポリシー</a>
+  <a href="../../contact.html">お問い合わせ</a>
+  <p>&copy; 2026 くらしの計算室</p>
+</footer>
+
+<script type="module">
+import { calculate, STANDARDS, STANDARD_ORDER, toDegrees, toPercent } from "./calc.js";
+
+const PRESETS = {
+  step: { rise: 15, place: "site", beside: "0" },
+  porch: { rise: 45, place: "site", beside: "0" },
+  high: { rise: 100, place: "building", beside: "0" },
+};
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const n = (v, d = 2) => Number(v).toLocaleString("ja-JP", { maximumFractionDigits: d });
+const m = (mm) => `${n(mm / 1000, 2)}m`;
+const cm = (mm) => `${n(mm / 10, 1)}cm`;
+const TAGS = { ok: "適合", ng: "基準外", info: "参考" };
+
+function rows(list, opts) {
+  const cell = (f) => list.map((x) => f(x)).join("");
+  const td = (text, cls = "") => `<td${cls ? ` class="${cls}"` : ""}>${esc(text)}</td>`;
+  const out = [];
+  out.push(`<tr><td>勾配</td>${cell((x) => td(`1/${x.denom}（約${n(toDegrees(x.denom), 1)}度・${n(toPercent(x.denom), 1)}%）`))}</tr>`);
+  if (opts.chosen) {
+    out.push(`<tr><td>この基準の上限</td>${cell((x) => td(`1/${x.maxDenom}`))}</tr>`);
+    out.push(`<tr><td>勾配の判定</td>${cell((x) => td(x.gradientOk ? "適合" : "急すぎる", x.gradientOk ? "ok" : "ng"))}</tr>`);
+  }
+  out.push(`<tr><td>傾斜部分（水平）</td>${cell((x) => td(m(x.runMm)))}</tr>`);
+  out.push(`<tr><td>踊場（踏幅150cm）</td>${cell((x) => td(x.landings ? `${x.landings}か所` : "不要"))}</tr>`);
+  out.push(`<tr><td><strong>全長（水平）</strong></td>${cell((x) => `<td><strong>${esc(m(x.totalMm))}</strong></td>`)}</tr>`);
+  out.push(`<tr><td>斜面の長さ（傾斜部分）</td>${cell((x) => td(m(x.slopeLengthMm)))}</tr>`);
+  out.push(`<tr><td>幅（以上）</td>${cell((x) => td(x.widthMm === null ? "—" : cm(x.widthMm)))}</tr>`);
+  out.push(`<tr><td>手すり</td>${cell((x) => td(x.handrail.need ? (x.key === "yudo" ? "両側に必要" : "必要") : "不要"))}</tr>`);
+  if (opts.avail) {
+    out.push(`<tr><td>${esc(m(opts.avail))} に収まるか</td>${cell((x) => td(x.fitsAvailable ? "収まる" : "収まらない", x.fitsAvailable ? "ok" : "ng"))}</tr>`);
+    if (!opts.chosen)
+      out.push(`<tr><td>${esc(m(opts.avail))} で解消できる段差</td>${cell((x) => td(x.maxRiseInAvailable > 0 ? `${cm(x.maxRiseInAvailable)}まで` : "解消できない"))}</tr>`);
+  }
+  return out.join("");
+}
+
+function render() {
+  const availM = $("avail").value === "" ? 0 : Number($("avail").value);
+  const res = calculate({
+    riseMm: Math.round(Number($("rise").value) * 10),
+    place: $("place").value,
+    beside: $("beside").value === "1",
+    denom: $("denom").value === "" ? 0 : Number($("denom").value),
+    availableMm: Math.round(availM * 1000),
+  });
+
+  if (!res.ok) {
+    $("headline").innerHTML = '— <small>m</small>';
+    $("summary").textContent = res.errors[0];
+    $("rowsMin").innerHTML = "";
+    $("rowsChosen").innerHTML = "";
+    $("chosenBox").hidden = true;
+    $("checks").innerHTML = "";
+    return;
+  }
+
+  const i = res.input;
+  const en = res.minimum[1];
+  $("headline").innerHTML = `${n(en.totalMm / 1000, 2)} <small>m</small>`;
+  $("summary").textContent =
+    `段差 ${cm(i.riseMm)} ／ ${i.place === "site" ? "屋外（敷地内の通路）" : "建物の中"} ／ 勾配 1/${en.denom}` +
+    (en.landings ? ` ／ 踊場 ${en.landings}か所を含む` : "");
+  $("rowsMin").innerHTML = rows(res.minimum, { avail: i.availableMm });
+
+  if (res.chosen) {
+    $("chosenCap").textContent = `勾配 1/${i.denom} で作った場合`;
+    $("rowsChosen").innerHTML = rows(res.chosen, { chosen: true, avail: i.availableMm });
+    $("chosenBox").hidden = false;
+  } else {
+    $("rowsChosen").innerHTML = "";
+    $("chosenBox").hidden = true;
+  }
+
+  const checks = [];
+  for (const x of res.minimum) {
+    const s = STANDARDS[x.key];
+    checks.push({
+      status: "info",
+      title: `${s.label}: ${x.article}`,
+      detail: `${s.role}。手すり: ${x.handrail.text}。`,
+    });
+  }
+  if (i.place === "site" && i.riseMm > 750) {
+    checks.push({
+      status: "info",
+      title: "勾配を1/20以下にすると、敷地内の通路では踊場の規定が掛かりません",
+      detail: `1/20 なら全長 ${m(i.riseMm * 20)}（踊場なし）。上の表の踊場込みの長さと比べてください。`,
+    });
+  }
+  if (i.riseMm <= 160) {
+    checks.push({
+      status: "info",
+      title: "高さ16cm以下は、円滑化基準でも1/8まで認められます",
+      detail: "ただし誘導基準には16cm以下の緩和はありません。車椅子で自力で上る場合、1/8は急な勾配です。",
+    });
+  }
+  $("checks").innerHTML = checks.map((x) =>
+    `<li><p class="hd"><span class="tag ${x.status}">${TAGS[x.status]}</span>${esc(x.title)}</p>` +
+    `<p class="dt">${esc(x.detail)}</p></li>`).join("");
+}
+
+for (const id of ["rise", "place", "beside", "avail", "denom"]) {
+  $(id).addEventListener("input", render);
+  $(id).addEventListener("change", render);
+}
+for (const btn of document.querySelectorAll("[data-preset]")) {
+  btn.addEventListener("click", () => {
+    const p = PRESETS[btn.dataset.preset];
+    $("rise").value = p.rise;
+    $("place").value = p.place;
+    $("beside").value = p.beside;
+    render();
+  });
+}
+render();
+</script>
+
+</body>
+</html>

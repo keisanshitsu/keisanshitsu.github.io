@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>カーポートの建ぺい率計算 — 1m緩和の判定・算入面積・あと何㎡置けるか</title>
+<meta name="description" content="敷地面積・指定建ぺい率・今の建物の建築面積とカーポートの寸法を入れると、高い開放性の1m緩和（告示第1437号）を満たすかを判定し、建築面積に算入される面積と合計の建ぺい率、上限まであと何㎡・その間口なら奥行き何mまで置けるかを出します。条文はe-Gov法令と国交省の告示で確認しています。">
+<link rel="canonical" href="https://keisanshitsu.github.io/tools/carport-coverage/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="くらしの計算室">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="カーポートの建ぺい率計算 — 1m緩和の判定・算入面積・あと何㎡置けるか">
+<meta property="og:description" content="カーポートを付けたら建ぺい率はオーバーするか。1m緩和の4要件を判定し、算入面積と合計の建ぺい率、上限まで置ける奥行きを出します。">
+<meta property="og:url" content="https://keisanshitsu.github.io/tools/carport-coverage/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "カーポートの建ぺい率計算",
+  "description": "カーポートが高い開放性を有する構造（平成5年建設省告示第1437号）に当たるかを判定し、建築基準法施行令第2条第1項第2号に基づく建築面積の算入部分と、建築基準法第53条の建ぺい率の合計を算出します。",
+  "url": "https://keisanshitsu.github.io/tools/carport-coverage/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (web browser)",
+  "inLanguage": "ja",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "くらしの計算室",
+    "url": "https://keisanshitsu.github.io/"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1b19; --muted:#6b6862;
+    --line:#e5e2dc; --card:#fff; --accent:#0f6cbd; --accent-soft:#eef5fc;
+    --ok:#1f7a45; --ok-soft:#eaf6ef; --ng:#b3261e; --ng-soft:#fdeeed;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#17181a; --fg:#e9e8e5; --muted:#a3a09a;
+           --line:#2e3033; --card:#1f2123; --accent:#6cb6f5; --accent-soft:#1b2733;
+           --ok:#5fd08a; --ok-soft:#16261d; --ng:#ff8a80; --ng-soft:#2a1a19; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  header{border-bottom:1px solid var(--line);padding:16px 0}
+  .site{font-size:.85rem;color:var(--muted);text-decoration:none}
+  h1{font-size:1.35rem;margin:28px 0 6px;line-height:1.5}
+  .sub{color:var(--muted);font-size:.92rem;margin:0 0 28px}
+  h2{font-size:1.05rem;margin:36px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
+  h3{font-size:.95rem;margin:22px 0 6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .grp{font-size:.82rem;font-weight:600;margin:18px 0 0}
+  .grp:first-child{margin-top:0}
+  label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+  input,select{width:100%;padding:9px 10px;font-size:1rem;color:var(--fg);
+    background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  input[type=checkbox]{width:auto;margin:0 6px 0 0;vertical-align:-2px}
+  .chk{font-size:.86rem;color:var(--fg);display:flex;align-items:center;margin-top:24px}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--fg);padding:9px 14px}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:8px}
+  .result{margin-top:20px;border:1px solid var(--accent);background:var(--accent-soft);
+    border-radius:12px;padding:18px}
+  .big{font-size:2rem;font-weight:700;color:var(--accent);line-height:1.2;margin:2px 0 0}
+  .big small{font-size:1rem;font-weight:600;margin-left:2px}
+  .verdict{display:inline-block;font-weight:700;border-radius:6px;padding:2px 10px;margin-top:8px}
+  .verdict.ok{background:var(--ok-soft);color:var(--ok)}
+  .verdict.ng{background:var(--ng-soft);color:var(--ng)}
+  .sub2{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+  .checks{list-style:none;padding:0;margin:14px 0 0}
+  .checks li{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin-bottom:8px}
+  .checks .hd{font-size:.9rem;font-weight:600;margin:0}
+  .checks .dt{font-size:.82rem;color:var(--muted);margin:3px 0 0}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;border-radius:5px;
+    padding:1px 7px;margin-right:7px;vertical-align:2px}
+  .tag.ok{background:var(--ok-soft);color:var(--ok)}
+  .tag.ng{background:var(--ng-soft);color:var(--ng)}
+  .tag.info{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+  .tablewrap{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;white-space:nowrap}
+  th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:600}
+  td.ok{color:var(--ok);font-weight:600}
+  td.ng{color:var(--ng);font-weight:600}
+  .cap{font-size:.85rem;font-weight:600;margin:18px 0 0}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:14px 16px;border-radius:0 8px 8px 0;font-size:.88rem;margin:24px 0}
+  .law{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;margin:14px 0;font-size:.86rem}
+  .law p{margin:0 0 6px;font-size:.86rem}
+  .law p:last-child{margin-bottom:0}
+  .formula{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:10px 14px;margin:12px 0;font-size:.9rem;overflow-x:auto;white-space:nowrap}
+  p,li{font-size:.94rem}
+  ul,ol{padding-left:1.2em}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src li{font-size:.85rem;overflow-wrap:anywhere}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:20px 0 40px;
+    color:var(--muted);font-size:.85rem}
+  footer a{color:var(--muted);margin-right:14px}
+  a{color:var(--accent)}
+  [hidden]{display:none !important}
+  @media (max-width:400px){
+    .big{font-size:1.7rem}
+  }
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><a class="site" href="../../">← くらしの計算室</a></div></header>
+
+<main class="wrap">
+
+<h1>カーポートの建ぺい率計算</h1>
+<p class="sub">
+  カーポートは屋根と柱があるので建築物になり、<strong>建築面積に入ります</strong>。
+  ただし柱の間隔・天井の高さなどの<strong>4つの要件を満たすと、屋根の端から四方1mずつは算入しません</strong>（高い開放性の緩和）。
+  敷地と今の建物、カーポートの寸法を入れると、緩和を受けられるか・算入される面積・合計の建ぺい率と、<strong>上限まであと何㎡、その間口なら奥行き何mまで置けるか</strong>を出します。
+</p>
+
+<div class="card">
+  <p class="grp">敷地</p>
+  <div class="opts">
+    <div>
+      <label for="site">敷地面積（㎡）</label>
+      <input id="site" type="number" inputmode="decimal" value="120" min="10" max="10000" step="0.01">
+    </div>
+    <div>
+      <label for="ratio">指定建ぺい率</label>
+      <select id="ratio">
+        <option value="30">30%</option>
+        <option value="40">40%</option>
+        <option value="50">50%</option>
+        <option value="60" selected>60%</option>
+        <option value="70">70%</option>
+        <option value="80">80%</option>
+      </select>
+    </div>
+    <div>
+      <label for="house">今ある建物の建築面積（㎡）</label>
+      <input id="house" type="number" inputmode="decimal" value="65" min="0" max="10000" step="0.01">
+    </div>
+    <div>
+      <label class="chk"><input id="corner" type="checkbox">角地の緩和（＋10%）の指定がある</label>
+    </div>
+  </div>
+
+  <p class="grp">カーポート（屋根の寸法）</p>
+  <div class="opts">
+    <div>
+      <label for="width">間口（屋根の幅・m）</label>
+      <input id="width" type="number" inputmode="decimal" value="5.0" min="1" max="30" step="0.01">
+    </div>
+    <div>
+      <label for="depth">奥行（屋根の長さ・m）</label>
+      <input id="depth" type="number" inputmode="decimal" value="5.5" min="1" max="30" step="0.01">
+    </div>
+    <div>
+      <label for="column">柱の間隔（いちばん狭いところ・m）</label>
+      <input id="column" type="number" inputmode="decimal" value="3.0" min="0.1" max="30" step="0.01">
+    </div>
+    <div>
+      <label for="ceiling">天井の高さ（屋根の下端まで・低いほう・m）</label>
+      <input id="ceiling" type="number" inputmode="decimal" value="2.3" min="1" max="10" step="0.01">
+    </div>
+    <div>
+      <label for="walls">壁・側面パネル</label>
+      <select id="walls">
+        <option value="none" selected>なし（柱と屋根だけ）</option>
+        <option value="some">あり</option>
+      </select>
+    </div>
+    <div id="openBox" hidden>
+      <label for="open">壁の無い部分の連続長さ（m）</label>
+      <input id="open" type="number" inputmode="decimal" value="5.5" min="0" max="100" step="0.01">
+    </div>
+  </div>
+
+  <div class="actions">
+    <button type="button" data-preset="one">1台用 2.7×5.0m</button>
+    <button type="button" data-preset="two">2台用 5.0×5.5m</button>
+    <button type="button" data-preset="low">柱が短い（天井2.0m）</button>
+  </div>
+</div>
+
+<div class="result" aria-live="polite">
+  <div>カーポートを付けたあとの建ぺい率</div>
+  <p class="big" id="headline">— <small>%</small></p>
+  <p id="verdictLine"><span class="verdict" id="verdict"></span></p>
+  <p class="sub2" id="summary">数値を入力してください。</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>項目</th><th>面積</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <p class="cap">高い開放性の4要件（告示第1437号）</p>
+  <ul class="checks" id="reqs"></ul>
+
+  <ul class="checks" id="checks"></ul>
+</div>
+
+<div class="note">
+  <strong>この結果は概算です。</strong>
+  計算は建築基準法・同施行令と国土交通省の告示の条文に基づきますが、建築面積の算定の細部（母屋に接続する場合、壁の数え方など）は
+  <strong>特定行政庁（市区町村または都道府県の建築指導の担当）によって取扱いが異なることがあります。</strong>
+  防火地域・準防火地域で耐火建築物などの加算を受けている敷地や、地区計画などで別の制限がある敷地では結果が変わります。
+  また、カーポートの設置には建築確認が必要な場合があります。
+  <strong>実際の計画は、建築士・施工業者などの専門家、または特定行政庁の窓口にご確認ください。</strong>
+</div>
+
+<h2>この計算の根拠</h2>
+
+<h3>カーポートも建築面積に入る</h3>
+<p>
+  建ぺい率は、敷地にある建物の建築面積の<strong>合計</strong>を敷地面積で割ったものです（建築基準法 第53条第1項）。
+  カーポートは屋根と柱を持つ建築物なので、母屋とは別の建物でも合計に加わります。
+</p>
+<div class="formula">建ぺい率 ＝（今ある建物の建築面積 ＋ カーポートの算入面積）÷ 敷地面積</div>
+
+<h3>4要件を満たせば、端から1mは算入しない</h3>
+<div class="law">
+  <p>国土交通大臣が高い開放性を有すると認めて指定する構造の建築物又はその部分については、その端から水平距離一メートル以内の部分の水平投影面積は、当該建築物の建築面積に算入しない。（建築基準法施行令 第2条第1項第2号ただし書）</p>
+  <p>一 外壁を有しない部分が連続して四メートル以上であること　二 柱の間隔が二メートル以上であること　三 天井の高さが二・一メートル以上であること　四 地階を除く階数が一であること（平成5年建設省告示第1437号）</p>
+</div>
+<div class="formula">算入面積 ＝（間口 − 2m）×（奥行 − 2m）　※4要件をすべて満たす場合</div>
+<p>
+  屋根の先端から四方それぞれ1m内側に入った部分だけが建築面積になります。
+  2台用の 5.0×5.5m（27.5㎡）なら 3.0×3.5m ＝ <strong>10.5㎡</strong>、1台用の 2.7×5.0m（13.5㎡）なら 0.7×3.0m ＝ <strong>2.1㎡</strong>です。
+  間口が2m以下なら算入面積は0になります。
+</p>
+
+<h3>要件を満たさない場合は屋根全体を算入</h3>
+<p>
+  1つでも満たさなければ緩和はなく、本ツールでは<strong>屋根の水平投影面積をそのまま</strong>算入します。
+  条文上は「柱の中心線で囲まれた部分」に1m以上突き出た軒の分を足す計算ですが、柱が片側だけのカーポートでは囲まれた部分が定まらず、
+  取扱いが分かれうるためです。屋根全体で数えると建ぺい率は高めに出るので、「収まる」と誤って示すことはありません。
+</p>
+
+<h3>「外壁を有しない部分が連続して4m以上」の判定</h3>
+<p>
+  壁や側面パネルが無い場合は、<strong>長いほうの辺の長さ</strong>で判定しています（屋根の外周をまわって数えることはしていません）。
+  側面パネルがある場合は、壁の無い部分が途切れずに続く長さを入力してください。
+</p>
+
+<h3>角地の緩和</h3>
+<p>
+  特定行政庁が指定する角地では、指定建ぺい率に10%が加わります（建築基準法 第53条第3項第2号）。
+  角地であっても指定を受けていなければ加わりません。指定の有無は市区町村の建築指導の窓口や都市計画図で確認できます。
+</p>
+
+<h2>よくある質問</h2>
+
+<h3>2台用のカーポートを付けたら建ぺい率オーバーになりますか</h3>
+<p>
+  敷地120㎡・建ぺい率60%（上限72㎡）・母屋65㎡の例では、残りは7㎡です。
+  5.0×5.5mのカーポートは緩和を受けても10.5㎡を算入するので、合計75.5㎡（約62.9%）で<strong>超えます</strong>。
+  間口5.0mのままなら、奥行は約4.33mまでで上限に収まります。角地の指定（上限84㎡）があれば収まります。
+</p>
+
+<h3>柱の高さが低いカーポートは緩和を受けられますか</h3>
+<p>
+  天井の高さ（屋根の下端までの高さ）が2.1m未満だと4要件の三を満たさず、屋根全体が算入されます。
+  天井の高さは製品によって違うので、寸法表（屋根の下端までの有効高さ）で確認してください。
+</p>
+
+<h3>ほかの外まわりの計算もできますか</h3>
+<p>
+  <a href="../doma-concrete/">土間コンクリートの材料計算</a>、
+  <a href="../block-wall/">ブロック塀の計算</a>、
+  <a href="../fence-quantity/">フェンスの枚数・柱の本数</a>、
+  <a href="../slope-length/">スロープの長さ計算</a>があります。
+</p>
+
+<h2>出典</h2>
+<ul class="src">
+  <li>建築基準法（昭和25年法律第201号）第53条第1項・第3項
+    <a href="https://laws.e-gov.go.jp/law/325AC0000000201" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>建築基準法施行令（昭和25年政令第338号）第2条第1項第2号
+    <a href="https://laws.e-gov.go.jp/law/325CO0000000338" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>建築基準法施行令第二条第一項第二号の規定に基づく国土交通大臣が高い開放性を有すると認めて指定する構造（平成5年建設省告示第1437号）
+    <a href="https://www.mlit.go.jp/notice/noticedata/pdf/201703/00006436.pdf" rel="nofollow noopener" target="_blank">国土交通省（PDF）</a></li>
+  <li>香川県土木部建築指導課「カーポート等の『高い開放性を有する構造の建築物』の建築面積の取扱いについて」（四方1mの取り方の図）
+    <a href="https://www.pref.kagawa.lg.jp/documents/3248/sxx12f150312175121_f11.pdf" rel="nofollow noopener" target="_blank">香川県（PDF）</a></li>
+  <li>条文は e-Gov 法令API で取得した現行版（2026年10月13日時点）を逐語で確認しています。施行前の改正版でも該当条文は同一です。
+    導出は<a href="./calc.js">計算コード</a>のコメントに、境界値の検証は<a href="./calc.test.mjs">テスト</a>に残してあります</li>
+</ul>
+<p class="src">最終確認日: 2026年10月13日</p>
+
+</main>
+
+<footer class="wrap">
+  <a href="../../">トップ</a>
+  <a href="../../privacy.html">プライバシーポリシー</a>
+  <a href="../../contact.html">お問い合わせ</a>
+  <p>&copy; 2026 くらしの計算室</p>
+</footer>
+
+<script type="module">
+import { calculate } from "./calc.js";
+
+const PRESETS = {
+  one: { width: 2.7, depth: 5.0, column: 2.5, ceiling: 2.3 },
+  two: { width: 5.0, depth: 5.5, column: 3.0, ceiling: 2.3 },
+  low: { width: 5.0, depth: 5.5, column: 3.0, ceiling: 2.0 },
+};
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const n = (v, d = 2) => Number(v).toLocaleString("ja-JP", { maximumFractionDigits: d });
+const sq = (cm2) => `${n(cm2 / 10000, 2)}㎡`;
+const mm = (cm) => `${n(cm / 100, 2)}m`;
+const cmOf = (id) => Math.round(Number($(id).value) * 100);
+const TAGS = { ok: "満たす", ng: "満たさない", info: "参考" };
+
+function render() {
+  const walls = $("walls").value;
+  $("openBox").hidden = walls !== "some";
+  const res = calculate({
+    siteM2: $("site").value === "" ? NaN : Number($("site").value),
+    ratioPct: Number($("ratio").value),
+    corner: $("corner").checked,
+    houseM2: $("house").value === "" ? NaN : Number($("house").value),
+    widthCm: cmOf("width"),
+    depthCm: cmOf("depth"),
+    walls,
+    openRunCm: cmOf("open"),
+    columnSpacingCm: cmOf("column"),
+    ceilingCm: cmOf("ceiling"),
+  });
+
+  if (!res.ok) {
+    $("headline").innerHTML = '— <small>%</small>';
+    $("verdict").className = "verdict";
+    $("verdict").textContent = "";
+    $("summary").textContent = res.errors[0];
+    $("rows").innerHTML = "";
+    $("reqs").innerHTML = "";
+    $("checks").innerHTML = "";
+    return;
+  }
+
+  const i = res.input;
+  $("headline").innerHTML = `${n(res.ratioPct, 2)} <small>%</small>`;
+  $("verdict").className = `verdict ${res.fits ? "ok" : "ng"}`;
+  $("verdict").textContent = res.fits ? `上限 ${res.limitPct}% に収まる` : `上限 ${res.limitPct}% を超える`;
+  $("summary").textContent =
+    `敷地 ${n(i.siteM2)}㎡ ／ 上限 ${sq(res.limitCm2)}（${res.limitPct}%${i.corner ? "・角地加算込み" : ""}）／ ` +
+    (res.relieved ? "1m緩和を受けられる" : "1m緩和は受けられない（屋根全体を算入）");
+
+  const tr = (k, v, cls = "") => `<tr><td>${k}</td><td${cls ? ` class="${cls}"` : ""}>${v}</td></tr>`;
+  const rows = [
+    tr("屋根の水平投影面積", esc(`${sq(res.roofCm2)}（${mm(i.widthCm)} × ${mm(i.depthCm)}）`)),
+    tr("1m緩和で算入しない部分", esc(res.relieved ? sq(res.excludedCm2) : "—（要件を満たさない）")),
+    tr("<strong>カーポートの算入面積</strong>", `<strong>${esc(sq(res.includedCm2))}</strong>`),
+    tr("今ある建物の建築面積", esc(`${sq(res.houseCm2)}（${n(res.houseRatioPct, 2)}%）`)),
+    tr("<strong>合計の建築面積</strong>", `<strong>${esc(sq(res.totalCm2))}</strong>`),
+    tr("建ぺい率の上限", esc(sq(res.limitCm2))),
+    res.afterCm2 >= 0
+      ? tr("上限までの残り（カーポート後）", esc(sq(res.afterCm2)), "ok")
+      : tr("上限からの超過", esc(sq(-res.afterCm2)), "ng"),
+  ];
+  if (!res.houseAlreadyOver) {
+    const d = res.maxDepthCm;
+    const txt = d === null ? "上限なし（算入面積が0）" : d < 100 ? "置けない" : `${mm(d)} まで`;
+    rows.push(tr(esc(`この間口（${mm(i.widthCm)}）で収まる奥行`), esc(txt)));
+    if (!res.relieved) {
+      const dr = res.maxDepthIfRelievedCm;
+      rows.push(tr("（4要件を満たした場合）", esc(dr === null ? "上限なし" : `${mm(dr)} まで`)));
+    }
+  }
+  $("rows").innerHTML = rows.join("");
+
+  $("reqs").innerHTML = res.requirements.items.map((x) => {
+    const st = x.key === "story" ? "info" : x.ok ? "ok" : "ng";
+    const detail = x.key === "story"
+      ? "カーポート（平屋）を前提としています。"
+      : x.key === "open" && i.walls === "none"
+        ? `壁なし: 長いほうの辺 ${mm(x.value)} で判定（必要 ${mm(x.need)} 以上）`
+        : `入力 ${mm(x.value)}（必要 ${mm(x.need)} 以上）`;
+    return `<li><p class="hd"><span class="tag ${st}">${TAGS[st]}</span>${esc(x.label)}</p><p class="dt">${esc(detail)}</p></li>`;
+  }).join("");
+
+  const checks = [];
+  if (res.houseAlreadyOver) {
+    checks.push({ title: "今ある建物だけで上限を超えています", detail: "入力した建築面積・建ぺい率をもう一度確認してください。緩和や許可を受けている場合は、本ツールの対象外です。" });
+  }
+  if (!res.relieved) {
+    checks.push({ title: `4要件を満たせば算入面積は ${sq(res.relievedCm2)} になります`, detail: "柱の間隔・天井の高さ・壁の有無は製品によって違います。寸法表で確認してください。" });
+  }
+  checks.push({ title: "母屋に接続するカーポートは対象外です", detail: "独立して立つカーポートを前提にしています。母屋の壁に取り付ける場合の算定は、特定行政庁に確認してください。" });
+  $("checks").innerHTML = checks.map((x) =>
+    `<li><p class="hd"><span class="tag info">${TAGS.info}</span>${esc(x.title)}</p><p class="dt">${esc(x.detail)}</p></li>`).join("");
+}
+
+for (const id of ["site", "ratio", "house", "corner", "width", "depth", "column", "ceiling", "walls", "open"]) {
+  $(id).addEventListener("input", render);
+  $(id).addEventListener("change", render);
+}
+for (const btn of document.querySelectorAll("[data-preset]")) {
+  btn.addEventListener("click", () => {
+    const p = PRESETS[btn.dataset.preset];
+    for (const k of Object.keys(p)) $(k).value = p[k];
+    render();
+  });
+}
+render();
+</script>
+
+</body>
+</html>

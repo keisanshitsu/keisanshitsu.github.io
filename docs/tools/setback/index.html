@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>セットバックの計算 — 2項道路の後退距離・後退面積と建てられる床面積</title>
+<meta name="description" content="今の道の幅と間口・敷地面積を入れると、2項道路のセットバック（後退）の距離と面積、建ぺい率・容積率の計算に使える敷地面積を出します。前面道路の幅員による容積率の制限（みなし幅員4m）も反映して、実際に建てられる建築面積・延べ面積まで計算します。条文はe-Gov法令で確認しています。">
+<link rel="canonical" href="https://keisanshitsu.github.io/tools/setback/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="くらしの計算室">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="セットバックの計算 — 2項道路の後退距離・後退面積と建てられる床面積">
+<meta property="og:description" content="その土地、セットバックで何㎡減るか。後退距離・後退面積と、前面道路の容積率制限まで反映した「建てられる床面積」を出します。">
+<meta property="og:url" content="https://keisanshitsu.github.io/tools/setback/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "セットバックの計算",
+  "description": "建築基準法第42条第2項の道路（2項道路）に接する敷地について、後退距離・後退面積と施行令第2条第1項第1号による敷地面積を算出し、第52条第2項の前面道路による容積率の制限を反映した建築面積・延べ面積の上限を計算します。",
+  "url": "https://keisanshitsu.github.io/tools/setback/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (web browser)",
+  "inLanguage": "ja",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "くらしの計算室",
+    "url": "https://keisanshitsu.github.io/"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1b19; --muted:#6b6862;
+    --line:#e5e2dc; --card:#fff; --accent:#0f6cbd; --accent-soft:#eef5fc;
+    --ok:#1f7a45; --ok-soft:#eaf6ef; --ng:#b3261e; --ng-soft:#fdeeed;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#17181a; --fg:#e9e8e5; --muted:#a3a09a;
+           --line:#2e3033; --card:#1f2123; --accent:#6cb6f5; --accent-soft:#1b2733;
+           --ok:#5fd08a; --ok-soft:#16261d; --ng:#ff8a80; --ng-soft:#2a1a19; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  header{border-bottom:1px solid var(--line);padding:16px 0}
+  .site{font-size:.85rem;color:var(--muted);text-decoration:none}
+  h1{font-size:1.35rem;margin:28px 0 6px;line-height:1.5}
+  .sub{color:var(--muted);font-size:.92rem;margin:0 0 28px}
+  h2{font-size:1.05rem;margin:36px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
+  h3{font-size:.95rem;margin:22px 0 6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .grp{font-size:.82rem;font-weight:600;margin:18px 0 0}
+  .grp:first-child{margin-top:0}
+  label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+  input,select{width:100%;padding:9px 10px;font-size:1rem;color:var(--fg);
+    background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--fg);padding:9px 14px}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:8px}
+  .wide{grid-column:1/-1}
+  .result{margin-top:20px;border:1px solid var(--accent);background:var(--accent-soft);
+    border-radius:12px;padding:18px}
+  .big{font-size:2rem;font-weight:700;color:var(--accent);line-height:1.2;margin:2px 0 0}
+  .big small{font-size:1rem;font-weight:600;margin-left:2px}
+  .sub2{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+  .checks{list-style:none;padding:0;margin:14px 0 0}
+  .checks li{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin-bottom:8px}
+  .checks .hd{font-size:.9rem;font-weight:600;margin:0}
+  .checks .dt{font-size:.82rem;color:var(--muted);margin:3px 0 0}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;border-radius:5px;
+    padding:1px 7px;margin-right:7px;vertical-align:2px}
+  .tag.ok{background:var(--ok-soft);color:var(--ok)}
+  .tag.ng{background:var(--ng-soft);color:var(--ng)}
+  .tag.info{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+  .tablewrap{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;white-space:nowrap}
+  th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:600}
+  td.ng{color:var(--ng);font-weight:600}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:14px 16px;border-radius:0 8px 8px 0;font-size:.88rem;margin:24px 0}
+  .law{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;margin:14px 0;font-size:.86rem}
+  .law p{margin:0 0 6px;font-size:.86rem}
+  .law p:last-child{margin-bottom:0}
+  .formula{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:10px 14px;margin:12px 0;font-size:.9rem;overflow-x:auto;white-space:nowrap}
+  p,li{font-size:.94rem}
+  ul,ol{padding-left:1.2em}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src li{font-size:.85rem;overflow-wrap:anywhere}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:20px 0 40px;
+    color:var(--muted);font-size:.85rem}
+  footer a{color:var(--muted);margin-right:14px}
+  a{color:var(--accent)}
+  [hidden]{display:none !important}
+  @media (max-width:400px){
+    .big{font-size:1.7rem}
+  }
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><a class="site" href="../../">← くらしの計算室</a></div></header>
+
+<main class="wrap">
+
+<h1>セットバックの計算（2項道路）</h1>
+<p class="sub">
+  幅4m未満の道（2項道路）に面した土地は、道の中心線から2mの線まで<strong>敷地を下げる（セットバックする）</strong>必要があり、
+  下げた部分は<strong>建ぺい率・容積率の計算に使う敷地面積に入りません</strong>。
+  さらに前面道路が狭いと容積率そのものも下がります。
+  今の道の幅・間口・敷地面積を入れると、<strong>後退距離・後退面積と、実際に建てられる建築面積・延べ面積</strong>を出します。
+</p>
+
+<div class="card">
+  <p class="grp">前の道</p>
+  <div class="opts">
+    <div>
+      <label for="road">今の道の幅（m）</label>
+      <input id="road" type="number" inputmode="decimal" value="2.0" min="0.5" max="30" step="0.01">
+    </div>
+    <div>
+      <label for="side">道の向かい側</label>
+      <select id="side">
+        <option value="both" selected>宅地など（両側で下がる）</option>
+        <option value="cliff">崖地・川・線路敷地など</option>
+      </select>
+    </div>
+    <div class="wide">
+      <label for="zone">区域</label>
+      <select id="zone">
+        <option value="std" selected>通常（中心線から2m）</option>
+        <option value="six">道路の幅を6mとする指定区域（中心線から3m）</option>
+      </select>
+    </div>
+  </div>
+
+  <p class="grp">敷地</p>
+  <div class="opts">
+    <div>
+      <label for="frontage">間口（道に接する長さ・m）</label>
+      <input id="frontage" type="number" inputmode="decimal" value="10" min="0.5" max="100" step="0.01">
+    </div>
+    <div>
+      <label for="site">敷地面積（後退部分を含む・㎡）</label>
+      <input id="site" type="number" inputmode="decimal" value="100" min="10" max="100000" step="0.01">
+    </div>
+    <div>
+      <label for="coverage">指定建ぺい率</label>
+      <select id="coverage">
+        <option value="30">30%</option>
+        <option value="40">40%</option>
+        <option value="50">50%</option>
+        <option value="60" selected>60%</option>
+        <option value="70">70%</option>
+        <option value="80">80%</option>
+      </select>
+    </div>
+    <div>
+      <label for="far">指定容積率</label>
+      <select id="far">
+        <option value="50">50%</option>
+        <option value="60">60%</option>
+        <option value="80">80%</option>
+        <option value="100">100%</option>
+        <option value="150">150%</option>
+        <option value="200" selected>200%</option>
+        <option value="300">300%</option>
+        <option value="400">400%</option>
+        <option value="500">500%</option>
+        <option value="600">600%</option>
+        <option value="700">700%</option>
+        <option value="800">800%</option>
+        <option value="900">900%</option>
+        <option value="1000">1000%</option>
+        <option value="1100">1100%</option>
+        <option value="1200">1200%</option>
+        <option value="1300">1300%</option>
+      </select>
+    </div>
+    <div class="wide">
+      <label for="factor">前面道路の幅に掛ける数値（用途地域で決まる）</label>
+      <select id="factor">
+        <option value="4" selected>0.4 — 住居系の地域（低層住居専用・田園住居・中高層住居専用・第一種/第二種住居・準住居）</option>
+        <option value="6">0.6 — 商業・工業系など（または住居系で特定行政庁が指定した区域）</option>
+        <option value="8">0.8 — 商業・工業系などで特定行政庁が定めた区域</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button type="button" data-preset="std">幅2m・間口10m・100㎡</button>
+    <button type="button" data-preset="narrow">幅2.7m・間口8m・120㎡</button>
+    <button type="button" data-preset="cliff">向かいが川・幅2.5m</button>
+  </div>
+</div>
+
+<div class="result" aria-live="polite">
+  <div>建ぺい率・容積率の計算に使う敷地面積</div>
+  <p class="big" id="headline">— <small>㎡</small></p>
+  <p class="sub2" id="summary">数値を入力してください。</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>項目</th><th>値</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>建てられる上限</th><th>この計算</th><th>後退・道路の制限を無視</th></tr></thead>
+      <tbody id="cmp"></tbody>
+    </table>
+  </div>
+
+  <ul class="checks" id="checks"></ul>
+</div>
+
+<div class="note">
+  <strong>この結果は概算です。</strong>
+  計算は建築基準法・同施行令の条文に基づきますが、<strong>道の中心線の位置・2項道路に当たるかどうか・後退距離の別指定・隅切り</strong>は
+  特定行政庁（市区町村または都道府県の建築指導の担当）が判断し、地域によって扱いが異なります。
+  本ツールは今の道の中央を中心線とし、隅切りを差し引いていません。
+  <strong>土地の売買や建築の計画では、建築士・土地家屋調査士などの専門家、または特定行政庁の窓口で道路の種別と後退線を必ずご確認ください。</strong>
+</div>
+
+<h2>この計算の根拠</h2>
+
+<h3>2項道路とセットバック</h3>
+<div class="law">
+  <p>…現に建築物が立ち並んでいる幅員四メートル未満の道で、特定行政庁の指定したものは、前項の規定にかかわらず、同項の道路とみなし、その中心線からの水平距離二メートル（同項の規定により指定された区域内においては、三メートル（…））の線をその道路の境界線とみなす。ただし、当該道がその中心線からの水平距離二メートル未満で崖地、川、線路敷地その他これらに類するものに沿う場合においては、当該崖地等の道の側の境界線及びその境界線から道の側に水平距離四メートルの線をその道路の境界線とみなす。（建築基準法 第42条第2項）</p>
+</div>
+<div class="formula">後退距離 ＝ 2m − 今の道の幅 ÷ 2　（向かい側が崖地・川などのとき：4m − 今の道の幅）</div>
+<p>
+  幅2mの道なら中心線から1m、つまり<strong>こちら側は1m下がります</strong>。向かい側も宅地なら向かいも1m下がり、将来は幅4mの道になります。
+  向かい側が崖地や川で下がれない場合は、<strong>拡幅の分をすべてこちら側で負う</strong>ので、幅2.5mの道なら1.5m下がります。
+</p>
+
+<h3>下がった部分は敷地面積に入らない</h3>
+<div class="law">
+  <p>ただし、法第四十二条第二項、第三項又は第五項の規定によつて道路の境界線とみなされる線と道との間の部分の敷地は、算入しない。（建築基準法施行令 第2条第1項第1号）</p>
+</div>
+<div class="formula">建ぺい率・容積率に使う敷地面積 ＝ 敷地面積 − 後退距離 × 間口</div>
+<p>
+  登記上の面積が100㎡でも、幅2mの道に10m接していれば10㎡が除かれ、<strong>90㎡として計算</strong>します。
+  下がった部分は道路とみなされるので、建物や、建物に附属する門・塀は建てられません
+  （第44条第1項。門・塀は第2条第1号で建築物に含まれます）。
+</p>
+
+<h3>前の道が狭いと、容積率も下がる</h3>
+<div class="law">
+  <p>前面道路…の幅員が十二メートル未満である建築物の容積率は、当該前面道路の幅員のメートルの数値に、次の各号に掲げる区分に従い、当該各号に定める数値を乗じたもの以下でなければならない。（建築基準法 第52条第2項）</p>
+</div>
+<div class="formula">容積率の上限 ＝ 指定容積率 と（前面道路の幅 × 0.4 または 0.6）の小さいほう</div>
+<p>
+  2項道路では、後退線を道路の境界線とみなすので、前面道路の幅は<strong>4m（6mの指定区域では6m）</strong>として計算します。
+  住居系の地域なら 4m × 0.4 ＝ <strong>160%</strong> で、指定容積率が200%でも160%までしか建てられません。
+  前面道路が2本以上ある場合は幅の広いほうを使うので、角地などでは本ツールより緩くなることがあります。
+</p>
+
+<h3>道に2m以上接していること</h3>
+<p>
+  建物を建てる敷地は、道路に<strong>2m以上</strong>接していなければなりません（建築基準法 第43条第1項）。
+  本ツールは間口が2m未満のときに注意を出します。路地状の敷地には条例で上乗せの基準があることがあります。
+</p>
+
+<h2>よくある質問</h2>
+
+<h3>セットバックで敷地はどれくらい減りますか</h3>
+<p>
+  幅2mの道に間口10mで接する100㎡の土地なら、1m下がって10㎡減り、90㎡になります。
+  住居系の地域で建ぺい率60%・容積率200%なら、建てられる上限は建築面積54㎡・延べ面積144㎡です。
+  後退も道路の制限も考えずに計算すると 60㎡・200㎡ になり、<strong>延べ面積では56㎡の差</strong>が出ます。
+</p>
+
+<h3>道の幅が4mちょうどならセットバックは要りますか</h3>
+<p>
+  2項道路は「幅員四メートル未満の道」なので、幅が4m以上あれば2項道路の後退は生じません。
+  ただし道路として認められているかどうか（そもそも建築基準法上の道路か）は別の問題で、役所の道路台帳や建築指導の窓口で確認します。
+</p>
+
+<h3>セットバックした部分の税金はどうなりますか</h3>
+<p>
+  固定資産税の非課税の申告や、相続税の評価の扱いがありますが、税金の計算は本ツールの対象外です。税務署や市区町村の資産税の窓口にご確認ください。
+</p>
+
+<h3>ほかの計算もできますか</h3>
+<p>
+  <a href="../carport-coverage/">カーポートの建ぺい率計算</a>、
+  <a href="../block-wall/">ブロック塀の計算</a>、
+  <a href="../fence-quantity/">フェンスの枚数・柱の本数</a>があります。
+  後退部分にある塀やフェンスは、建て替えのときに後退線の内側へ作り直すことになります。
+</p>
+
+<h2>出典</h2>
+<ul class="src">
+  <li>建築基準法（昭和25年法律第201号）第2条第1号・第42条第1項〜第3項・第43条第1項・第44条第1項・第52条第1項・第2項・第53条第1項
+    <a href="https://laws.e-gov.go.jp/law/325AC0000000201" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>建築基準法施行令（昭和25年政令第338号）第2条第1項第1号
+    <a href="https://laws.e-gov.go.jp/law/325CO0000000338" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>条文は e-Gov 法令API で取得した現行版（2026年10月14日時点）を逐語で確認しています。施行前の改正版でも、本ツールが使う条項は同一です。
+    導出は<a href="./calc.js">計算コード</a>のコメントに、境界値の検証は<a href="./calc.test.mjs">テスト</a>に残してあります</li>
+</ul>
+<p class="src">最終確認日: 2026年10月14日</p>
+
+</main>
+
+<footer class="wrap">
+  <a href="../../">トップ</a>
+  <a href="../../privacy.html">プライバシーポリシー</a>
+  <a href="../../contact.html">お問い合わせ</a>
+  <p>&copy; 2026 くらしの計算室</p>
+</footer>
+
+<script type="module">
+import { calculate } from "./calc.js";
+
+const PRESETS = {
+  std: { road: 2.0, side: "both", zone: "std", frontage: 10, site: 100 },
+  narrow: { road: 2.7, side: "both", zone: "std", frontage: 8, site: 120 },
+  cliff: { road: 2.5, side: "cliff", zone: "std", frontage: 12, site: 150 },
+};
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const n = (v, d = 2) => Number(v).toLocaleString("ja-JP", { maximumFractionDigits: d });
+// 上限は 0.01㎡ 未満を切り捨てて表示する（多く見せない）
+const sq = (mm2) => `${n(Math.floor(mm2 / 1e4 + 1e-9) / 100, 2)}㎡`;
+const m = (mm) => `${n(mm / 1000, 3)}m`;
+const cmOf = (id) => Math.round(Number($(id).value) * 100);
+
+function render() {
+  const res = calculate({
+    roadCm: $("road").value === "" ? NaN : cmOf("road"),
+    zone: $("zone").value,
+    side: $("side").value,
+    frontageCm: $("frontage").value === "" ? NaN : cmOf("frontage"),
+    siteM2: $("site").value === "" ? NaN : Number($("site").value),
+    coveragePct: Number($("coverage").value),
+    farPct: Number($("far").value),
+    roadFactorTenths: Number($("factor").value),
+  });
+
+  if (!res.ok) {
+    $("headline").innerHTML = "— <small>㎡</small>";
+    $("summary").textContent = res.errors[0];
+    $("rows").innerHTML = "";
+    $("cmp").innerHTML = "";
+    $("checks").innerHTML = "";
+    return;
+  }
+
+  const i = res.input;
+  $("headline").innerHTML = `${esc(sq(res.effectiveMm2).replace("㎡", ""))} <small>㎡</small>`;
+  $("summary").textContent = res.kind === "wide"
+    ? `今の道の幅が ${m(i.roadCm * 10)} あるので、2項道路の後退は生じません。`
+    : `中心線（今の道の中央と仮定）から下がる距離は ${m(res.setbackMm)}。敷地 ${n(i.siteM2)}㎡ のうち ${sq(res.setbackAreaMm2)} が計算から外れます。`;
+
+  const tr = (k, v, cls = "") => `<tr><td>${k}</td><td${cls ? ` class="${cls}"` : ""}>${v}</td></tr>`;
+  $("rows").innerHTML = [
+    tr("後退距離", esc(m(res.setbackMm))),
+    tr("後退面積（後退距離 × 間口）", esc(`${sq(res.setbackAreaMm2)}（${m(res.setbackMm)} × ${m(i.frontageCm * 10)}）`)),
+    tr("<strong>敷地面積（計算用）</strong>", `<strong>${esc(sq(res.effectiveMm2))}</strong>`),
+    tr("前面道路の幅（容積率の計算用）", esc(m(res.deemedWidthMm))),
+    tr("前面道路による容積率の上限", esc(res.roadFarPct === null ? "なし（12m以上）" : `${n(res.roadFarPct, 1)}%（${n(res.deemedWidthMm / 1000, 2)} × ${i.roadFactorTenths / 10}）`)),
+    tr("<strong>使える容積率</strong>", `<strong>${esc(`${n(res.farLimitPct, 1)}%`)}</strong>`, res.roadRuleBinds ? "ng" : ""),
+  ].join("");
+
+  const r3 = (k, a, b) => `<tr><td>${k}</td><td><strong>${esc(a)}</strong></td><td>${esc(b)}</td></tr>`;
+  $("cmp").innerHTML = [
+    r3(`建築面積（建ぺい率 ${i.coveragePct}%）`, sq(res.maxBuildingMm2), sq(res.naiveBuildingMm2)),
+    r3(`延べ面積（容積率 ${n(res.farLimitPct, 1)}%）`, sq(res.maxFloorMm2), `${sq(res.naiveFloorMm2)}（${i.farPct}%）`),
+  ].join("");
+
+  const checks = [];
+  checks.push(res.frontageOk
+    ? { st: "ok", title: "道に2m以上接している（第43条第1項）", detail: "後退後の道路境界線に沿って間口がそのまま接すると仮定しています。" }
+    : { st: "ng", title: "道に接する長さが2m未満です（第43条第1項）", detail: "このままでは原則として建物を建てられません。特定行政庁に確認してください。" });
+  if (res.roadRuleBinds)
+    checks.push({ st: "info", title: `前の道が狭いため、容積率は ${i.farPct}% ではなく ${n(res.farLimitPct, 1)}% までです`, detail: "幅の広い別の道にも接している場合は、その道の幅で計算するので緩くなることがあります。" });
+  if (res.kind === "setback")
+    checks.push({ st: "info", title: "隅切りは差し引いていません", detail: "角の敷地では、条例で角を切る（隅切り）ことがあり、計算用の敷地面積はさらに減ります。" });
+  $("checks").innerHTML = checks.map((x) =>
+    `<li><p class="hd"><span class="tag ${x.st}">${{ ok: "満たす", ng: "注意", info: "参考" }[x.st]}</span>${esc(x.title)}</p><p class="dt">${esc(x.detail)}</p></li>`).join("");
+}
+
+for (const id of ["road", "side", "zone", "frontage", "site", "coverage", "far", "factor"]) {
+  $(id).addEventListener("input", render);
+  $(id).addEventListener("change", render);
+}
+for (const btn of document.querySelectorAll("[data-preset]")) {
+  btn.addEventListener("click", () => {
+    const p = PRESETS[btn.dataset.preset];
+    for (const k of Object.keys(p)) $(k).value = p[k];
+    render();
+  });
+}
+render();
+</script>
+
+</body>
+</html>

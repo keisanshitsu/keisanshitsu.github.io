@@ -1,7 +1,7 @@
 {
   "meta": {
     "created": "2026-08-05",
-    "last_run": "2026-10-14",
+    "last_run": "2026-10-19",
     "handoff_for_2026-10-05": "probe_index.mjs の問い合わせ順を『当サイト→陽性対照→陰性対照』に入れ替えて1回だけ実行する。当サイトのクエリは常に3本目で、10/04 は対照 200・当サイトだけ 202（引き直しも 202）。順序（連続リクエストの流量制限）とクエリ内容のどちらが原因かを切り分けるため。isQueryUsable は緩めない。詳細は decisions.md 2026-10-04（追補）",
     "gap_days_2026-09-30": 2,
     "gap_note_2026-09-30": "前回完走 2026-09-28 → 本日 2026-09-30（水）。9/29 はセッション上限で exit 1（ループ本体は動かず、notify_human だけ走った）。起動時チェックで【異常を検出】: git status が clean でなく、submit_indexnow.mjs / .test.mjs（parseArgs 追加・テスト14件追加）と metrics_latest.json が未コミットで残っていた。HEAD と origin/main は一致（9a4bbd7）＝一致だけでは push 済みの証明にならない例がまた出た。修正は 45/45 PASS を確認して本日コミットした。notify_receipt の any_opened は直近4回とも false。",
@@ -42,7 +42,7 @@
       "release_evidence": "IndexNow への最小送信の応答が 202（鍵の検証は保留中）から 200（受理かつ鍵も検証済み）に変わった。仕様上、鍵の検証はエンジンが鍵ファイルをクロールすることで行われる（一次情報: https://www.indexnow.org/documentation \"Once you submit your URLs to search engines, search engines will crawl the key file to verify ownership\"）。したがって参加エンジンのいずれかが当ホストの鍵ファイルを実際に取得した。",
       "release_caveat": "⚠ 条件(b)は文字どおり満たされたので解除するが、【証拠は鍵ファイルへの到達であって、ツールページのクロールではない】。同日の索引プローブ（probe_index.mjs、対照2本とも通過）では当ホストは検索結果に1件も出ていない＝コンテンツはまだ索引されていない。解除は『増産してよい』であって『流入が始まった』ではない。6本目を作るときも AND条件（項目2≥3 かつ 項目4≥3）は必須のままである。⚠ 条件を後から書き換えて保留を延命することはしなかった。それは 9/05〜9/13 の8日間と同じ失敗になるため。"
     },
-    "decision_rules_reached_count": 16,
+    "decision_rules_reached_count": 17,
     "decision_rules_reached_note": "2026-09-15 に 0 → 1、以降 9/16・9/17・9/21・9/22 と続き、本日 9/23 で通算6回。到達した行は #3（9/15）・#3（9/16）・#8（9/17）・#8（9/21）・#8（9/22・ただし保留）・#8（9/23・ただし保留中のため打ち手は保留中の作業＝発見経路の検証）。 2026-09-28 に #8（保留は 9/23 に解除済み）で通算7回目。6本目 T007 を作った。 2026-10-02 に #8 で通算9回目（保留中のため打ち手は保留中の作業）。 2026-10-04 に #8 で通算10回目（保留中・保留中の作業は尽きたため打ち手は週次レビューのみ）。 2026-10-06 に #8 で通算11回目（保留中・打ち手は 10/04 追補の handoff＝probe の順序切り分け）。 2026-10-07 に #8 で通算12回目（production_hold_2026-09-30 を期限で強制解除）。7本目 T008 を作った。 2026-10-10 に #8 で通算13回目。8本目 T009 を作った。 2026-10-12 に #8 で通算14回目（T010。当日はカウンタの更新漏れで13のままだった——10/13 に検出して補正）。2026-10-13 に #8 で通算15回目。10本目 T011 を作った。",
     "last_run_type": "【日次ループ】。起動時チェック: 前回完走 10/13（空白なし）・git clean・HEAD=origin/main（ca3172b）・notify any_opened は直近も false。前提ゲート全行通過（計測未接続は人間待ちのみで落ちる）。意思決定ルール #1〜#7 不発火（#4 は measured=false のため発火させない）、#8 発火。11本目 T012『セットバックの計算（2項道路）』を作った——初めて外構クラスタの外（土地・不動産側）。採点 27/35（AND条件 項目2=3・項目4=3）を先にコミット・push（05c829c）→ 実装 → verify exit 0（647アサーション・375px 14枚＋操作後265状態・WARN 0）→ push（e2503bd）→ 本番 GET 200 → IndexNow --url 200。根拠は e-Gov 法令API v2（法2条1号・42条・43条・44条・52条・53条・令2条1項1号）。法52条は 11/26 施行の改正で変わるが第2項は同一（項単位 diff）。facts_to_recheck に同日3件。計測 no_credentials 70日目・probe not_found",
     "last_run_type_previous_2026-09-28": "【日次ループ】。前提ゲートは全行通過（3日連続該当なし／remote あり／未公開在庫0／計測は人間待ちのみで落ちる／L2 起点未成立）。意思決定ルール #1〜#7 不発火（#4 は measured=false のため『表示回数0』と読まない）。#8 に到達し、production_hold は 9/23 に解除済みのため新規ツールを1本作った: T007 フェンスの枚数・柱の本数（26/35、AND条件 項目2=3・項目4=4）。採点を research/niches.md に書いてコミット・push してから実装に入った（#006 の手順違反を繰り返さないため）。",
@@ -126,7 +126,10 @@
     "next_run_note_2026-10-11": "⚠ 次回読むこと。(1) 10/11 は日曜＝週次レビュー。問い: 制作を再開した 10/07・10/10 の翌日に利用上限で落ちたか（10/08 はネットワーク不通で判定不能）。落ちたら制作頻度の上限を決める (2) probe_index は1日1回 --ours-first (3) #4 は measured=false のため発火させない (4) 公開8本すべてが同一クラスタ。9本目を採点するとき、クラスタ外の候補を少なくとも1件並べて比べること（規則ではなく観察）",
     "last_run_type_previous_2026-10-11": "【日次ループ】。前提ゲート全行通過（3日連続該当なし／remote あり／未公開在庫0／計測未接続は人間待ちのみで落ちる——blocked_on_human に STEP1.5-5・STEP1.6 実在、notify toast_reached=true、代替手段の否定は 9/12・10/04 実測／L2 起点未成立）。意思決定ルール #1〜#7 不発火（#4 は measured=false のため発火させない）、#8 発火。production_hold_2026-09-30 を期限（10/07）で強制解除し、7本目 T008『防草シートの必要量と固定ピンの本数』を作った。採点 27/35・AND条件 3/3 を先にコミット・push（b4d7f6f）→実装・ゲート exit 0（434アサーション・WARN 0・375px 実レンダリング 10枚/182状態）→push（6a505f9）→本番 GET 200 → IndexNow --url 200。probe_index は --ours-first で not_found（n=2 で当サイト先頭は2回とも 200）。fetch_metrics は no_credentials（63日目）。decisions.md 2026-10-07 参照",
     "last_run_type_previous_2026-10-12": "【日次ループ】。起動時チェック: 前回完走 10/11（空白なし）・git clean・HEAD=origin/main（80a8d7e）・notify any_opened は直近も false。前提ゲート全行通過（計測未接続は人間待ちのみで落ちる）。意思決定ルール #1〜#7 不発火（#4 は measured=false のため発火させない）、#8 発火。9本目 T010『スロープの長さ計算』を作った。採点 27/35（AND条件 項目2=3・項目4=3）を先にコミット・push（210dd9f）→ 実装 → verify exit 0（546アサーション・375px 12枚＋操作後211状態・WARN 0）→ push（83a4288）→ 本番 GET 200 → IndexNow --url 200。根拠は e-Gov 法令API v2 で取得した条文（令26条・バリアフリー法施行令13条/19条・誘導基準6条/11条）で、facts_to_recheck にも同日積んだ（10/11 の規則）。計測 no_credentials 68日目・probe not_found",
-    "last_run_type_previous_2026-10-13": "【日次ループ】。起動時チェック: 前回完走 10/12（空白なし）・git clean・HEAD=origin/main（00ff76e）・notify any_opened は直近も false。前提ゲート全行通過（計測未接続は人間待ちのみで落ちる）。意思決定ルール #1〜#7 不発火（#4 は measured=false のため発火させない）、#8 発火。10本目 T011『カーポートの建ぺい率計算』を作った。採点 28/35（AND条件 項目2=3・項目4=4）を先にコミット・push（2264e02）→ 実装 → verify exit 0（596アサーション・375px 13枚＋操作後229状態・WARN 0）→ push（ed91d9c）→ 本番 GET 200 → IndexNow --url 200。根拠は e-Gov 法令API v2（令2条1項2号・法53条）と国交省の告示PDF（告示1437号）で、facts_to_recheck にも同日積んだ。計測 no_credentials 69日目・probe not_found"
+    "last_run_type_previous_2026-10-13": "【日次ループ】。起動時チェック: 前回完走 10/12（空白なし）・git clean・HEAD=origin/main（00ff76e）・notify any_opened は直近も false。前提ゲート全行通過（計測未接続は人間待ちのみで落ちる）。意思決定ルール #1〜#7 不発火（#4 は measured=false のため発火させない）、#8 発火。10本目 T011『カーポートの建ぺい率計算』を作った。採点 28/35（AND条件 項目2=3・項目4=4）を先にコミット・push（2264e02）→ 実装 → verify exit 0（596アサーション・375px 13枚＋操作後229状態・WARN 0）→ push（ed91d9c）→ 本番 GET 200 → IndexNow --url 200。根拠は e-Gov 法令API v2（令2条1項2号・法53条）と国交省の告示PDF（告示1437号）で、facts_to_recheck にも同日積んだ。計測 no_credentials 69日目・probe not_found",
+    "gap_days_2026-10-19": 5,
+    "gap_note_2026-10-19": "前回完走 2026-10-14 → 本日 2026-10-19（月）。10/15〜10/18 は logs/ に run_*.log が1件も無い＝ループ自体が起動していない（PC 停止とみられる。利用上限やネットワークの痕跡も無い）。10/18（日）の週次レビューは実行されていない。起動時チェック: git status clean・HEAD と origin/main 一致（43efcbd）。notify_receipt の any_opened は直近4回とも false",
+    "handoff_for_next_run_2026-10-19": "(1) probe_index.mjs は当ホストが出たときに【どのURLが出たか】を記録していない。10/19 の初の found で、出たのがトップかツールかを確かめられなかった（同日の再問い合わせは 202＝流量制限）。our_host_found の URL を probe_history.jsonl に残すよう直す。(2) 10/19 の found は陰性対照が HTTP 202・結果0件（＝実際には検査されていない）のまま判定された。verdict() は 202 を『陰性対照が出なかった』と同じに扱っている。found の信頼性は当ホスト名そのものが結果URLに出たことに依っていて誤検出の余地は小さいが、陰性対照が検査されなかった日は history にその旨を残す（isQueryUsable は緩めない）。(3) 次の週次レビューは 10/25（日）"
   },
   "north_star": {
     "metric": "monthly_clicks",
@@ -456,7 +459,20 @@
         "interpretation": "鍵ファイルは取りに来たが、コンテンツはまだ索引されていない。⚠ クロール済みで索引反映待ちの状態とは区別できない。『索引されていない』を『クロールされていない』と読み替えないこと",
         "side_finding": "当ホストのURLは出ないが、github.com/keisanshitsu（組織ページ・リポジトリ）は出る。つまり Bing 側は組織の存在は知っているが、Pages サイトは索引していない"
       },
-      "bug_found_in_itself_2026-09-23": "初回実行で自分のバグを1件検出した。3本目のクエリだけ HTTP 202・結果0件が返ったのを、黙って『見つからなかった』に数えていた。全クエリがこうなった日に『索引されていない』と結論する穴だった。isQueryUsable を追加し、使えるクエリが0本なら detector_broken を返すようにした（テスト F1〜F3）。⚠ 測定器は作った日に自分で疑うこと——今回は実行して初めて見えた"
+      "bug_found_in_itself_2026-09-23": "初回実行で自分のバグを1件検出した。3本目のクエリだけ HTTP 202・結果0件が返ったのを、黙って『見つからなかった』に数えていた。全クエリがこうなった日に『索引されていない』と結論する穴だった。isQueryUsable を追加し、使えるクエリが0本なら detector_broken を返すようにした（テスト F1〜F3）。⚠ 測定器は作った日に自分で疑うこと——今回は実行して初めて見えた",
+      "first_found_2026-10-19": {
+        "ran_at": "2026-10-19T00:17:53Z",
+        "state": "found",
+        "order": "ours,pos,neg",
+        "our_http": 200,
+        "pos_http": 200,
+        "neg_http": 202,
+        "observed": "クエリ keisanshitsu.github.io の結果上位に github.com 3件と並んで keisanshitsu.github.io のURLが2番目に出た。IndexNow の鍵検証（9/23）から26日、probe 開始から runs 15 回目で初",
+        "proves": "Bing か DuckDuckBot のどちらかが当ホストに到達し索引した。非Google の索引 0→1",
+        "does_not_prove": "Google の索引（1ミリも分からない）・IndexNow が原因であること・どのページが索引されたか（URL を記録していなかった）",
+        "caveat": "陰性対照は HTTP 202・結果0件で、実際には検査されていない。同日に URL を確かめるため1回だけ問い合わせたが 202（流量制限）",
+        "history_after": "runs 15 / found 1 / not_found 10 / detector_broken 4"
+      }
     }
   },
   "subdirectory_constraints": {
@@ -1320,6 +1336,72 @@
       "published_url": "https://keisanshitsu.github.io/tools/setback/",
       "published_verified_live": "push（e2503bd）後に本番 GET 200・title 一致・calc.js 200・トップにリンクあり。IndexNow --url で HTTP 200（受理・鍵検証済み。索引の証明ではない）",
       "recheck": "facts_to_recheck に法第42条・43条・44条・52条2項と施行令第2条第1項第1号を登録（2027-04-01）"
+    },
+    {
+      "id": "T013",
+      "slug": "shed-permit",
+      "title": "物置の建築確認の要否（10㎡・防火地域・増築か新築か）と、置いたあとの建ぺい率・容積率",
+      "path": "docs/tools/shed-permit/",
+      "score": 27,
+      "score_scale": "35点満点（7項目）。内訳は項目1=4 / 項目2=4 / 項目3=5 / 項目4=3 / 項目5=4 / 項目6=4 / 項目7=3",
+      "score_and_condition": "12本目なので AND条件『項目2≥3 かつ 項目4≥3』が適用される。4 と 3 で成立。足切り該当なし",
+      "score_order": "採点（research/niches.md #013）を先にコミット・push（90d9452）してから実装した",
+      "built_on": "2026-10-19",
+      "published_on": "2026-10-19",
+      "gate_passed": "node scripts/verify.mjs exit 0（HTML15枚・ツール12本・694アサーション・375px 15枚＋操作後288状態・WARN 0）。T013 単体は47ケース（10㎡ ちょうど／10.01㎡、2個の合計 10㎡ ちょうど／10.02㎡、防火・新築なら1㎡でも要る、区域外は防火を使わない、区域外・空き地 200㎡ ちょうど／超、区域外・増築10㎡超は check、建ぺい率・容積率のちょうど上限／0.01㎡超、浮動小数 49.38㎡）。欠陥注入5種（<=→< 2箇所・増築条件の脱落・合計→max・min→max）でそれぞれ 3/1/2/1/3 件 FAIL を確認",
+      "visual_check_375px": "実施（verify.mjs の実レンダリング）。初期表示と操作後の状態すべて横溢れなし",
+      "basis": [
+        {
+          "fact": "10㎡の例外（防火・準防火地域外の増築・改築・移転で床面積の合計10㎡以内）",
+          "source": "https://laws.e-gov.go.jp/api/2/law_data/325AC0000000201",
+          "verbatim": "第六条第二項 前項の規定は、防火地域及び準防火地域外において建築物を増築し、改築し、又は移転しようとする場合で、その増築、改築又は移転に係る部分の床面積の合計が十平方メートル以内であるときについては、適用しない。",
+          "checked_on": "2026-10-19"
+        },
+        {
+          "fact": "確認が要る建築物（1号 特殊建築物200㎡超／2号 2階以上・延べ200㎡超／3号 都市計画区域・準都市計画区域等内）",
+          "source": "https://laws.e-gov.go.jp/api/2/law_data/325AC0000000201",
+          "verbatim": "第六条第一項 一 別表第一（い）欄に掲げる用途に供する特殊建築物で、その用途に供する部分の床面積の合計が二百平方メートルを超えるもの 二 前号に掲げる建築物を除くほか、二以上の階数を有し、又は延べ面積が二百平方メートルを超える建築物 三 前二号に掲げる建築物を除くほか、都市計画区域若しくは準都市計画区域…内…における建築物／別表第一（五）倉庫その他これに類するもので政令で定めるもの",
+          "checked_on": "2026-10-19"
+        },
+        {
+          "fact": "建築物の定義",
+          "source": "https://laws.e-gov.go.jp/api/2/law_data/325AC0000000201",
+          "verbatim": "第二条第一号 建築物 土地に定着する工作物のうち、屋根及び柱若しくは壁を有するもの（これに類する構造のものを含む。）…",
+          "checked_on": "2026-10-19"
+        },
+        {
+          "fact": "建ぺい率は同一敷地内の建築面積の合計",
+          "source": "https://laws.e-gov.go.jp/api/2/law_data/325AC0000000201",
+          "verbatim": "第五十三条第一項 建築物の建築面積（同一敷地内に二以上の建築物がある場合においては、その建築面積の合計）の敷地面積に対する割合",
+          "checked_on": "2026-10-19"
+        },
+        {
+          "fact": "敷地・建築面積・床面積・延べ面積",
+          "source": "https://laws.e-gov.go.jp/api/2/law_data/325CO0000000338",
+          "verbatim": "第一条第一号 敷地 一の建築物又は用途上不可分の関係にある二以上の建築物のある一団の土地をいう。／第二条第一項第三号 床面積 建築物の各階又はその一部で壁その他の区画の中心線で囲まれた部分の水平投影面積による。／第四号 延べ面積 建築物の各階の床面積の合計による。",
+          "checked_on": "2026-10-19"
+        },
+        {
+          "fact": "防火地域・準防火地域は都市計画区域にだけ定められる",
+          "source": "https://laws.e-gov.go.jp/api/2/law_data/343AC0000000100",
+          "verbatim": "第八条第一項 都市計画区域については、都市計画に、次に掲げる地域、地区又は街区を定めることができる。…五 防火地域又は準防火地域／第二項 準都市計画区域については…前項第一号から第二号の二まで、第三号（高度地区に係る部分に限る。）、第六号、第七号、第十二号…又は第十五号に掲げる地域又は地区を定めることができる。",
+          "checked_on": "2026-10-19"
+        },
+        {
+          "fact": "自宅の敷地＝増築・空き地＝新築、2個以上は合計、新築は10㎡以内でも要る",
+          "source": "https://www.city.sagamihara.kanagawa.jp/_res/projects/default_project/_page_/001/035/093/leaflet_202604.pdf",
+          "verbatim": "自宅の敷地に物置を設置する ⇒ 増築／建築物のない空き地に物置を設置する ⇒ 新築／防火地域・準防火地域以外の地域で床面積の合計（２個以上設置する場合はその合計）が10㎡以内の増築の場合は、申請不要です。新築の場合は床面積の合計が10㎡以内でも申請が必要となります（相模原市 建築審査課・令和8年1月作成）",
+          "checked_on": "2026-10-19"
+        }
+      ],
+      "basis_caveat": "『自宅の敷地に置く＝増築』は条文に直接は書かれておらず、令1条1号（用途上不可分の建築物は一の敷地）からの取扱い。自治体の公式資料（相模原市）で確認したが、全国の特定行政庁の文書ではない。区域外で母屋のある敷地に10㎡超を置く場合は第6条第1項の『増築後において第一号又は第二号に規定する規模』に別棟が当たるかが条文で決まらないため check（断定しない）にした",
+      "error_direction": "物置の面積を本体外寸（間口×奥行）で数える＝壁の中心線より大きい＝10㎡判定は『要る』側、建ぺい率・容積率は『超える』側",
+      "deliberately_omitted": "小規模な物置を建築物として扱わない自治体基準（相模原市は奥行1m以下・高さ2.3m以下・2㎡以内）・用途地域による単独倉庫の制限（法48条）・カーポート等との同時設置・防災備蓄倉庫の延べ面積不算入（令2条1項4号ロ）・前面道路による容積率の制限（法52条2項、T012 に任せる）・完了検査",
+      "cluster": "外構と土地・法規の境目。T011（カーポート）と相互リンク",
+      "monetization": "ガーデンプラス 現場調査フォーム送信 5,000円（施工メニューに『収納』。比較記事での確認で、公式サイトは証明書エラーで未確認）。未提携（ASP登録は人間作業）",
+      "published_url": "https://keisanshitsu.github.io/tools/shed-permit/",
+      "published_verified_live": "push（87b5b1c）後に本番 GET 200・title 一致・calc.js 200・トップと sitemap にあり。IndexNow --url で HTTP 200（受理・鍵検証済み。索引の証明ではない）",
+      "recheck": "facts_to_recheck に法第6条第1項第2項・都市計画法第8条・相模原市リーフレットを登録（2027-04-01）"
     }
   ],
   "backlog": [
@@ -1674,6 +1756,17 @@
       "impressions": null,
       "note": "未計測（measured=false）。ゼロではない。70日目。",
       "note_discovery": "Google への発見経路は本日も0本（sitemap 未送信70日目）。probe_index.mjs を --ours-first で1回実行し not_found。履歴 runs 14 / not_found 10 / detector_broken 4 / found 0。T012 は IndexNow --url で 200（受理）"
+    },
+    {
+      "date": "2026-10-19",
+      "source": "scripts/fetch_metrics.py",
+      "status": "no_credentials",
+      "measured": false,
+      "sessions": null,
+      "clicks": null,
+      "impressions": null,
+      "note": "未計測（measured=false）。ゼロではない。75日目。",
+      "note_discovery": "Google への発見経路は本日も0本（sitemap 未送信75日目）。probe_index.mjs を --ours-first で1回実行し【初の found】（runs 15 / found 1 / not_found 10 / detector_broken 4）。陰性対照は 202 で未検査。非Google の索引 0→1 であって Google ではない。T013 は IndexNow --url で 200（受理）"
     }
   ],
   "facts_to_recheck": [
@@ -1845,6 +1938,39 @@
       "confirmed_how": "逐語確認。2026-11-01 施行版（令和8年政令第284号）でも第2条は同一",
       "recheck_by": "2027-04-01",
       "recheck_how": "https://laws.e-gov.go.jp/api/2/law_revisions/325CO0000000338 で UnEnforced の版の Article_2 を現行と比較する（所要1分）"
+    },
+    {
+      "topic": "建築基準法 第6条第1項・第2項（確認が要る建築物と10㎡の例外）・第2条第1号・第53条第1項",
+      "backs_shipped_tool": "T013 shed-permit（docs/tools/shed-permit/calc.js の permit）",
+      "basis_year": "e-Gov 現行版（2026-10-19 取得）",
+      "source": "https://laws.e-gov.go.jp/api/2/law_data/325AC0000000201?response_format=xml",
+      "confirmed": true,
+      "confirmed_on": "2026-10-19",
+      "confirmed_how": "逐語確認。未施行の改正4件（2026-11-26・2027-01-22・2027-05-26・2028-07-30）すべてで第2条第1号・第6条第1項第2項・第53条第1項は同一（項単位で比較）",
+      "recheck_by": "2027-04-01",
+      "recheck_how": "https://laws.e-gov.go.jp/api/2/law_revisions/325AC0000000201 で UnEnforced の版の Article Num=6 の Paragraph 1・2 を現行と比較する（所要1分）"
+    },
+    {
+      "topic": "都市計画法 第8条第1項第5号・第2項（防火地域・準防火地域は都市計画区域にだけ定める）",
+      "backs_shipped_tool": "T013 shed-permit（docs/tools/shed-permit/calc.js の permit）",
+      "basis_year": "e-Gov 現行版（2026-10-19 取得）",
+      "source": "https://laws.e-gov.go.jp/api/2/law_data/343AC0000000100?response_format=xml",
+      "confirmed": true,
+      "confirmed_on": "2026-10-19",
+      "confirmed_how": "逐語確認（2026-10-19 取得版）。改正履歴は未確認",
+      "recheck_by": "2027-04-01",
+      "recheck_how": "https://laws.e-gov.go.jp/api/2/law_revisions/343AC0000000100 で UnEnforced の版の Article Num=8 を比較する"
+    },
+    {
+      "topic": "相模原市『物置の設置をご検討中の方へ』（自宅の敷地＝増築・空き地＝新築・2個以上は合計）",
+      "backs_shipped_tool": "T013 shed-permit（docs/tools/shed-permit/calc.js の permit）",
+      "basis_year": "令和8年1月作成版",
+      "source": "https://www.city.sagamihara.kanagawa.jp/_res/projects/default_project/_page_/001/035/093/leaflet_202604.pdf",
+      "confirmed": true,
+      "confirmed_on": "2026-10-19",
+      "confirmed_how": "PDF を取得し pypdf で本文を抽出して逐語確認（令和8年1月作成）",
+      "recheck_by": "2027-04-01",
+      "recheck_how": "URL を GET して 200 と本文の『自宅の敷地に物置を設置する ⇒ 増築』を確認。自治体資料は差し替えでURLが変わりうる"
     }
   ],
   "weekly_reviews": [

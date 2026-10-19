@@ -12,3 +12,4 @@
 {"ran_at":"2026-10-12T00:17:53.353Z","state":"not_found","order":"ours,pos,neg","pos_http":200,"neg_http":202,"our_http":[200],"retried":false,"usable_query_count":1}
 {"ran_at":"2026-10-13T00:17:50.384Z","state":"not_found","order":"ours,pos,neg","pos_http":200,"neg_http":202,"our_http":[200],"retried":false,"usable_query_count":1}
 {"ran_at":"2026-10-14T00:18:01.393Z","state":"not_found","order":"ours,pos,neg","pos_http":200,"neg_http":202,"our_http":[200],"retried":false,"usable_query_count":1}
+{"ran_at":"2026-10-19T00:17:53.979Z","state":"found","order":"ours,pos,neg","pos_http":200,"neg_http":202,"our_http":[200],"retried":false,"usable_query_count":1}

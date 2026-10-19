@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>物置の建築確認の要否と建ぺい率 — 10㎡・防火地域・増築か新築かで判定</title>
+<meta name="description" content="物置を置くのに建築確認（確認申請）が要るかを、床面積10㎡・防火地域／準防火地域・自宅の敷地か空き地かで判定します。2個置くときは合計で判定し、置いたあとの建ぺい率・容積率と、上限まであと何㎡置けるかも出します。条文はe-Gov法令で確認しています。">
+<link rel="canonical" href="https://keisanshitsu.github.io/tools/shed-permit/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="くらしの計算室">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="物置の建築確認の要否と建ぺい率 — 10㎡・防火地域・増築か新築かで判定">
+<meta property="og:description" content="物置に確認申請は要るか。10㎡以下でも防火地域や空き地なら要ります。条文どおりに判定し、置いたあとの建ぺい率・容積率も出します。">
+<meta property="og:url" content="https://keisanshitsu.github.io/tools/shed-permit/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "物置の建築確認の要否と建ぺい率",
+  "description": "建築基準法第6条第1項・第2項に基づき、物置の設置に建築確認が必要かを判定し、同法第52条・第53条の容積率・建ぺい率を算出します。",
+  "url": "https://keisanshitsu.github.io/tools/shed-permit/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (web browser)",
+  "inLanguage": "ja",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "くらしの計算室",
+    "url": "https://keisanshitsu.github.io/"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1b19; --muted:#6b6862;
+    --line:#e5e2dc; --card:#fff; --accent:#0f6cbd; --accent-soft:#eef5fc;
+    --ok:#1f7a45; --ok-soft:#eaf6ef; --ng:#b3261e; --ng-soft:#fdeeed;
+    --warn:#8a5a00; --warn-soft:#fdf4e3;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#17181a; --fg:#e9e8e5; --muted:#a3a09a;
+           --line:#2e3033; --card:#1f2123; --accent:#6cb6f5; --accent-soft:#1b2733;
+           --ok:#5fd08a; --ok-soft:#16261d; --ng:#ff8a80; --ng-soft:#2a1a19;
+           --warn:#f2c46b; --warn-soft:#2b2416; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  header{border-bottom:1px solid var(--line);padding:16px 0}
+  .site{font-size:.85rem;color:var(--muted);text-decoration:none}
+  h1{font-size:1.35rem;margin:28px 0 6px;line-height:1.5}
+  .sub{color:var(--muted);font-size:.92rem;margin:0 0 28px}
+  h2{font-size:1.05rem;margin:36px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
+  h3{font-size:.95rem;margin:22px 0 6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .grp{font-size:.82rem;font-weight:600;margin:18px 0 0}
+  .grp:first-child{margin-top:0}
+  label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+  input,select{width:100%;padding:9px 10px;font-size:1rem;color:var(--fg);
+    background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  input[type=checkbox]{width:auto;margin:0 6px 0 0;vertical-align:-2px}
+  .chk{font-size:.86rem;color:var(--fg);display:flex;align-items:center;margin-top:24px}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--fg);padding:9px 14px}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:8px}
+  .result{margin-top:20px;border:1px solid var(--accent);background:var(--accent-soft);
+    border-radius:12px;padding:18px}
+  .big{font-size:1.7rem;font-weight:700;line-height:1.3;margin:2px 0 0}
+  .big.ok{color:var(--ok)} .big.ng{color:var(--ng)} .big.warn{color:var(--warn)}
+  .sub2{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+  .checks{list-style:none;padding:0;margin:14px 0 0}
+  .checks li{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin-bottom:8px}
+  .checks .hd{font-size:.9rem;font-weight:600;margin:0}
+  .checks .dt{font-size:.82rem;color:var(--muted);margin:3px 0 0}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;border-radius:5px;
+    padding:1px 7px;margin-right:7px;vertical-align:2px}
+  .tag.ok{background:var(--ok-soft);color:var(--ok)}
+  .tag.ng{background:var(--ng-soft);color:var(--ng)}
+  .tag.warn{background:var(--warn-soft);color:var(--warn)}
+  .tag.info{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+  .tablewrap{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;white-space:nowrap}
+  th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:600}
+  td.ok{color:var(--ok);font-weight:600}
+  td.ng{color:var(--ng);font-weight:600}
+  .cap{font-size:.85rem;font-weight:600;margin:18px 0 0}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:14px 16px;border-radius:0 8px 8px 0;font-size:.88rem;margin:24px 0}
+  .law{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;margin:14px 0;font-size:.86rem}
+  .law p{margin:0 0 6px;font-size:.86rem}
+  .law p:last-child{margin-bottom:0}
+  .formula{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:10px 14px;margin:12px 0;font-size:.9rem;overflow-x:auto;white-space:nowrap}
+  p,li{font-size:.94rem}
+  ul,ol{padding-left:1.2em}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src li{font-size:.85rem;overflow-wrap:anywhere}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:20px 0 40px;
+    color:var(--muted);font-size:.85rem}
+  footer a{color:var(--muted);margin-right:14px}
+  a{color:var(--accent)}
+  [hidden]{display:none !important}
+  @media (max-width:400px){
+    .big{font-size:1.45rem}
+  }
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><a class="site" href="../../">← くらしの計算室</a></div></header>
+
+<main class="wrap">
+
+<h1>物置の建築確認の要否と建ぺい率</h1>
+<p class="sub">
+  地面に固定して使う物置は、屋根と壁があるので<strong>建築物</strong>です。建築確認（確認申請）が要らないのは、
+  <strong>自宅の敷地に置く（増築）・防火地域でも準防火地域でもない・床面積の合計が10㎡以内</strong>の3つがそろったときです。
+  1つでも欠けると、都市計画区域の中では面積が小さくても要ります。
+  場所と物置の寸法を入れると要否を判定し、置いたあとの<strong>建ぺい率・容積率と、上限まであと何㎡置けるか</strong>も出します。
+</p>
+
+<div class="card">
+  <p class="grp">置く場所</p>
+  <div class="opts">
+    <div>
+      <label for="zone">区域</label>
+      <select id="zone">
+        <option value="inside" selected>都市計画区域・準都市計画区域などの中</option>
+        <option value="outside">どれにも入らない（区域の外）</option>
+      </select>
+    </div>
+    <div id="fireBox">
+      <label for="fire">防火地域・準防火地域</label>
+      <select id="fire">
+        <option value="no" selected>どちらでもない</option>
+        <option value="yes">防火地域または準防火地域</option>
+      </select>
+    </div>
+    <div>
+      <label for="house">その敷地に</label>
+      <select id="house">
+        <option value="yes" selected>家などの建物がある（増築）</option>
+        <option value="no">建物の無い空き地（新築）</option>
+      </select>
+    </div>
+  </div>
+
+  <p class="grp">物置（本体の外寸）</p>
+  <div class="opts">
+    <div>
+      <label for="w1">間口（m）</label>
+      <input id="w1" type="number" inputmode="decimal" value="2.2" min="0.3" max="30" step="0.01">
+    </div>
+    <div>
+      <label for="d1">奥行（m）</label>
+      <input id="d1" type="number" inputmode="decimal" value="1.6" min="0.3" max="30" step="0.01">
+    </div>
+    <div>
+      <label class="chk"><input id="second" type="checkbox">同時に2個目も置く</label>
+    </div>
+    <div id="w2Box" hidden>
+      <label for="w2">2個目の間口（m）</label>
+      <input id="w2" type="number" inputmode="decimal" value="1.8" min="0.3" max="30" step="0.01">
+    </div>
+    <div id="d2Box" hidden>
+      <label for="d2">2個目の奥行（m）</label>
+      <input id="d2" type="number" inputmode="decimal" value="0.9" min="0.3" max="30" step="0.01">
+    </div>
+  </div>
+
+  <p class="grp">敷地（建ぺい率・容積率の計算用）</p>
+  <div class="opts">
+    <div>
+      <label for="site">敷地面積（㎡）</label>
+      <input id="site" type="number" inputmode="decimal" value="120" min="10" max="10000" step="0.01">
+    </div>
+    <div>
+      <label for="ratio">指定建ぺい率</label>
+      <select id="ratio">
+        <option value="30">30%</option>
+        <option value="40">40%</option>
+        <option value="50">50%</option>
+        <option value="60" selected>60%</option>
+        <option value="70">70%</option>
+        <option value="80">80%</option>
+      </select>
+    </div>
+    <div>
+      <label class="chk"><input id="corner" type="checkbox">角地の緩和（＋10%）の指定がある</label>
+    </div>
+    <div>
+      <label for="far">指定容積率（%）</label>
+      <input id="far" type="number" inputmode="numeric" value="200" min="50" max="1300" step="10">
+    </div>
+    <div id="hbBox">
+      <label for="hb">今ある建物の建築面積（㎡）</label>
+      <input id="hb" type="number" inputmode="decimal" value="60" min="0" max="10000" step="0.01">
+    </div>
+    <div id="hfBox">
+      <label for="hf">今ある建物の延べ面積（㎡）</label>
+      <input id="hf" type="number" inputmode="decimal" value="110" min="0" max="10000" step="0.01">
+    </div>
+  </div>
+
+  <div class="actions">
+    <button type="button" data-preset="small">小型 1.8×0.9m</button>
+    <button type="button" data-preset="mid">中型 2.2×1.6m</button>
+    <button type="button" data-preset="large">大型 3.0×2.5m</button>
+  </div>
+</div>
+
+<div class="result" aria-live="polite">
+  <div>建築確認（確認申請）</div>
+  <p class="big" id="headline">—</p>
+  <p class="sub2" id="summary">数値を入力してください。</p>
+
+  <p class="cap">確認が要らない3つの条件（建築基準法 第6条第2項）</p>
+  <ul class="checks" id="conds"></ul>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>項目</th><th>面積・割合</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <ul class="checks" id="checks"></ul>
+</div>
+
+<div class="note">
+  <strong>この結果は概算です。</strong>
+  判定は建築基準法・同施行令の条文に基づきますが、<strong>小さな物置を建築物として扱うかどうか</strong>や、
+  増築か新築かの扱いの細部は<strong>特定行政庁（市区町村または都道府県の建築指導の担当）によって取扱いが異なることがあります。</strong>
+  確認が要らない場合でも、建ぺい率・容積率・構造などの規定は守る必要があります。
+  地区計画・建築協定、用途地域によって物置だけを空き地に置けない場合もあります。
+  <strong>実際の計画は、建築士・施工業者などの専門家、または特定行政庁の窓口にご確認ください。</strong>
+</div>
+
+<h2>この判定の根拠</h2>
+
+<h3>物置も建築物になる</h3>
+<div class="law">
+  <p>建築物　土地に定着する工作物のうち、屋根及び柱若しくは壁を有するもの（これに類する構造のものを含む。）…（建築基準法 第2条第1号）</p>
+</div>
+<p>
+  地面やコンクリートに固定して、倉庫として使い続ける物置はこれに当たります。
+  ただし、奥行きが浅く人が中に入らない小さな物置を建築物として扱わない取扱いをしている自治体があります
+  （例: 相模原市は奥行1m以下・高さ2.3m以下・床面積2㎡以内）。<strong>この基準は自治体ごとに違うので、本ツールでは判定していません。</strong>
+</p>
+
+<h3>確認が要らないのは「防火地域外・増築・10㎡以内」</h3>
+<div class="law">
+  <p>前項の規定は、防火地域及び準防火地域外において建築物を増築し、改築し、又は移転しようとする場合で、その増築、改築又は移転に係る部分の床面積の合計が十平方メートル以内であるときについては、適用しない。（建築基準法 第6条第2項）</p>
+</div>
+<p>
+  家のある敷地に物置を置くのは<strong>増築</strong>、建物の無い空き地に物置だけを置くのは<strong>新築</strong>として扱われます
+  （敷地は「一の建築物又は用途上不可分の関係にある二以上の建築物のある一団の土地」— 建築基準法施行令 第1条第1号）。
+  <strong>新築には10㎡の例外が無い</strong>ので、空き地なら1㎡の物置でも確認が要ります。
+  2個以上を置くときは床面積の<strong>合計</strong>で判定します。
+</p>
+
+<h3>区域の中では、例外に当たらなければ確認が要る</h3>
+<p>
+  都市計画区域・準都市計画区域などの中の建築物は、規模にかかわらず確認の対象です（建築基準法 第6条第1項第3号。準景観地区や、都道府県知事が指定する区域も含みます）。
+  防火地域・準防火地域は都市計画区域の中にだけ定められるので（都市計画法 第8条第1項第5号・第2項）、区域の外を選ぶと防火の項目は使いません。
+  区域の外では、平屋で200㎡以下の物置は第1号・第2号にも当たらないので、空き地に置く場合は確認が要りません。
+  区域の外で家のある敷地に10㎡を超える物置を置く場合は、家と合わせた規模で判断されるかが条文だけでは決まらないため、本ツールは<strong>「要確認」</strong>と表示します。
+</p>
+
+<h3>確認が要らなくても、建ぺい率と容積率は守る</h3>
+<div class="formula">建ぺい率 ＝（今ある建物の建築面積 ＋ 物置）÷ 敷地面積</div>
+<div class="formula">容積率 ＝（今ある建物の延べ面積 ＋ 物置）÷ 敷地面積</div>
+<p>
+  建ぺい率は同じ敷地にある建物の建築面積の<strong>合計</strong>で計算します（建築基準法 第53条第1項）。
+  平屋の物置は建築面積にも延べ面積にも同じだけ加わるので、置ける残りは<strong>建ぺい率と容積率の残りの小さいほう</strong>です。
+  前の道が狭い敷地は容積率がさらに小さくなることがあります（<a href="../setback/">セットバックの計算</a>で確かめられます）。
+</p>
+
+<h3>面積は本体の外寸で数えている</h3>
+<p>
+  正しくは壁の中心線で囲まれた面積（建築基準法施行令 第2条第1項第3号）ですが、本ツールは<strong>本体の外寸（間口×奥行）</strong>で数えます。
+  外寸のほうが少し大きいので、10㎡の判定は「要る」側、建ぺい率・容積率は「超える」側に出ます。
+  10㎡ぎりぎりの製品は、メーカーの寸法表の床面積で確かめてください。
+</p>
+
+<h2>よくある質問</h2>
+
+<h3>10㎡以下の物置なら確認申請はいりませんか</h3>
+<p>
+  自宅の敷地で、防火地域・準防火地域でなければ要りません。
+  <strong>防火地域・準防火地域では面積にかかわらず要り、建物の無い空き地に置く場合も要ります。</strong>
+  防火地域・準防火地域かどうかは、市区町村の都市計画図（Web の地図サービスがある自治体も多い）で確認できます。
+</p>
+
+<h3>物置を2つ置くとどうなりますか</h3>
+<p>
+  床面積の合計で判定します。例えば 2.2×1.6m（3.52㎡）と 2.6×2.5m（6.5㎡）は、1つずつなら10㎡以下ですが、
+  同時に置くと合計10.02㎡で10㎡を超えるので、確認が要ります。
+</p>
+
+<h3>カーポートと一緒に置く場合は</h3>
+<p>
+  同時に建てる建物の床面積は合計して判定されることがあり、カーポートの扱いは特定行政庁によって分かれるため、本ツールの対象外です。
+  カーポートの建ぺい率は<a href="../carport-coverage/">カーポートの建ぺい率計算</a>で出せます。
+</p>
+
+<h3>ほかの外まわりの計算もできますか</h3>
+<p>
+  <a href="../doma-concrete/">土間コンクリートの材料計算</a>（物置の下の土間にも）、
+  <a href="../block-wall/">ブロック塀の計算</a>、
+  <a href="../fence-quantity/">フェンスの枚数・柱の本数</a>、
+  <a href="../weed-sheet-quantity/">防草シートの必要量</a>があります。
+</p>
+
+<h2>出典</h2>
+<ul class="src">
+  <li>建築基準法（昭和25年法律第201号）第2条第1号・第6条第1項・第2項・第52条第1項・第53条第1項・第3項・別表第一
+    <a href="https://laws.e-gov.go.jp/law/325AC0000000201" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>建築基準法施行令（昭和25年政令第338号）第1条第1号・第2条第1項第2号〜第4号
+    <a href="https://laws.e-gov.go.jp/law/325CO0000000338" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>都市計画法（昭和43年法律第100号）第8条第1項第5号・第2項（防火地域・準防火地域を定められる区域）
+    <a href="https://laws.e-gov.go.jp/law/343AC0000000100" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>相模原市 建築審査課「物置の設置をご検討中の方へ」（令和8年1月作成。自宅の敷地＝増築・空き地＝新築、2個以上は合計、小規模な物置の取扱いの例）
+    <a href="https://www.city.sagamihara.kanagawa.jp/_res/projects/default_project/_page_/001/035/093/leaflet_202604.pdf" rel="nofollow noopener" target="_blank">相模原市（PDF）</a></li>
+  <li>条文は e-Gov 法令API で取得した現行版（2026年10月19日時点）を逐語で確認しています。施行前の改正版でも該当条文は同一です（第52条第1項は号が増えますが、指定容積率を入力する本ツールには影響しません）。
+    導出は<a href="./calc.js">計算コード</a>のコメントに、境界値の検証は<a href="./calc.test.mjs">テスト</a>に残してあります</li>
+</ul>
+<p class="src">最終確認日: 2026年10月19日</p>
+
+</main>
+
+<footer class="wrap">
+  <a href="../../">トップ</a>
+  <a href="../../privacy.html">プライバシーポリシー</a>
+  <a href="../../contact.html">お問い合わせ</a>
+  <p>&copy; 2026 くらしの計算室</p>
+</footer>
+
+<script type="module">
+import { calculate } from "./calc.js";
+
+const PRESETS = {
+  small: { w1: 1.8, d1: 0.9 },
+  mid: { w1: 2.2, d1: 1.6 },
+  large: { w1: 3.0, d1: 2.5 },
+};
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const n = (v, d = 2) => Number(v).toLocaleString("ja-JP", { maximumFractionDigits: d });
+const sq = (cm2) => `${n(cm2 / 10000, 2)}㎡`;
+const cmOf = (id) => Math.round(Number($(id).value) * 100);
+const numOf = (id) => ($(id).value === "" ? NaN : Number($(id).value));
+const TAGS = { ok: "満たす", ng: "満たさない", warn: "要確認", info: "参考" };
+
+const HEAD = {
+  not_required: ["ok", "確認申請は不要"],
+  required: ["ng", "確認申請が必要"],
+  check: ["warn", "要確認（特定行政庁へ）"],
+};
+
+function render() {
+  const zone = $("zone").value;
+  const hasHouse = $("house").value === "yes";
+  const second = $("second").checked;
+  $("fireBox").hidden = zone === "outside";
+  $("w2Box").hidden = !second;
+  $("d2Box").hidden = !second;
+  $("hbBox").hidden = !hasHouse;
+  $("hfBox").hidden = !hasHouse;
+
+  const res = calculate({
+    zone,
+    fire: $("fire").value === "yes",
+    hasHouse,
+    w1Cm: cmOf("w1"),
+    d1Cm: cmOf("d1"),
+    second,
+    w2Cm: cmOf("w2"),
+    d2Cm: cmOf("d2"),
+    siteM2: numOf("site"),
+    ratioPct: Number($("ratio").value),
+    corner: $("corner").checked,
+    farPct: numOf("far"),
+    houseBuildM2: numOf("hb"),
+    houseFloorM2: numOf("hf"),
+  });
+
+  if (!res.ok) {
+    $("headline").className = "big";
+    $("headline").textContent = "—";
+    $("summary").textContent = res.errors[0];
+    $("conds").innerHTML = "";
+    $("rows").innerHTML = "";
+    $("checks").innerHTML = "";
+    return;
+  }
+
+  const i = res.input;
+  const p = res.permit;
+  const [cls, label] = HEAD[p.status];
+  $("headline").className = `big ${cls}`;
+  $("headline").textContent = label;
+
+  const reason = {
+    "6-2": "第6条第2項の3条件をすべて満たすため、確認の規定が適用されません。",
+    "6-1-3": p.why === "fire"
+      ? "防火地域・準防火地域では10㎡以内の例外が使えないため、第6条第1項第3号により必要です。"
+      : p.why === "new"
+        ? "建物の無い敷地に置く新築なので10㎡以内の例外が使えず、第6条第1項第3号により必要です。"
+        : "床面積の合計が10㎡を超えるため、第6条第1項第3号により必要です。",
+    "outside-small": "区域の外で、物置だけの平屋・200㎡以下なので第6条第1項のどの号にも当たりません。",
+    "6-1-1": "区域の外でも、床面積の合計が200㎡を超えるため第6条第1項第1号・第2号により必要です。",
+    "outside-extension": "区域の外で家のある敷地に10㎡を超えて置く場合、家と合わせた規模で判断されるかが条文だけでは決まりません。",
+  }[p.rule];
+  $("summary").textContent = `物置の床面積 ${sq(res.shedCm2)}（本体の外寸）。${reason}`;
+
+  const inZone = i.zone === "inside";
+  const conds = [
+    { ok: res.permit.extension, label: "自宅など建物のある敷地に置く（増築）", detail: res.permit.extension ? "増築として扱われます。" : "空き地に置くのは新築です。新築に10㎡の例外はありません。" },
+    { ok: !res.permit.fireZone, label: "防火地域・準防火地域の外", detail: inZone ? (res.permit.fireZone ? "防火地域・準防火地域では面積にかかわらず例外になりません。" : "都市計画図で確かめてください。") : "区域の外には防火地域・準防火地域は定められません。" },
+    { ok: res.shedCm2 <= 100000, label: "床面積の合計が10㎡以内", detail: res.exemptRoomCm2 >= 0 ? `あと ${sq(res.exemptRoomCm2)} まで。` : `${sq(-res.exemptRoomCm2)} 超えています。` },
+  ];
+  $("conds").innerHTML = conds.map((x) =>
+    `<li><p class="hd"><span class="tag ${x.ok ? "ok" : "ng"}">${x.ok ? TAGS.ok : TAGS.ng}</span>${esc(x.label)}</p><p class="dt">${esc(x.detail)}</p></li>`).join("");
+
+  const tr = (k, v, c = "") => `<tr><td>${k}</td><td${c ? ` class="${c}"` : ""}>${v}</td></tr>`;
+  const rows = [
+    tr("物置の床面積", esc(i.second ? `${sq(res.shedCm2)}（${sq(res.shed1Cm2)} ＋ ${sq(res.shed2Cm2)}）` : sq(res.shedCm2))),
+    tr("<strong>建ぺい率（物置を置いたあと）</strong>", `<strong>${esc(`${n(res.buildRatioPct, 2)}%`)}</strong>`, res.buildFits ? "ok" : "ng"),
+    tr("　建築面積の合計／上限", esc(`${sq(res.buildTotalCm2)} ／ ${sq(res.buildLimitCm2)}（${res.limitPct}%${i.corner ? "・角地加算込み" : ""}）`)),
+    tr("<strong>容積率（物置を置いたあと）</strong>", `<strong>${esc(`${n(res.floorRatioPct, 2)}%`)}</strong>`, res.floorFits ? "ok" : "ng"),
+    tr("　延べ面積の合計／上限", esc(`${sq(res.floorTotalCm2)} ／ ${sq(res.floorLimitCm2)}（${n(i.farPct, 0)}%）`)),
+    res.afterCm2 >= 0
+      ? tr("上限までの残り（物置を置いたあと）", esc(`${sq(res.afterCm2)}（${res.binding === "build" ? "建ぺい率" : "容積率"}で決まる）`), "ok")
+      : tr("上限からの超過", esc(`${sq(-res.afterCm2)}（${res.binding === "build" ? "建ぺい率" : "容積率"}）`), "ng"),
+  ];
+  $("rows").innerHTML = rows.join("");
+
+  const checks = [];
+  if (res.houseAlreadyOver) {
+    checks.push({ t: "warn", title: "今ある建物だけで上限を超えています", detail: "入力した面積・建ぺい率・容積率をもう一度確認してください。緩和や許可を受けている場合は、本ツールの対象外です。" });
+  }
+  if (p.status === "not_required") {
+    checks.push({ t: "info", title: "確認が不要でも、建築基準法の規定は守る必要があります", detail: "建ぺい率・容積率のほか、構造や地区計画・建築協定の制限があります。" });
+  }
+  if (!i.hasHouse) {
+    checks.push({ t: "warn", title: "用途地域によっては、空き地に物置だけを置けません", detail: "第一種・第二種低層住居専用地域などでは、住宅に附属しない単独の倉庫が建てられない場合があります。特定行政庁に確認してください。" });
+  }
+  checks.push({ t: "info", title: "小さな物置は建築物として扱われないことがあります", detail: "奥行きが浅く人が入らない物置の扱いは自治体ごとに違います（例: 相模原市は奥行1m以下・高さ2.3m以下・2㎡以内）。本ツールは判定していません。" });
+  $("checks").innerHTML = checks.map((x) =>
+    `<li><p class="hd"><span class="tag ${x.t}">${TAGS[x.t]}</span>${esc(x.title)}</p><p class="dt">${esc(x.detail)}</p></li>`).join("");
+}
+
+for (const id of ["zone", "fire", "house", "w1", "d1", "second", "w2", "d2", "site", "ratio", "corner", "far", "hb", "hf"]) {
+  $(id).addEventListener("input", render);
+  $(id).addEventListener("change", render);
+}
+for (const btn of document.querySelectorAll("[data-preset]")) {
+  btn.addEventListener("click", () => {
+    const p = PRESETS[btn.dataset.preset];
+    for (const k of Object.keys(p)) $(k).value = p[k];
+    render();
+  });
+}
+render();
+</script>
+
+</body>
+</html>

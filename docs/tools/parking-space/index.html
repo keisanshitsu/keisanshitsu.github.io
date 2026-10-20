@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>駐車スペースの寸法計算 — 何台入るか・車庫証明の目安と国交省の駐車ます</title>
+<meta name="description" content="駐車スペースの間口・奥行と車の全長・全幅を入れると、並列・縦列で何cm余るか足りないかを、車庫証明の「全体を収容」の目安と国土交通省「駐車場設計・施工指針」の駐車ます（普通乗用車 2.5m×6.0m など）の2つの物差しで出します。指針の枠で何台入るかも表示します。">
+<link rel="canonical" href="https://keisanshitsu.github.io/tools/parking-space/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="くらしの計算室">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="駐車スペースの寸法計算 — 何台入るか・車庫証明の目安と国交省の駐車ます">
+<meta property="og:description" content="自宅の駐車スペースに車は何台入るか。車体がそのまま収まるか（車庫証明の目安）と、国交省の指針の駐車ますで足りるかを分けて、余り・不足をcmで出します。">
+<meta property="og:url" content="https://keisanshitsu.github.io/tools/parking-space/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "駐車スペースの寸法計算",
+  "description": "自動車の保管場所の確保等に関する法律施行令第1条第2号（全体を収容）の目安と、国土交通省「駐車場設計・施工指針」表-2.4.1・表-2.4.2 の駐車ますの大きさ・天井の有効高さに照らして、駐車スペースの余り・不足と収容台数を算出します。",
+  "url": "https://keisanshitsu.github.io/tools/parking-space/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (web browser)",
+  "inLanguage": "ja",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "くらしの計算室",
+    "url": "https://keisanshitsu.github.io/"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1b19; --muted:#6b6862;
+    --line:#e5e2dc; --card:#fff; --accent:#0f6cbd; --accent-soft:#eef5fc;
+    --ok:#1f7a45; --ok-soft:#eaf6ef; --ng:#b3261e; --ng-soft:#fdeeed;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#17181a; --fg:#e9e8e5; --muted:#a3a09a;
+           --line:#2e3033; --card:#1f2123; --accent:#6cb6f5; --accent-soft:#1b2733;
+           --ok:#5fd08a; --ok-soft:#16261d; --ng:#ff8a80; --ng-soft:#2a1a19; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  header{border-bottom:1px solid var(--line);padding:16px 0}
+  .site{font-size:.85rem;color:var(--muted);text-decoration:none}
+  h1{font-size:1.35rem;margin:28px 0 6px;line-height:1.5}
+  .sub{color:var(--muted);font-size:.92rem;margin:0 0 28px}
+  h2{font-size:1.05rem;margin:36px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
+  h3{font-size:.95rem;margin:22px 0 6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .grp{font-size:.82rem;font-weight:600;margin:18px 0 0}
+  .grp:first-child{margin-top:0}
+  label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+  input,select{width:100%;padding:9px 10px;font-size:1rem;color:var(--fg);
+    background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--fg);padding:9px 14px}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:8px}
+  .car{border-top:1px dashed var(--line);margin-top:12px;padding-top:4px}
+  .result{margin-top:20px;border:1px solid var(--accent);background:var(--accent-soft);
+    border-radius:12px;padding:18px}
+  .big{font-size:2rem;font-weight:700;color:var(--accent);line-height:1.2;margin:2px 0 0}
+  .big small{font-size:1rem;font-weight:600;margin-left:2px}
+  .verdict{display:inline-block;font-weight:700;border-radius:6px;padding:2px 10px;margin:8px 6px 0 0}
+  .verdict.ok{background:var(--ok-soft);color:var(--ok)}
+  .verdict.ng{background:var(--ng-soft);color:var(--ng)}
+  .sub2{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+  .checks{list-style:none;padding:0;margin:14px 0 0}
+  .checks li{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin-bottom:8px}
+  .checks .hd{font-size:.9rem;font-weight:600;margin:0}
+  .checks .dt{font-size:.82rem;color:var(--muted);margin:3px 0 0}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;border-radius:5px;
+    padding:1px 7px;margin-right:7px;vertical-align:2px}
+  .tag.info{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+  .tablewrap{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;white-space:nowrap}
+  th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:600}
+  td.ok{color:var(--ok);font-weight:600}
+  td.ng{color:var(--ng);font-weight:600}
+  .cap{font-size:.85rem;font-weight:600;margin:18px 0 0}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:14px 16px;border-radius:0 8px 8px 0;font-size:.88rem;margin:24px 0}
+  .law{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;margin:14px 0;font-size:.86rem}
+  .law p{margin:0 0 6px;font-size:.86rem}
+  .law p:last-child{margin-bottom:0}
+  .formula{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:10px 14px;margin:12px 0;font-size:.9rem;overflow-x:auto;white-space:nowrap}
+  p,li{font-size:.94rem}
+  ul,ol{padding-left:1.2em}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src li{font-size:.85rem;overflow-wrap:anywhere}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:20px 0 40px;
+    color:var(--muted);font-size:.85rem}
+  footer a{color:var(--muted);margin-right:14px}
+  a{color:var(--accent)}
+  [hidden]{display:none !important}
+  @media (max-width:400px){
+    .big{font-size:1.7rem}
+  }
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><a class="site" href="../../">← くらしの計算室</a></div></header>
+
+<main class="wrap">
+
+<h1>駐車スペースの寸法計算</h1>
+<p class="sub">
+  駐車スペースの間口・奥行と、車検証に載っている車の<strong>全長・全幅</strong>を入れると、並列・縦列に並べたときの余り・不足をcmで出します。
+  物差しは2つあります。<strong>車体がそのまま収まるか</strong>（車庫証明の「全体を収容」の目安）と、
+  <strong>国土交通省の指針の駐車ます</strong>（普通乗用車なら幅2.5m×長さ6.0m）で足りるか。あわせて、指針の枠で何台入るかを出します。
+</p>
+
+<div class="card">
+  <p class="grp">駐車スペース（内法）</p>
+  <div class="opts">
+    <div>
+      <label for="sw">間口（横幅・m）</label>
+      <input id="sw" type="number" inputmode="decimal" value="5.0" min="1" max="50" step="0.01">
+    </div>
+    <div>
+      <label for="sd">奥行（m）</label>
+      <input id="sd" type="number" inputmode="decimal" value="6.0" min="1" max="50" step="0.01">
+    </div>
+    <div>
+      <label for="ceil">屋根の下端までの高さ（m・屋根なしは空欄）</label>
+      <input id="ceil" type="number" inputmode="decimal" value="" min="1" max="10" step="0.01" placeholder="屋根なし">
+    </div>
+    <div>
+      <label for="layout">並べ方</label>
+      <select id="layout">
+        <option value="parallel" selected>並列（横に並べる）</option>
+        <option value="series">縦列（前後に並べる）</option>
+      </select>
+    </div>
+    <div>
+      <label for="count">車の台数</label>
+      <select id="count">
+        <option value="1">1台</option>
+        <option value="2" selected>2台</option>
+        <option value="3">3台</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="cars"></div>
+
+  <div class="actions">
+    <button type="button" data-preset="two">2台 並列 5.0×6.0m</button>
+    <button type="button" data-preset="narrow">狭め 4.0×5.0m</button>
+    <button type="button" data-preset="series">縦列 2.5×10.0m</button>
+  </div>
+</div>
+
+<div class="result" aria-live="polite">
+  <div>指針の駐車ますに対する余り（幅・奥行）</div>
+  <p class="big" id="headline">—</p>
+  <p id="verdictLine"><span class="verdict" id="vGarage"></span><span class="verdict" id="vGuide"></span></p>
+  <p class="sub2" id="summary">数値を入力してください。</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>項目</th><th>必要</th><th>余り（−は不足）</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <p class="cap">車ごと: 指針の枠の中で車体のまわりに残る幅・長さ</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>車</th><th>枠（幅×長さ）</th><th>両脇に残る幅</th><th>前後に残る長さ</th></tr></thead>
+      <tbody id="perCar"></tbody>
+    </table>
+  </div>
+
+  <p class="cap">このスペースに指針の枠で何台入るか（同じ区分の車だけを並べた場合）</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>区分（枠の大きさ）</th><th>横×縦</th><th>台数</th></tr></thead>
+      <tbody id="capacity"></tbody>
+    </table>
+  </div>
+
+  <ul class="checks" id="checks"></ul>
+</div>
+
+<div class="note">
+  <strong>この結果は概算です。</strong>
+  「車体が収まる」は車どうし・壁との<strong>隙間を0</strong>として判定しているので、収まると出ても<strong>ドアの開け閉めや出し入れができるとは限りません</strong>。
+  車庫証明（自動車保管場所証明）の可否は、道路からの出入りや距離の要件も含めて<strong>警察署</strong>が判断します。
+  国土交通省の指針は公共の駐車場の設計の目安で、自宅の駐車スペースに義務として掛かるものではありません。
+  <strong>工事の計画は、外構の施工業者などの専門家にご確認ください。</strong>
+</div>
+
+<h2>この計算の根拠</h2>
+
+<h3>物差し1: 車体がそのまま収まるか（車庫証明の目安）</h3>
+<div class="law">
+  <p>当該自動車が法令の規定により通行することができないこととされる道路以外の道路から当該自動車を支障なく出入させ、かつ、その全体を収容することができるものであること。（自動車の保管場所の確保等に関する法律施行令 第1条第2号）</p>
+</div>
+<p>
+  保管場所（車庫）は、<strong>車の全体を収容できる</strong>ことが要件の一つです。本ツールは車検証の全長・全幅をそのまま並べ、
+  スペースの内法に収まるかを見ています。並べ方によって次のように足し合わせます。
+</p>
+<div class="formula">並列: 必要な幅 ＝ 全幅の合計、必要な奥行 ＝ いちばん長い全長</div>
+<div class="formula">縦列: 必要な幅 ＝ いちばん広い全幅、必要な奥行 ＝ 全長の合計</div>
+<p>
+  同じ条文の「支障なく出入させ」（前面の道路から出し入れできるか）や、第1号の「使用の本拠から2km以内」は寸法だけでは決まらないので、判定していません。
+</p>
+
+<h3>物差し2: 国土交通省の指針の駐車ます</h3>
+<div class="law">
+  <p>駐車ますの大きさは、設計対象車両に応じて、表－２．４．１に示す値以上とすることを原則とする。（駐車場設計・施工指針 2.4.2）</p>
+  <p>表-2.4.1 駐車ますの大きさ（長さ×幅員）: 軽自動車 3.6m×2.0m ／ 小型乗用車 5.0m×2.3m ／ 普通乗用車 6.0m×2.5m</p>
+  <p>表-2.4.2 天井の有効高さ（車室）: 軽自動車 2.1m ／ 小型乗用車 2.1m ／ 普通乗用車 2.2m</p>
+</div>
+<p>
+  指針の枠は車体より一回り大きく、たとえば全幅1.70mの小型自動車なら枠の幅2.3mとの差の<strong>60cm</strong>が両脇に残ります。
+  ドアの開け閉めに何cm要るかには公的な数値が無いので、本ツールは「足りる・足りない」を言わず、残る幅を示すだけにしています。
+</p>
+
+<h3>車の区分（軽・小型・普通）</h3>
+<div class="law">
+  <p>小型自動車: 長さ 4.70m以下・幅 1.70m以下・高さ 2.00m以下 ／ 軽自動車: 長さ 3.40m以下・幅 1.48m以下・高さ 2.00m以下（道路運送車両法施行規則 別表第一。排気量などの条件もあります）</p>
+</div>
+<p>
+  区分で「軽」「小型」を選ぶと、その上限の寸法が入ります。お手持ちの車の数値は車検証の「長さ」「幅」「高さ」で確認して書き換えてください。
+  上限を超える寸法を入れるとエラーになります。長さ・幅・高さのどれかが小型自動車の上限を超える車（軽自動車を除く）は「普通」を選び、寸法を入力してください（「普通」を選んだときに入る寸法は例です）。
+  指針の枠は、小型自動車に「小型乗用車」、普通自動車に「普通乗用車」の値を当てています。
+</p>
+
+<h2>よくある質問</h2>
+
+<h3>2台並べるには幅が何m要りますか</h3>
+<p>
+  指針の枠で考えると、普通乗用車2台で <strong>2.5m×2＝5.0m</strong>、小型自動車と軽なら 2.3m＋2.0m＝<strong>4.3m</strong>です。
+  車体だけなら小型自動車の上限（全幅1.70m）と軽の上限（1.48m）で3.18mですが、これでは車の間に隙間がありません。
+</p>
+
+<h3>車庫証明は「指針の大きさ」が無いと取れませんか</h3>
+<p>
+  施行令の要件は「全体を収容することができる」ことで、指針の枠の大きさは要件として書かれていません。
+  ただし運用や必要書類は都道府県警察ごとに定められているので、申請先の警察署で確認してください。
+</p>
+
+<h3>カーポートの屋根の高さはどれくらい要りますか</h3>
+<p>
+  車体が入るには全高より高ければ足りますが、指針の天井の有効高さは軽・小型で2.1m、普通で2.2mです。
+  カーポートを付けるときの<a href="../carport-coverage/">建ぺい率の計算</a>もあわせて確認してください。
+</p>
+
+<h3>ほかの外まわりの計算もできますか</h3>
+<p>
+  駐車場を舗装するときの<a href="../doma-concrete/">土間コンクリートの材料計算</a>、
+  <a href="../carport-coverage/">カーポートの建ぺい率計算</a>、
+  物置を置くときの<a href="../shed-permit/">建築確認の要否と建ぺい率</a>、
+  <a href="../fence-quantity/">フェンスの枚数・柱の本数</a>、
+  <a href="../slope-length/">スロープの長さ計算</a>があります。
+</p>
+
+<h2>出典</h2>
+<ul class="src">
+  <li>自動車の保管場所の確保等に関する法律（昭和37年法律第145号）第3条
+    <a href="https://laws.e-gov.go.jp/law/337AC0000000145" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>自動車の保管場所の確保等に関する法律施行令（昭和37年政令第329号）第1条
+    <a href="https://laws.e-gov.go.jp/law/337CO0000000329" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>道路運送車両法施行規則（昭和26年運輸省令第74号）別表第一
+    <a href="https://laws.e-gov.go.jp/law/326M50000800074" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>国土交通省「駐車場設計・施工指針について」（平成4年6月10日 道企発第40号、改正 平成6年9月28日 道企発第63号）2.4.2 表-2.4.1・2.4.3 表-2.4.2
+    <a href="https://www.mlit.go.jp/road/sign/kijyun/pdf/19920610tyuusyajou.pdf" rel="nofollow noopener" target="_blank">国土交通省（PDF）</a></li>
+  <li>条文は e-Gov 法令API で取得した現行版（2026年10月20日時点）を逐語で確認しています。施行前の改正版（施行規則 2027年1月1日施行）でも別表第一は同一です。
+    導出は<a href="./calc.js">計算コード</a>のコメントに、境界値の検証は<a href="./calc.test.mjs">テスト</a>に残してあります</li>
+</ul>
+<p class="src">最終確認日: 2026年10月20日</p>
+
+</main>
+
+<footer class="wrap">
+  <a href="../../">トップ</a>
+  <a href="../../privacy.html">プライバシーポリシー</a>
+  <a href="../../contact.html">お問い合わせ</a>
+  <p>&copy; 2026 くらしの計算室</p>
+</footer>
+
+<script type="module">
+import { calculate, GUIDE, CLASS_MAX, CLASS_LABEL } from "./calc.js";
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const n = (v, d = 2) => Number(v).toLocaleString("ja-JP", { maximumFractionDigits: d });
+const m = (cm) => `${n(cm / 100, 2)}m`;
+const signed = (cm) => (cm >= 0 ? `＋${n(cm, 0)}cm` : `−${n(-cm, 0)}cm`);
+const cmOf = (v) => (v === "" ? "" : Math.round(Number(v) * 100));
+
+// 区分を選んだときに入れる寸法（軽・小型は別表第一の上限。普通は上限が無いので例として 4.80×1.85×1.70）
+const FILL = {
+  kei: { l: 3.40, w: 1.48, h: 2.00 },
+  small: { l: 4.70, w: 1.70, h: 2.00 },
+  normal: { l: 4.80, w: 1.85, h: 1.70 },
+};
+const INITIAL = ["small", "kei", "normal"];
+
+function carRow(i) {
+  const cls = INITIAL[i];
+  const f = FILL[cls];
+  return `<div class="car" data-car="${i}">
+  <p class="grp">${i + 1}台目</p>
+  <div class="opts">
+    <div><label for="c${i}cls">区分</label>
+      <select id="c${i}cls">
+        <option value="kei"${cls === "kei" ? " selected" : ""}>軽自動車</option>
+        <option value="small"${cls === "small" ? " selected" : ""}>小型自動車</option>
+        <option value="normal"${cls === "normal" ? " selected" : ""}>普通自動車</option>
+      </select></div>
+    <div><label for="c${i}l">全長（m）</label><input id="c${i}l" type="number" inputmode="decimal" value="${f.l.toFixed(2)}" min="2" max="8" step="0.01"></div>
+    <div><label for="c${i}w">全幅（m）</label><input id="c${i}w" type="number" inputmode="decimal" value="${f.w.toFixed(2)}" min="1" max="2.6" step="0.01"></div>
+    <div><label for="c${i}h">全高（m・屋根があるとき）</label><input id="c${i}h" type="number" inputmode="decimal" value="${f.h.toFixed(2)}" min="1" max="4" step="0.01"></div>
+  </div></div>`;
+}
+$("cars").innerHTML = [0, 1, 2].map(carRow).join("");
+
+function readCars() {
+  const k = Number($("count").value);
+  const out = [];
+  for (let i = 0; i < 3; i++) {
+    document.querySelector(`[data-car="${i}"]`).hidden = i >= k;
+    if (i < k) out.push({ cls: $(`c${i}cls`).value, lengthCm: cmOf($(`c${i}l`).value), widthCm: cmOf($(`c${i}w`).value), heightCm: cmOf($(`c${i}h`).value) });
+  }
+  return out;
+}
+
+function render() {
+  const res = calculate({
+    spaceWidthCm: cmOf($("sw").value),
+    spaceDepthCm: cmOf($("sd").value),
+    ceilingCm: cmOf($("ceil").value.trim()),
+    layout: $("layout").value,
+    cars: readCars(),
+  });
+  if (!res.ok) {
+    $("headline").textContent = "—";
+    for (const id of ["vGarage", "vGuide"]) { $(id).className = "verdict"; $(id).textContent = ""; }
+    $("summary").textContent = res.errors[0];
+    for (const id of ["rows", "perCar", "capacity", "checks"]) $(id).innerHTML = "";
+    return;
+  }
+  const { garage: ga, guide: gu, input: i } = res;
+  $("headline").innerHTML = `幅 ${esc(signed(gu.spareWidthCm))} <small>／</small> 奥行 ${esc(signed(gu.spareDepthCm))}`;
+  $("vGarage").className = `verdict ${ga.fits ? "ok" : "ng"}`;
+  $("vGarage").textContent = ga.fits ? "車体は収まる" : "車体が収まらない";
+  $("vGuide").className = `verdict ${gu.fits ? "ok" : "ng"}`;
+  $("vGuide").textContent = gu.fits ? "指針の枠も収まる" : "指針の枠には足りない";
+  $("summary").textContent =
+    `スペース ${m(i.spaceWidthCm)} × ${m(i.spaceDepthCm)}${i.hasRoof ? `・屋根の下 ${m(i.ceilingCm)}` : "・屋根なし"} ／ ` +
+    `${i.cars.length}台を${i.layout === "series" ? "縦列" : "並列"}`;
+
+  const cls = (v) => (v >= 0 ? "ok" : "ng");
+  const tr = (k, need, spare) => `<tr><td>${esc(k)}</td><td>${esc(m(need))}</td><td class="${cls(spare)}">${esc(signed(spare))}</td></tr>`;
+  const rows = [
+    tr("車体（隙間0）の幅", ga.needWidthCm, ga.spareWidthCm),
+    tr("車体（隙間0）の奥行", ga.needDepthCm, ga.spareDepthCm),
+  ];
+  if (i.hasRoof) rows.push(tr("車体の高さ（いちばん高い車）", ga.needHeightCm, ga.spareHeightCm));
+  rows.push(tr("指針の枠の幅", gu.needWidthCm, gu.spareWidthCm), tr("指針の枠の奥行", gu.needDepthCm, gu.spareDepthCm));
+  if (i.hasRoof) rows.push(tr("指針の天井の有効高さ", gu.needHeightCm, gu.spareHeightCm));
+  $("rows").innerHTML = rows.join("");
+
+  $("perCar").innerHTML = res.perCar.map((c, k) =>
+    `<tr><td>${k + 1}台目（${esc(CLASS_LABEL[c.cls])}）</td><td>${esc(`${m(c.boxWidthCm)}×${m(c.boxLengthCm)}`)}</td>` +
+    `<td>${esc(n(c.sideSpareCm, 0))}cm</td><td>${esc(n(c.endSpareCm, 0))}cm</td></tr>`).join("");
+
+  $("capacity").innerHTML = Object.entries(res.capacity).map(([k, v]) => {
+    const g = GUIDE[k];
+    const roof = v.ceilingOk === false ? "（天井が低い）" : "";
+    return `<tr><td>${esc(`${g.label}（${m(g.widthCm)}×${m(g.lengthCm)}）`)}</td><td>${v.across}×${v.deep}</td>` +
+      `<td class="${v.total > 0 && v.ceilingOk !== false ? "ok" : "ng"}">${v.total}台${esc(roof)}</td></tr>`;
+  }).join("");
+
+  const checks = [];
+  if (ga.fits && !gu.fits)
+    checks.push({ title: "車体は入りますが、指針の枠より狭い配置です", detail: "隙間が少ないので、ドアの開け閉めや乗り降り、出し入れの切り返しを実際の車で確かめてください。" });
+  checks.push({ title: "道路からの出し入れは判定していません", detail: "前面の道路の幅や切り返しの余地は寸法だけでは決まりません。車庫証明は申請先の警察署が判断します。" });
+  $("checks").innerHTML = checks.map((x) =>
+    `<li><p class="hd"><span class="tag info">参考</span>${esc(x.title)}</p><p class="dt">${esc(x.detail)}</p></li>`).join("");
+}
+
+const PRESETS = {
+  two: { sw: 5.0, sd: 6.0, ceil: "", layout: "parallel", count: 2 },
+  narrow: { sw: 4.0, sd: 5.0, ceil: "", layout: "parallel", count: 2 },
+  series: { sw: 2.5, sd: 10.0, ceil: "", layout: "series", count: 2 },
+};
+document.addEventListener("input", render);
+document.addEventListener("change", (e) => {
+  const mt = /^c(\d)cls$/.exec(e.target.id);
+  if (mt) {
+    const f = FILL[e.target.value];
+    const k = mt[1];
+    $(`c${k}l`).value = f.l.toFixed(2); $(`c${k}w`).value = f.w.toFixed(2); $(`c${k}h`).value = f.h.toFixed(2);
+  }
+  render();
+});
+for (const btn of document.querySelectorAll("[data-preset]")) {
+  btn.addEventListener("click", () => {
+    const p = PRESETS[btn.dataset.preset];
+    for (const k of Object.keys(p)) $(k).value = p[k];
+    render();
+  });
+}
+render();
+</script>
+
+</body>
+</html>

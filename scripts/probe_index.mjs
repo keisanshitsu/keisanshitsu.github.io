@@ -73,6 +73,30 @@ export function containsHost(urls, host) {
   return hostsOf(urls).includes(normalizeHost(host));
 }
 
+// 当ホストのURLそのもの（重複なし・出た順）。
+// なぜ（2026-10-20）: 10/19 の初の found で、出たのがトップかツールのページかを
+// 記録しておらず、翌日以降に確かめようがなかった。found は「どれが」まで残さないと
+// 次の打ち手（ツールが索引されているか）に使えない。
+export function ourHostUrls(urls, host) {
+  const h = normalizeHost(host);
+  const out = [];
+  for (const u of urls) {
+    try {
+      if (normalizeHost(new URL(u).host) === h && !out.includes(u)) out.push(u);
+    } catch { /* skip */ }
+  }
+  return out;
+}
+
+// 陰性対照が「実際に検査された」か。
+// 10/19 の found は陰性対照が HTTP 202・結果0件のまま判定された。202 は流量制限で
+// 検索していないので、「存在しないホストが出なかった」は何も確かめていない。
+// verdict() はこれまでどおり判定に使わない（found の根拠は当ホスト名そのものが出たこと）が、
+// 検査されなかった日を履歴で区別できるようにする。存在しない文字列なので 200・0件は正常。
+export function negControlTested(httpStatus) {
+  return httpStatus === 200;
+}
+
 // 1件のクエリが判定材料として使えるか。
 // 2026-09-23 の初回実行で、3本目のクエリだけ HTTP 202・結果0件が返った
 // （DuckDuckGo 側の流量制限とみられる）。初版はこれを黙って「見つからなかった」に
@@ -217,7 +241,7 @@ async function main() {
         r = await search(q);
         retried = true;
       }
-      ours.push({ ...r, retried, our_host_found: containsHost(r.urls, host) });
+      ours.push({ ...r, retried, our_host_found: containsHost(r.urls, host), our_urls: ourHostUrls(r.urls, host) });
       await sleep(4000);
     }
   };
@@ -234,8 +258,10 @@ async function main() {
   const ourFound = ours.some((r) => r.our_host_found);
   const queryRows = ours.map((r) => ({
     query: r.query, http: r.status, result_count: r.urls.length, retried: r.retried,
-    our_host_found: r.our_host_found, top_hosts: hostsOf(r.urls).slice(0, 5),
+    our_host_found: r.our_host_found, our_urls: r.our_urls, top_hosts: hostsOf(r.urls).slice(0, 5),
   }));
+  const ourUrls = [...new Set(queryRows.flatMap((r) => r.our_urls))];
+  const negTested = negControlTested(neg.status);
   const usable = queryRows.filter(isQueryUsable);
 
   const result = {
@@ -245,8 +271,9 @@ async function main() {
     order,
     controls: {
       positive: { query: POS_CONTROL_QUERY, expect_host: POS_CONTROL_HOST, found: posFound, http: pos.status, result_count: pos.urls.length },
-      negative: { query: NEG_CONTROL_QUERY, expect_absent_host: NEG_CONTROL_HOST, found: negFound, http: neg.status, result_count: neg.urls.length },
+      negative: { query: NEG_CONTROL_QUERY, expect_absent_host: NEG_CONTROL_HOST, found: negFound, http: neg.status, result_count: neg.urls.length, tested: negTested },
     },
+    our_urls: ourUrls,
     queries: queryRows.map((r) => ({ ...r, usable: isQueryUsable(r) })),
     usable_query_count: usable.length,
     verdict: verdict({
@@ -264,7 +291,9 @@ async function main() {
       state: result.verdict.state,
       order,
       pos_http: pos.status, neg_http: neg.status,
+      neg_control_tested: negTested,
       our_http: queryRows.map((r) => r.http),
+      our_urls: ourUrls,
       retried: queryRows.some((r) => r.retried),
       usable_query_count: usable.length,
     }) + "\n", "utf8");

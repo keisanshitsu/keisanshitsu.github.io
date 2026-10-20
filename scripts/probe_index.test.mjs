@@ -9,7 +9,7 @@
 
 import {
   extractResultUrls, normalizeHost, hostsOf, containsHost, verdict, isQueryUsable, PROVES,
-  summarizeHistory, parseHistory, shouldRetry,
+  summarizeHistory, parseHistory, shouldRetry, ourHostUrls, negControlTested,
 } from "./probe_index.mjs";
 
 const results = [];
@@ -112,6 +112,21 @@ eq("R2 200 は引き直さない", shouldRetry(200), false);
 eq("R3 通信失敗（null）は引き直さない", shouldRetry(null), false);
 eq("R4 引き直しても判定基準は緩めない（202 のままなら不成立）",
   isQueryUsable({ http: 202, result_count: 10 }), false);
+
+// ── どのURLが出たか・陰性対照が検査されたか（2026-10-20） ──
+// 10/19 の初の found で、出たのがトップかツールかを記録しておらず確かめられなかった。
+eq("U1 当ホストのURLだけを出た順に返す",
+  ourHostUrls(["https://github.com/keisanshitsu", "https://keisanshitsu.github.io/tools/shed/",
+    "https://www.keisanshitsu.github.io/"], "keisanshitsu.github.io"),
+  ["https://keisanshitsu.github.io/tools/shed/", "https://www.keisanshitsu.github.io/"]);
+eq("U2 同じURLは1回だけ",
+  ourHostUrls(["https://keisanshitsu.github.io/", "https://keisanshitsu.github.io/"], "keisanshitsu.github.io").length, 1);
+eq("U3 部分一致のホストは含めない（B4 と同じ向き）",
+  ourHostUrls(["https://keisanshitsu.github.io.evil.example/"], "keisanshitsu.github.io"), []);
+eq("U4 壊れたURLは飛ばす", ourHostUrls(["ht!tp://[bad"], "keisanshitsu.github.io"), []);
+eq("N1 陰性対照 200 は検査された（0件が正常）", negControlTested(200), true);
+eq("N2 陰性対照 202 は検査されていない（10/19 の実例）", negControlTested(202), false);
+eq("N3 通信失敗も検査されていない", negControlTested(null), false);
 
 const pass = results.filter((r) => r.ok).length;
 for (const r of results.filter((r) => !r.ok)) {

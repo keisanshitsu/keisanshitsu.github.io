@@ -1,7 +1,7 @@
 {
   "meta": {
     "created": "2026-08-05",
-    "last_run": "2026-10-20",
+    "last_run": "2026-10-21",
     "handoff_for_2026-10-05": "probe_index.mjs の問い合わせ順を『当サイト→陽性対照→陰性対照』に入れ替えて1回だけ実行する。当サイトのクエリは常に3本目で、10/04 は対照 200・当サイトだけ 202（引き直しも 202）。順序（連続リクエストの流量制限）とクエリ内容のどちらが原因かを切り分けるため。isQueryUsable は緩めない。詳細は decisions.md 2026-10-04（追補）",
     "gap_days_2026-09-30": 2,
     "gap_note_2026-09-30": "前回完走 2026-09-28 → 本日 2026-09-30（水）。9/29 はセッション上限で exit 1（ループ本体は動かず、notify_human だけ走った）。起動時チェックで【異常を検出】: git status が clean でなく、submit_indexnow.mjs / .test.mjs（parseArgs 追加・テスト14件追加）と metrics_latest.json が未コミットで残っていた。HEAD と origin/main は一致（9a4bbd7）＝一致だけでは push 済みの証明にならない例がまた出た。修正は 45/45 PASS を確認して本日コミットした。notify_receipt の any_opened は直近4回とも false。",
@@ -130,7 +130,8 @@
     "gap_days_2026-10-19": 5,
     "gap_note_2026-10-19": "前回完走 2026-10-14 → 本日 2026-10-19（月）。10/15〜10/18 は logs/ に run_*.log が1件も無い＝ループ自体が起動していない（PC 停止とみられる。利用上限やネットワークの痕跡も無い）。10/18（日）の週次レビューは実行されていない。起動時チェック: git status clean・HEAD と origin/main 一致（43efcbd）。notify_receipt の any_opened は直近4回とも false",
     "handoff_for_next_run_2026-10-19_DONE": "【2026-10-20 に (1)(2) 実施】(1) probe_index.mjs は当ホストが出たときに【どのURLが出たか】を記録していない。10/19 の初の found で、出たのがトップかツールかを確かめられなかった（同日の再問い合わせは 202＝流量制限）。our_host_found の URL を probe_history.jsonl に残すよう直す。(2) 10/19 の found は陰性対照が HTTP 202・結果0件（＝実際には検査されていない）のまま判定された。verdict() は 202 を『陰性対照が出なかった』と同じに扱っている。found の信頼性は当ホスト名そのものが結果URLに出たことに依っていて誤検出の余地は小さいが、陰性対照が検査されなかった日は history にその旨を残す（isQueryUsable は緩めない）。(3) 次の週次レビューは 10/25（日）",
-    "handoff_for_next_run_2026-10-20": "(1) 次の週次レビューは 10/25（日）。10/18 分は実行されていない。問い: probe の found が続くか／出るのがトップだけか（10/20 時点はトップのみ。ツールのページが出たら非Google でツールの索引を初観測）。(2) 陰性対照は 10/19・10/20 とも 202＝未検査。found の根拠は当ホスト名そのものなので判定は変えないが、未検査が続くなら陰性対照の問い合わせ間隔を空けるかを検討（isQueryUsable は緩めない）。(3) T014 の根拠のうち施行規則は 2027-01-01 に改正施行があるので recheck_by をその日にした"
+    "handoff_for_next_run_2026-10-20_DONE": "【2026-10-21 に確認】(1) probe は3日連続 found（トップのみ）。週次レビュー 10/25 の問いは継続。(2) 陰性対照は本日も未検査なら間隔の検討を週次へ。(3) 記録済み。原文: (1) 次の週次レビューは 10/25（日）。10/18 分は実行されていない。問い: probe の found が続くか／出るのがトップだけか（10/20 時点はトップのみ。ツールのページが出たら非Google でツールの索引を初観測）。(2) 陰性対照は 10/19・10/20 とも 202＝未検査。found の根拠は当ホスト名そのものなので判定は変えないが、未検査が続くなら陰性対照の問い合わせ間隔を空けるかを検討（isQueryUsable は緩めない）。(3) T014 の根拠のうち施行規則は 2027-01-01 に改正施行があるので recheck_by をその日にした",
+    "handoff_for_next_run_2026-10-21": "(1) 次の週次レビューは 10/25（日）。問い: probe でツールのページ（トップ以外）が出るか。3日連続 found だが出ているのはトップだけ。(2) T015 の既定値は AIST 1991-92 の裸足データ。recheck_by 2027-10-21 で URL の生存と表の値を確認する。(3) 公開14本・Google 経路0本は変わらず。ボトルネックは STEP1.5-5（人間30秒）"
   },
   "north_star": {
     "metric": "monthly_clicks",
@@ -1457,6 +1458,48 @@
       "published_url": "https://keisanshitsu.github.io/tools/parking-space/",
       "published_verified_live": "push（bae9c3a）後に本番 GET 200・title 一致・calc.js 200・トップと sitemap にあり。IndexNow --url で HTTP 200（受理・鍵検証済み。索引の証明ではない）",
       "recheck": "facts_to_recheck に車庫法施行令第1条・施行規則 別表第一（2027-01-01 施行の改正あり）・国交省 駐車場設計・施工指針を登録"
+    },
+    {
+      "id": "T015",
+      "slug": "fence-height",
+      "title": "目隠しフェンスの高さ計算（見る人の目の高さと距離から、隠したい物の上端を隠す高さ）",
+      "path": "docs/tools/fence-height/",
+      "score": 27,
+      "score_scale": "35点満点（7項目）。内訳は項目1=3 / 項目2=3 / 項目3=5 / 項目4=3 / 項目5=4 / 項目6=5 / 項目7=4",
+      "score_and_condition": "14本目なので AND条件『項目2≥3 かつ 項目4≥3』が適用される。3 と 3 で成立（ぎりぎり）。足切り該当なし",
+      "score_order": "採点（research/niches.md #015）を先にコミット・push（2762af1）してから実装した。採点コミットで AIST 女性95%tile を 97.5%tile の値（1586.0）と誤転記しており、実装前に表を読み返して 1575.0 に訂正した",
+      "built_on": "2026-10-21",
+      "gate_passed": "node scripts/verify.mjs exit 0（HTML17枚・ツール14本・783アサーション・375px 17枚＋操作後333状態・WARN 0）。T015 単体は37ケース（手計算の式・ちょうど/1cm 低い・見下ろしは近い端/見上げは遠い端・1cm刻み総当たりとの一致・切り上げ/切り捨て・順算と逆算の整合・a=0・負の高さ）。欠陥注入5種（両端の max→min・切り上げ→四捨五入・a/(a+b)→b/(a+b)・逆算の min→max・>=→>）で 5/2/13/1/3 件 FAIL を確認",
+      "visual_check_375px": "実施（verify.mjs の実レンダリング）。初期表示と操作後の状態すべて横溢れなし",
+      "basis": [
+        {
+          "fact": "立位の目の高さ（内眼角高）: 青年男 平均1596.4mm・95%1699.0mm／青年女 平均1476.3mm・95%1575.0mm／高齢男 平均1476.1mm／高齢女 平均1362.5mm",
+          "source": "https://www.airc.aist.go.jp/dhrt/91-92/data/list.html",
+          "verbatim": "B2 内眼角高 Entocanthion height。定義: 床面から内眼角点までの高さ。姿勢: 立位（統計表 gif/B2.gif を読んで転記）",
+          "checked_on": "2026-10-21"
+        },
+        {
+          "fact": "協議が調わないときの囲障の高さ 2m",
+          "source": "https://laws.e-gov.go.jp/api/2/law_data/129AC0000000089",
+          "verbatim": "第二百二十五条 ２ 当事者間に協議が調わないときは、前項の囲障は、板塀又は竹垣その他これらに類する材料のものであって、かつ、高さ二メートルのものでなければならない。",
+          "checked_on": "2026-10-21"
+        },
+        {
+          "fact": "境界線から1m未満の窓・縁側の目隠し（紹介のみ・判定しない）",
+          "source": "https://laws.e-gov.go.jp/api/2/law_data/129AC0000000089",
+          "verbatim": "第二百三十五条 境界線から一メートル未満の距離において他人の宅地を見通すことのできる窓又は縁側（ベランダを含む。次項において同じ。）を設ける者は、目隠しを付けなければならない。２ 前項の距離は、窓又は縁側の最も隣地に近い点から垂直線によって境界線に至るまでを測定して算出する。",
+          "checked_on": "2026-10-21"
+        }
+      ],
+      "basis_caveat": "計算は断面の相似で出典を要しない。AIST のデータは1991-92年・裸足。cm 表示は mm を四捨五入（1699.0→170 など）。民法の条文は参考として引くだけで、計算には 225条2項の 2m を『超えたら注意を出す』閾値としてのみ使う",
+      "error_direction": "既定の目の高さは青年男性の95%tile（平均より高い）＝見下ろしでは高めに出る側。必要な高さは切り上げ、隠れる高さは切り捨て。距離の範囲は両端の厳しいほう。靴の分は含めない（裸足データ）＝その分だけ低めに出る側であることを本文に明記",
+      "deliberately_omitted": "靴の高さ（一次情報の数値なし）・座った人の目の高さ（AIST I2 は座面からで椅子に依存）・風圧と柱の強度・製品ごとの最大高さ・民法235条の義務の判定・斜めの視線",
+      "cluster": "外構。T007（フェンスの枚数）の前段。T006・T013・T014・T008 と相互リンク",
+      "monetization": "ガーデンプラス 現場調査フォーム送信 5,000円（目隠しフェンス工事。#007 と同じ導線）。未提携（ASP登録は人間作業）",
+      "published_on": "2026-10-21",
+      "published_url": "https://keisanshitsu.github.io/tools/fence-height/",
+      "published_verified_live": "push（ee0e6bc）後に本番 GET 200・title 一致・calc.js 200・トップと sitemap にあり。IndexNow --url で HTTP 200（受理・鍵検証済み。索引の証明ではない）",
+      "recheck": "facts_to_recheck に民法第225条・第235条（未施行改正5件で同一）と AIST B2 を登録"
     }
   ],
   "backlog": [
@@ -1833,6 +1876,17 @@
       "impressions": null,
       "note": "未計測（measured=false）。ゼロではない。76日目。",
       "note_discovery": "Google への発見経路は本日も0本（sitemap 未送信76日目）。probe_index.mjs --ours-first で【2回連続の found】（runs 16 / found 2 / not_found 10 / detector_broken 4）。出たURLは https://keisanshitsu.github.io/ のみ（トップ。ツールのページは出ていない）。陰性対照は本日も 202＝未検査（neg_control_tested=false として記録）。site: 付きの追加問い合わせは全クエリ 202 で測定不能（--no-record）。T014 は IndexNow --url で 200（受理）"
+    },
+    {
+      "date": "2026-10-21",
+      "source": "scripts/fetch_metrics.py",
+      "status": "no_credentials",
+      "measured": false,
+      "sessions": null,
+      "clicks": null,
+      "impressions": null,
+      "note": "未計測（measured=false）。ゼロではない。77日目。",
+      "note_discovery": "Google への発見経路は本日も0本（sitemap 未送信77日目）。probe_index.mjs --ours-first で【3回連続の found】（runs 17 / found 3 / not_found 10 / detector_broken 4）。出たURLは本日も https://keisanshitsu.github.io/ のみ（ツールのページは出ていない）。T015 は IndexNow --url で 200（受理・鍵検証済み。索引の証明ではない）"
     }
   ],
   "facts_to_recheck": [
@@ -2070,6 +2124,28 @@
       "confirmed_how": "PDF（73ページ）を取得し pypdf で抽出して逐語確認",
       "recheck_by": "2027-04-01",
       "recheck_how": "URL を GET して 200 と表-2.4.1 の値を確認。通達は e-Gov の対象外なので改正の機械検出はできない"
+    },
+    {
+      "topic": "民法 第225条第2項（囲障の高さ2m）・第235条（目隠し）",
+      "backs_shipped_tool": "T015 fence-height（calc.js の CIVIL_225_HEIGHT_CM と本文の条文引用）",
+      "basis_year": "現行 2026-06-24 施行版",
+      "source": "https://laws.e-gov.go.jp/api/2/law_data/129AC0000000089",
+      "confirmed": true,
+      "confirmed_on": "2026-10-21",
+      "confirmed_how": "e-Gov 法令API v2 で現行版を取得し逐語確認。law_revisions の未施行改正5件（2027-06-23・2027-12-05・2028-06-13・2028-12-23・2029-06-23）すべての版で両条を抽出し、現行と同一を確認",
+      "recheck_by": "2027-06-23",
+      "recheck_how": "law_revisions で UnEnforced を確認し、該当版の第225条・第235条を現行と比較"
+    },
+    {
+      "topic": "産総研 AIST人体寸法データベース1991-92 B2 内眼角高",
+      "backs_shipped_tool": "T015 fence-height（calc.js の EYE）",
+      "basis_year": "1991-92 計測",
+      "source": "https://www.airc.aist.go.jp/dhrt/91-92/data/list.html",
+      "confirmed": true,
+      "confirmed_on": "2026-10-21",
+      "confirmed_how": "項目一覧から B2 の統計表（gif/B2.gif）を取得して画像を読み、平均・95パーセンタイルを転記",
+      "recheck_by": "2027-10-21",
+      "recheck_how": "URL を GET して 200 と B2 の値を確認。新しい版（1997-98 等）を既定値に使うかもこのとき検討する"
     }
   ],
   "weekly_reviews": [

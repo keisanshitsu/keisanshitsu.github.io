@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>人工芝の必要量の計算 — 何ロール要るか・継ぎ目の長さ・固定ピンの本数</title>
+<meta name="description" content="敷く場所の幅と奥行き、ロールの幅と長さから、人工芝が何ロール要るかを割り付けて計算します。芝目をそろえる前提で、継ぎ目の長さと数、細い最後の列を余りから裂いて取る方法、固定ピンの本数を販売店・施工会社4社の打ち方ごとに並べて出します。">
+<link rel="canonical" href="https://keisanshitsu.github.io/tools/artificial-turf-quantity/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="くらしの計算室">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="人工芝の必要量の計算 — 何ロール要るか・継ぎ目の長さ・固定ピンの本数">
+<meta property="og:description" content="幅と奥行きから、人工芝のロール本数・継ぎ目の長さ・固定ピンの本数を割り付けて計算。面積の割り算では足りない寸法も分かります。">
+<meta property="og:url" content="https://keisanshitsu.github.io/tools/artificial-turf-quantity/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "人工芝の必要量の計算",
+  "description": "敷く場所の幅と奥行き、ロールの寸法から、人工芝のロール本数・継ぎ目の長さと数・固定ピンの本数を、芝目をそろえる前提で割り付けて算出します。",
+  "url": "https://keisanshitsu.github.io/tools/artificial-turf-quantity/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (web browser)",
+  "inLanguage": "ja",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "くらしの計算室",
+    "url": "https://keisanshitsu.github.io/"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1b19; --muted:#6b6862;
+    --line:#e5e2dc; --card:#fff; --accent:#0f6cbd; --accent-soft:#eef5fc;
+    --ok:#1f7a45; --ok-soft:#eaf6ef; --ng:#b3261e; --ng-soft:#fdeeed;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#17181a; --fg:#e9e8e5; --muted:#a3a09a;
+           --line:#2e3033; --card:#1f2123; --accent:#6cb6f5; --accent-soft:#1b2733;
+           --ok:#5fd08a; --ok-soft:#16261d; --ng:#ff8a80; --ng-soft:#2a1a19; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  header{border-bottom:1px solid var(--line);padding:16px 0}
+  .site{font-size:.85rem;color:var(--muted);text-decoration:none}
+  h1{font-size:1.35rem;margin:28px 0 6px;line-height:1.5}
+  .sub{color:var(--muted);font-size:.92rem;margin:0 0 28px}
+  h2{font-size:1.05rem;margin:36px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
+  h3{font-size:.95rem;margin:22px 0 6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+  input,select{width:100%;padding:9px 10px;font-size:1rem;color:var(--fg);
+    background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--fg);padding:9px 14px}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:16px}
+  .fold{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+  .fold summary{cursor:pointer;font-size:.86rem;color:var(--muted)}
+  .result{margin-top:20px;border:1px solid var(--accent);background:var(--accent-soft);
+    border-radius:12px;padding:18px}
+  .big{font-size:2rem;font-weight:700;color:var(--accent);line-height:1.2;margin:2px 0 0}
+  .big small{font-size:1rem;font-weight:600;margin-left:2px}
+  .sub2{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+  .split{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:16px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .stat .k{font-size:.76rem;color:var(--muted);margin:0}
+  .stat .v{font-size:1.15rem;font-weight:700;margin:2px 0 0}
+  .checks{list-style:none;padding:0;margin:14px 0 0}
+  .checks li{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin-bottom:8px}
+  .checks .hd{font-size:.9rem;font-weight:600;margin:0}
+  .checks .dt{font-size:.82rem;color:var(--muted);margin:3px 0 0}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;border-radius:5px;
+    padding:1px 7px;margin-right:7px;vertical-align:2px}
+  .tag.ok{background:var(--ok-soft);color:var(--ok)}
+  .tag.ng{background:var(--ng-soft);color:var(--ng)}
+  .tag.info{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+  .tablewrap{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;white-space:nowrap}
+  th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:600}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:14px 16px;border-radius:0 8px 8px 0;font-size:.88rem;margin:24px 0}
+  .law{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;margin:14px 0;font-size:.86rem}
+  .law p{margin:0 0 6px;font-size:.86rem}
+  .law p:last-child{margin-bottom:0}
+  .formula{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:10px 14px;margin:12px 0;font-size:.9rem;overflow-x:auto;white-space:nowrap}
+  p,li{font-size:.94rem}
+  ul{padding-left:1.2em}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src li{font-size:.85rem;overflow-wrap:anywhere}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:20px 0 40px;
+    color:var(--muted);font-size:.85rem}
+  footer a{color:var(--muted);margin-right:14px}
+  a{color:var(--accent)}
+  @media (max-width:400px){
+    .big{font-size:1.7rem}
+  }
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><a class="site" href="../../">← くらしの計算室</a></div></header>
+
+<main class="wrap">
+
+<h1>人工芝の必要量の計算</h1>
+<p class="sub">
+  敷く場所の幅と奥行きを入れると、<strong>人工芝が何ロール要るか</strong>を実際に割り付けて出します。
+  あわせて<strong>継ぎ目の長さと数</strong>、<strong>固定ピンの本数</strong>（販売店・施工会社4社の打ち方ごと）も出します。
+  面積をロール1本の面積で割るだけでは足りない寸法も分かります。
+</p>
+
+<div class="card">
+  <div class="opts" style="margin-top:0">
+    <div>
+      <label for="w">幅 (m)</label>
+      <input id="w" type="number" inputmode="decimal" value="3" min="0.1" max="100" step="0.1">
+    </div>
+    <div>
+      <label for="l">奥行き (m)</label>
+      <input id="l" type="number" inputmode="decimal" value="4.5" min="0.1" max="100" step="0.1">
+    </div>
+    <div>
+      <label for="roll">ロールの寸法（幅×長さ）</label>
+      <select id="roll">
+        <option value="1000x10000" selected>1m × 10m</option>
+        <option value="2000x10000">2m × 10m</option>
+        <option value="1000x5000">1m × 5m</option>
+        <option value="2000x5000">2m × 5m</option>
+        <option value="custom">ほかの寸法を入れる</option>
+      </select>
+    </div>
+  </div>
+
+  <details class="fold">
+    <summary>芝を流す向き・細い列の取り方・ロール寸法・ピンの間隔を変える</summary>
+    <div class="opts">
+      <div>
+        <label for="dir">芝を流す向き</label>
+        <select id="dir">
+          <option value="auto" selected>自動（ロールと継ぎ目が少ないほう）</option>
+          <option value="length">奥行きの方向に流す</option>
+          <option value="width">幅の方向に流す</option>
+        </select>
+      </div>
+      <div>
+        <label for="narrow">細い最後の列の取り方</label>
+        <select id="narrow">
+          <option value="auto" selected>自動（裂くとロールが減るときだけ裂く）</option>
+          <option value="rip">余りを縦に裂いて継ぐ</option>
+          <option value="full">ロール幅のまま切る</option>
+        </select>
+      </div>
+      <div>
+        <label for="rw">ロール幅 (m)</label>
+        <input id="rw" type="number" inputmode="decimal" value="1" min="0.3" max="5" step="0.1">
+      </div>
+      <div>
+        <label for="rl">ロール長 (m)</label>
+        <input id="rl" type="number" inputmode="decimal" value="10" min="1" max="50" step="1">
+      </div>
+      <div>
+        <label for="pe">自分で決める間隔：外周 (cm)</label>
+        <input id="pe" type="number" inputmode="numeric" value="" min="10" max="300" step="1" placeholder="空欄なら出さない">
+      </div>
+      <div>
+        <label for="ps">自分で決める間隔：継ぎ目 (cm)</label>
+        <input id="ps" type="number" inputmode="numeric" value="" min="10" max="300" step="1" placeholder="空欄なら外周と同じ">
+      </div>
+      <div>
+        <label for="pi">自分で決める間隔：中央 (cm)</label>
+        <input id="pi" type="number" inputmode="numeric" value="" min="10" max="300" step="1" placeholder="空欄なら打たない">
+      </div>
+    </div>
+  </details>
+
+  <div class="actions">
+    <button type="button" data-preset="resta">販売店の例（6m × 1.5m）</button>
+    <button type="button" data-preset="niwa">庭（3m × 4.5m）</button>
+    <button type="button" data-preset="veranda">ベランダ（1.2m × 6m）</button>
+    <button type="button" data-preset="wide">広い庭（5m × 8m・2m幅）</button>
+  </div>
+</div>
+
+<div class="result" aria-live="polite">
+  <div>必要な人工芝のロール</div>
+  <p class="big" id="rolls">— <small>本</small></p>
+  <p class="sub2" id="summary">幅と奥行きを入力してください。</p>
+
+  <div class="split">
+    <div class="stat">
+      <p class="k">ロールから使う長さ</p>
+      <p class="v" id="used">—</p>
+    </div>
+    <div class="stat">
+      <p class="k">継ぎ目の長さ（ジョイント）</p>
+      <p class="v" id="seam">—</p>
+    </div>
+    <div class="stat">
+      <p class="k">ロールの残り</p>
+      <p class="v" id="left">—</p>
+    </div>
+    <div class="stat">
+      <p class="k">面積の割り算だと</p>
+      <p class="v" id="naive">—</p>
+    </div>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>芝を流す向き</th><th>列</th><th>ロール</th><th>使う長さ</th><th>継ぎ目</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <h3 style="margin-top:18px">固定ピン（U字ピン）の本数 — 打ち方ごと</h3>
+  <div class="tablewrap" style="margin-top:6px">
+    <table>
+      <thead><tr><th>打ち方（出典）</th><th>本数</th></tr></thead>
+      <tbody id="pinrows"></tbody>
+    </table>
+  </div>
+
+  <ul class="checks" id="checks"></ul>
+  <p class="sub2" id="notes"></p>
+</div>
+
+<div class="note">
+  <strong>この結果は概算です。</strong>
+  長方形の場所に、ロールを同じ向き（芝目をそろえる）で突き付けて敷く前提で計算しています。
+  植木・配管・建物の角などを避ける切り欠きや、端を切りそろえるためのゆとりは入れていません。
+  <strong>ピンの間隔には公的な基準が無く</strong>、下の4社の施工手順でも30cm〜1mとばらつきます。
+  採用する製品の施工説明書があれば、そちらを優先してください。
+  <strong>購入の前に、販売店や施工業者などの専門家にご確認ください。</strong>
+</div>
+
+<h2>この計算の根拠</h2>
+
+<h3>人工芝は重ねずに突き付け、芝目をそろえる</h3>
+<p>
+  防草シートは10cm重ねて敷きますが、人工芝は重ねません。重ねるとその部分が盛り上がるためです。
+  また、複数のロールを並べるときは芝目（芝の毛の向き）をそろえます。
+</p>
+<div class="law">
+  <p>継ぎ目の隙間は3mm程度空けるのがポイント！基布を重ねすぎると人工芝が盛り上がる原因となるので注意しましょう。（RESTA）</p>
+  <p>人工芝ロールを並べて敷く場合は、芝目(パイルの向き)が同じになるように並べましょう。（RESTA）</p>
+  <p>複数枚の人工芝を並べる際、この芝目をすべて同じ方向に揃えて敷かないと、光の反射具合が1枚ごとに異なって見え（アルスグリーン）</p>
+</div>
+<p>
+  芝目をそろえるので、<strong>切れ端を90°回して隙間に使うことができません</strong>。
+  本ツールは、すべての列を同じ向きに流し、ロールの長さ方向から切り出す前提で割り付けます。
+  そのため、<strong>面積をロール1本の面積で割った本数より多く要る</strong>ことがあります。
+  たとえば幅2.6m×奥行き3.6m（9.36㎡）は、1m×10m（10㎡）のロール1本の面積に収まりますが、
+  どちら向きに敷いても列の合計が10mを超えるため、<strong>実際には2本</strong>要ります。
+</p>
+
+<h3>細い最後の列は、余りを縦に裂いて取れる</h3>
+<p>
+  幅がロール幅で割り切れないと、最後の列だけ細くなります。この列の取り方は2通りあります。
+</p>
+<ul>
+  <li><strong>ロール幅のまま切る</strong> — 奥行き分の長さを切り出し、幅を切り落とす。継ぎ目は少ないが、ロールを多く使う</li>
+  <li><strong>余りを縦に裂いて継ぐ</strong> — 短く切った片を芝目の向きのまま縦に裂き、端どうしを継ぐ。ロールは少なくて済むが、横の継ぎ目が増える</li>
+</ul>
+<p>
+  自動では、<strong>裂くとロールの本数が減るときだけ</strong>裂きます。減らないなら、継ぎ目の少ないほうを選びます。
+  幅10cm未満の列は裂きません。
+</p>
+
+<h3>販売店の例と突き合わせた結果</h3>
+<p>
+  販売店RESTAの施工手順には、1m×10m巻の人工芝を6m×1.5mの庭に敷く例が載っています。
+</p>
+<div class="law">
+  <p>1m巾×6mと0.5m巾×3mにカットし長手方向に敷く</p>
+  <p>どちらの場合も面積は9m2で1m巾×10m巻1本分で足りますが</p>
+  <p>ジョイント箇所の長さは、(1)の割り付けが2ヶ所・合計6.5mで、(2)の割り付けが5ヶ所の7.5mとなり</p>
+</div>
+<div class="tablewrap">
+  <table>
+    <thead><tr><th>項目</th><th>販売店の例</th><th>本ツール</th></tr></thead>
+    <tbody>
+      <tr><td>(1) 長手方向：ロール</td><td>1本</td><td>1本（6m＋3m）</td></tr>
+      <tr><td>(1) 長手方向：継ぎ目</td><td>2か所・6.5m</td><td>2か所・6.5m</td></tr>
+      <tr><td>(2) 短手方向：ロール</td><td>1本</td><td>1本（1.5m×6枚）</td></tr>
+      <tr><td>(2) 短手方向：継ぎ目</td><td>5か所・7.5m</td><td>5か所・7.5m</td></tr>
+    </tbody>
+  </table>
+</div>
+<p>
+  (1)の「0.5m巾×3m」が、上の「余りを縦に裂いて継ぐ」取り方です（1m×3mを裂いて0.5m×3mを2本）。
+  販売店は「より継ぎ目の少ない前者の長手方向に割り付けするのが正解」としており、
+  本ツールもロールの本数が同じなら<strong>継ぎ目の短いほう</strong>を選びます。
+</p>
+<div class="formula">継ぎ目の長さ ＝ 列どうしの継ぎ目（奥行き×(列の数−1)） ＋ 各列の中の横の継ぎ目（その列の幅）</div>
+
+<h3>ピンの間隔は資料によって30cm〜1m</h3>
+<p>
+  人工芝の固定ピンの打ち方には、公的な基準もメーカー共通の基準も見つかりませんでした。
+  販売店・施工会社の施工手順は次のとおりで、間隔がそろっていません。
+</p>
+<div class="law">
+  <p>敷き詰めた人工芝の外周に、１ｍ間隔でピンで固定していきます。（DCM）</p>
+  <p>芝が浮き上がらないように50ｃｍ間隔で固定していくといいでしょう（コメリ）</p>
+  <p>敷き詰めた人工芝の端部分(外周)に30cm程度を目安に等間隔でピンを打ち込んでいきます。（RESTA）／ピンを打ちこむ間隔は50cm～1m程度が目安です。（RESTA・継ぎ目）</p>
+  <p>これらの場所には、30cm〜50cm間隔を目安にして細かくU字ピンを打ち込んでください。…中央部分にも1m程度の間隔で均等に打ち込んでおくと、より安心で長持ちする仕上がりになります。（アルスグリーン・外周と継ぎ目）</p>
+</div>
+<p>
+  そこで本ツールは1つに決めず、<strong>4つの打ち方それぞれで本数を数えて並べます</strong>。
+  幅に書かれた間隔（30〜50cm、50cm〜1m）は、本数が少なくならないよう<strong>密なほう</strong>を使っています。
+  DCMは継ぎ目の間隔を書いていないので外周と同じ1mとみなし、コメリの50cmは外周と継ぎ目に当てています。
+  継ぎ目では、コメリが書くとおり「両方の芝にＵ字ピンが刺さるように」打つ位置として数えます。
+</p>
+<div class="formula">ピン ＝ 外周の線 ＋ 継ぎ目の線（交点は1本） ＋（中央にも打つ場合）区画の内側の格子</div>
+<p>
+  どの線も「長さ÷間隔」を切り上げた数で等分するので、実際の間隔は指定以下になります。
+  継ぎ目の端にも1本打つ前提で、<strong>少なく出る側には寄せていません</strong>。
+</p>
+
+<h2>よくある質問</h2>
+
+<h3>人工芝の下に防草シートは要りますか</h3>
+<p>
+  DCMとコメリの施工手順は、人工芝の下に防草シートを敷く手順を載せています
+  （RESTAには防草シートを使わない簡易施工の手順もあります）。
+  防草シートの量とピンは<a href="../weed-sheet-quantity/">防草シートの必要量と固定ピンの本数</a>で計算できます
+  （使い方を「砂利・人工芝の下」にしてください）。
+</p>
+
+<h3>L字や複雑な形の場所はどうしますか</h3>
+<p>
+  長方形に分けて、それぞれ計算して足してください。
+  ただし、分けた区画どうしで余りを融通できる場合があるので、ロールの本数は多めに出ることがあります。
+</p>
+
+<h3>ジョイントテープや接着剤はどれだけ要りますか</h3>
+<p>
+  継ぎ目の長さを目安にしてください。テープの幅や接着剤の塗布量は製品ごとに違うため、本ツールでは本数・量にしていません。
+</p>
+
+<h3>ほかの材料の数量も出せますか</h3>
+<p>
+  外まわりの数量計算をそろえています。
+  <a href="../doma-concrete/">土間コンクリートの材料</a>、
+  <a href="../fence-quantity/">フェンスの枚数・柱の本数</a>、
+  <a href="../fence-height/">目隠しフェンスの高さ</a>、
+  <a href="../block-wall/">ブロック塀の計算</a>、
+  <a href="../slope-length/">スロープの長さ</a>があります。
+</p>
+
+<h2>出典</h2>
+<ul class="src">
+  <li>株式会社RESTA「人工芝のカット方法とジョイント処理」
+    <a href="https://www.diy-shop.jp/artificial-turf/process.html" rel="nofollow noopener" target="_blank">diy-shop.jp</a>
+    — 6m×1.5mの割付例（継ぎ目 2ヶ所・6.5m／5ヶ所・7.5m、どちらも1m×10m巻1本）、継ぎ目のピン50cm～1m</li>
+  <li>株式会社RESTA「防草シート・ボンドを使わない簡易施工」
+    <a href="https://www.diy-shop.jp/artificial-turf/garden_construction.html" rel="nofollow noopener" target="_blank">diy-shop.jp</a>
+    — 外周30cm、継ぎ目の隙間3mm（重ねない）、芝目をそろえる、ロール寸法（巾1m×10mが一般的、巾2m、長さ5m〜30m）</li>
+  <li>DCM株式会社「人工芝の敷き方」
+    <a href="https://www.dcm-hc.co.jp/howto/guide/g_gardening/20200226124357.html" rel="nofollow noopener" target="_blank">dcm-hc.co.jp</a>
+    — 外周1m間隔</li>
+  <li>コメリ「人工芝の敷き方」
+    <a href="https://www.komeri.com/contents/howto/html/04920.html" rel="nofollow noopener" target="_blank">komeri.com</a>
+    — 50cm間隔、継ぎ目は両方の芝に刺さるように、向きをそろえる</li>
+  <li>アルスグリーン株式会社「人工芝の継ぎ目を解決！外構のプロが教える綺麗な敷き方と注意点」
+    <a href="https://www.arsgreen.jp/archives/18206" rel="nofollow noopener" target="_blank">arsgreen.jp</a>
+    — 外周・継ぎ目30〜50cm、中央1m程度、芝目をそろえる理由</li>
+  <li>計算式は上記の手順から機械的に導いたものです。
+    導出は<a href="./calc.js">計算コード</a>のコメントに、
+    販売店の例との照合と境界値の検証は<a href="./calc.test.mjs">テスト</a>に残してあります</li>
+</ul>
+<p class="src">最終確認日: 2026年10月22日</p>
+
+</main>
+
+<footer class="wrap">
+  <a href="../../">トップ</a>
+  <a href="../../privacy.html">プライバシーポリシー</a>
+  <a href="../../contact.html">お問い合わせ</a>
+  <p>&copy; 2026 くらしの計算室</p>
+</footer>
+
+<script type="module">
+import { calculate } from "./calc.js";
+
+const PRESETS = {
+  resta:   { w: 1.5, l: 6, roll: "1000x10000" },
+  niwa:    { w: 3, l: 4.5, roll: "1000x10000" },
+  veranda: { w: 1.2, l: 6, roll: "1000x10000" },
+  wide:    { w: 5, l: 8, roll: "2000x10000" },
+};
+
+const $ = (id) => document.getElementById(id);
+const TAGS = { ok: "OK", ng: "注意", info: "参考" };
+const DIR = { length: "奥行き方向", width: "幅方向" };
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const n = (v, d = 2) => Number(v).toLocaleString("ja-JP", { maximumFractionDigits: d });
+const mm = (id) => Math.round(Number($(id).value) * 1000);
+const cmOrNull = (id) => ($(id).value.trim() === "" ? null : Math.round(Number($(id).value) * 10));
+
+function syncRoll() {
+  const v = $("roll").value;
+  if (v === "custom") return;
+  const [w, l] = v.split("x").map(Number);
+  $("rw").value = w / 1000;
+  $("rl").value = l / 1000;
+}
+
+function render() {
+  const edge = cmOrNull("pe");
+  const custom = edge === null ? null : { edge, seam: cmOrNull("ps") ?? edge, inner: cmOrNull("pi") };
+  const res = calculate({
+    widthMm: mm("w"),
+    lengthMm: mm("l"),
+    rollWMm: mm("rw"),
+    rollLMm: mm("rl"),
+    direction: $("dir").value,
+    narrow: $("narrow").value,
+    custom,
+  });
+
+  if (!res.ok) {
+    $("rolls").innerHTML = '— <small>本</small>';
+    for (const id of ["used", "seam", "left", "naive"]) $(id).textContent = "—";
+    $("rows").innerHTML = "";
+    $("pinrows").innerHTML = "";
+    $("checks").innerHTML = "";
+    $("summary").textContent = res.errors[0];
+    $("notes").textContent = "";
+    return;
+  }
+
+  const c = res.chosen;
+  const i = res.input;
+  $("rolls").innerHTML = `${c.rolls} <small>本</small>`;
+  $("used").textContent = `${n(c.rollLengthUsedMm / 1000)} m`;
+  $("seam").textContent = `${n(c.seamM)} m（${c.seamPlaces}か所）`;
+  $("left").textContent = `${n(c.leftoverMm / 1000)} m`;
+  $("naive").textContent = `${res.naiveRolls} 本`;
+  $("summary").textContent =
+    `地面 ${n(res.areaM2)}㎡ ／ ロール ${n(i.rollWMm / 1000)}m×${n(i.rollLMm / 1000)}m を${DIR[c.direction]}に${c.strips}列` +
+    (c.narrow ? `（最後の列は幅 ${n(c.lastStripWidthMm / 1000)}m${c.ripped ? "・余りを裂いて継ぐ" : ""}）` : "");
+
+  $("rows").innerHTML = [c, res.other].map((x, k) =>
+    `<tr><td>${DIR[x.direction]}${k === 0 ? "（採用）" : ""}</td><td>${x.strips} 列</td><td>${x.rolls} 本</td>` +
+    `<td>${n(x.rollLengthUsedMm / 1000)} m</td><td>${n(x.seamM)} m・${x.seamPlaces}か所</td></tr>`).join("");
+
+  $("pinrows").innerHTML = res.pins.map((p) =>
+    `<tr><td>${esc(p.label)}<br><span class="src">${esc(p.src)}</span></td><td>${p.pins.toLocaleString("ja-JP")} 本</td></tr>`).join("");
+
+  $("checks").innerHTML = res.checks.map((x) =>
+    `<li><p class="hd"><span class="tag ${x.status}">${TAGS[x.status]}</span>${esc(x.title)}</p>` +
+    `<p class="dt">${esc(x.detail)}</p></li>`).join("");
+  $("notes").textContent = res.notes.join(" ");
+}
+
+$("roll").addEventListener("change", () => { syncRoll(); render(); });
+for (const id of ["rw", "rl"]) {
+  $(id).addEventListener("input", () => {
+    const v = `${Math.round(Number($("rw").value) * 1000)}x${Math.round(Number($("rl").value) * 1000)}`;
+    $("roll").value = [...$("roll").options].some((o) => o.value === v) ? v : "custom";
+    render();
+  });
+}
+for (const id of ["w", "l", "dir", "narrow", "pe", "ps", "pi"]) {
+  $(id).addEventListener("input", render);
+  $(id).addEventListener("change", render);
+}
+for (const btn of document.querySelectorAll("[data-preset]")) {
+  btn.addEventListener("click", () => {
+    const p = PRESETS[btn.dataset.preset];
+    $("w").value = p.w;
+    $("l").value = p.l;
+    $("roll").value = p.roll;
+    syncRoll();
+    render();
+  });
+}
+render();
+</script>
+
+</body>
+</html>

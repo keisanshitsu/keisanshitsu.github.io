@@ -190,6 +190,54 @@ export function shouldRetry(status) {
   return status === 202;
 }
 
+// ── ツールのページの照会（--rotate-tool） ──────────────────────────────
+// なぜ（2026-11-01 週次）: ホスト名で引けばトップが出るのは当然で、10/19 以降の found
+// （7回連続）は「ツールのページが索引されたか」について何も言っていなかった。
+// 10/30 の週次で気づいて handoff に置いたが、日次は毎回 #8 が取るので3回持ち越された。
+// 全ツールを毎日引くと DDG の流量制限（202）を自分で招くので、日付で1本ずつ回す。
+
+// 公開済みのツールを id 順に並べ、日付（YYYY-MM-DD）で1本選ぶ。
+// 同じ日は同じツール、連続 n 日で n 本すべてを1回ずつ引く。
+export function pickRotatingTool(tools, ymd) {
+  const list = (tools || [])
+    .filter((x) => x?.published_url && x?.path)
+    .slice()
+    .sort((a, b) => String(a.id).localeCompare(String(b.id)));
+  if (list.length === 0) return null;
+  const day = Math.floor(Date.parse(`${ymd}T00:00:00Z`) / 86400000);
+  if (!Number.isFinite(day)) return null;
+  return list[((day % list.length) + list.length) % list.length];
+}
+
+export function extractTitle(html) {
+  const m = String(html || "").match(/<title>([^<]+)<\/title>/i);
+  if (!m) return null;
+  return m[1].replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").trim() || null;
+}
+
+// 末尾の / と index.html の有無、www. と http/https の違いで別物にしない。
+export function normalizeUrl(u) {
+  try {
+    const x = new URL(u);
+    const path = x.pathname.replace(/\/index\.html$/, "/").replace(/\/?$/, "/");
+    return `${normalizeHost(x.host)}${path}`;
+  } catch {
+    return null;
+  }
+}
+
+// 1本のツールについての判定。
+//   true  … そのツールのURLが結果に出た
+//   false … クエリは成立したが出なかった（⚠ 1ページ目に無いだけかもしれない＝未索引の証明ではない）
+//   null  … クエリが成立しなかった（202・0件）。測れなかった日を false にしない
+// トップだけが出た日は false である。トップの found をツールの found に数えない。
+export function toolPageVerdict(row, toolUrl) {
+  if (!isQueryUsable(row)) return null;
+  const want = normalizeUrl(toolUrl);
+  if (!want) return null;
+  return (row.our_urls || []).some((u) => normalizeUrl(u) === want);
+}
+
 // ── 副作用のある部分 ───────────────────────────────────────────────
 
 async function search(query) {
@@ -230,7 +278,22 @@ async function main() {
   const oursFirst = process.argv.includes("--ours-first");
   const order = oursFirst ? "ours,pos,neg" : "pos,neg,ours";
 
-  const queries = [host, ...(process.argv.slice(2).filter((a) => !a.startsWith("--")))];
+  // --rotate-tool: その日のツールを1本選び、ページの <title> そのままで引く（引用符は付けない。
+  // 付けると未索引の日に結果0件＝「測れなかった」になり、未索引と区別できなくなる）
+  let toolPick = null;
+  if (process.argv.includes("--rotate-tool")) {
+    const tool = pickRotatingTool(pipeline.tools, new Date().toLocaleDateString("sv-SE"));
+    if (tool) {
+      const title = extractTitle(readFileSync(join(ROOT, tool.path, "index.html"), "utf8"));
+      if (title) toolPick = { id: tool.id, url: tool.published_url, query: title };
+    }
+  }
+
+  const queries = [
+    host,
+    ...(toolPick ? [toolPick.query] : []),
+    ...(process.argv.slice(2).filter((a) => !a.startsWith("--"))),
+  ];
   const ours = [];
   const runOurs = async () => {
     for (const q of queries) {
@@ -263,6 +326,15 @@ async function main() {
   const ourUrls = [...new Set(queryRows.flatMap((r) => r.our_urls))];
   const negTested = negControlTested(neg.status);
   const usable = queryRows.filter(isQueryUsable);
+  let toolProbe = null;
+  if (toolPick) {
+    const row = queryRows.find((r) => r.query === toolPick.query);
+    toolProbe = {
+      id: toolPick.id, url: toolPick.url, query: toolPick.query,
+      http: row?.http ?? null, usable: row ? isQueryUsable(row) : false,
+      found_tool_page: row ? toolPageVerdict(row, toolPick.url) : null,
+    };
+  }
 
   const result = {
     ran_at: new Date().toISOString(),
@@ -274,6 +346,7 @@ async function main() {
       negative: { query: NEG_CONTROL_QUERY, expect_absent_host: NEG_CONTROL_HOST, found: negFound, http: neg.status, result_count: neg.urls.length, tested: negTested },
     },
     our_urls: ourUrls,
+    tool_probe: toolProbe,
     queries: queryRows.map((r) => ({ ...r, usable: isQueryUsable(r) })),
     usable_query_count: usable.length,
     verdict: verdict({
@@ -296,6 +369,7 @@ async function main() {
       our_urls: ourUrls,
       retried: queryRows.some((r) => r.retried),
       usable_query_count: usable.length,
+      ...(toolProbe ? { tool_probe: { id: toolProbe.id, http: toolProbe.http, found_tool_page: toolProbe.found_tool_page } } : {}),
     }) + "\n", "utf8");
   }
   result.history = summarizeHistory(

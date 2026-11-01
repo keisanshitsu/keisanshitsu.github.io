@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>カーポートの積雪荷重計算 — 地域の垂直積雪量と製品の耐積雪を同じ単位で比べる</title>
+<meta name="description" content="地域の垂直積雪量と屋根の勾配から、建築基準法施行令第86条の式で1㎡あたりの積雪荷重（N/㎡）を出し、カーポートの耐積雪荷重が足りるかを判定します。製品で耐えられる垂直積雪量の逆算、新雪・締雪・粗目雪で何cmに当たるかも出します。条文はe-Gov法令で確認しています。">
+<link rel="canonical" href="https://keisanshitsu.github.io/tools/carport-snow-load/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="くらしの計算室">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="カーポートの積雪荷重計算 — 地域の垂直積雪量と製品の耐積雪を同じ単位で比べる">
+<meta property="og:description" content="「耐積雪20cm」のカーポートで、この地域の雪に足りるか。建築基準法施行令第86条の式で積雪荷重を出し、製品の耐積雪荷重と比べます。">
+<meta property="og:url" content="https://keisanshitsu.github.io/tools/carport-snow-load/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "カーポートの積雪荷重計算",
+  "description": "建築基準法施行令第86条の積雪荷重（単位荷重×垂直積雪量×屋根形状係数）を1平方メートルあたりで算出し、カーポートの耐積雪荷重と比較します。",
+  "url": "https://keisanshitsu.github.io/tools/carport-snow-load/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (web browser)",
+  "inLanguage": "ja",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "くらしの計算室",
+    "url": "https://keisanshitsu.github.io/"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1b19; --muted:#6b6862;
+    --line:#e5e2dc; --card:#fff; --accent:#0f6cbd; --accent-soft:#eef5fc;
+    --ok:#1f7a45; --ok-soft:#eaf6ef; --ng:#b3261e; --ng-soft:#fdeeed;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#17181a; --fg:#e9e8e5; --muted:#a3a09a;
+           --line:#2e3033; --card:#1f2123; --accent:#6cb6f5; --accent-soft:#1b2733;
+           --ok:#5fd08a; --ok-soft:#16261d; --ng:#ff8a80; --ng-soft:#2a1a19; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  header{border-bottom:1px solid var(--line);padding:16px 0}
+  .site{font-size:.85rem;color:var(--muted);text-decoration:none}
+  h1{font-size:1.35rem;margin:28px 0 6px;line-height:1.5}
+  .sub{color:var(--muted);font-size:.92rem;margin:0 0 28px}
+  h2{font-size:1.05rem;margin:36px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
+  h3{font-size:.95rem;margin:22px 0 6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .grp{font-size:.82rem;font-weight:600;margin:18px 0 0}
+  .grp:first-child{margin-top:0}
+  label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+  input,select{width:100%;padding:9px 10px;font-size:1rem;color:var(--fg);
+    background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  input[type=checkbox]{width:auto;margin:0 6px 0 0;vertical-align:-2px}
+  .chk{font-size:.86rem;color:var(--fg);display:flex;align-items:center;margin-top:24px}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--fg);padding:9px 14px}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:8px}
+  .hint{font-size:.78rem;color:var(--muted);margin:8px 0 0}
+  .result{margin-top:20px;border:1px solid var(--accent);background:var(--accent-soft);
+    border-radius:12px;padding:18px}
+  .big{font-size:2rem;font-weight:700;color:var(--accent);line-height:1.2;margin:2px 0 0}
+  .big small{font-size:1rem;font-weight:600;margin-left:2px}
+  .verdict{display:inline-block;font-weight:700;border-radius:6px;padding:2px 10px;margin-top:8px}
+  .verdict.ok{background:var(--ok-soft);color:var(--ok)}
+  .verdict.ng{background:var(--ng-soft);color:var(--ng)}
+  .verdict.info{background:var(--card);color:var(--muted);border:1px solid var(--line)}
+  .sub2{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+  .checks{list-style:none;padding:0;margin:14px 0 0}
+  .checks li{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin-bottom:8px}
+  .checks .hd{font-size:.9rem;font-weight:600;margin:0}
+  .checks .dt{font-size:.82rem;color:var(--muted);margin:3px 0 0}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;border-radius:5px;
+    padding:1px 7px;margin-right:7px;vertical-align:2px}
+  .tag.info{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+  .tablewrap{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;white-space:nowrap}
+  th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:600}
+  td.ok{color:var(--ok);font-weight:600}
+  td.ng{color:var(--ng);font-weight:600}
+  .cap{font-size:.85rem;font-weight:600;margin:18px 0 0}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:14px 16px;border-radius:0 8px 8px 0;font-size:.88rem;margin:24px 0}
+  .law{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;margin:14px 0;font-size:.86rem}
+  .law p{margin:0 0 6px;font-size:.86rem}
+  .law p:last-child{margin-bottom:0}
+  .formula{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:10px 14px;margin:12px 0;font-size:.9rem;overflow-x:auto;white-space:nowrap}
+  p,li{font-size:.94rem}
+  ul,ol{padding-left:1.2em}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src li{font-size:.85rem;overflow-wrap:anywhere}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:20px 0 40px;
+    color:var(--muted);font-size:.85rem}
+  footer a{color:var(--muted);margin-right:14px}
+  a{color:var(--accent)}
+  [hidden]{display:none !important}
+  @media (max-width:400px){
+    .big{font-size:1.7rem}
+  }
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><a class="site" href="../../">← くらしの計算室</a></div></header>
+
+<main class="wrap">
+
+<h1>カーポートの積雪荷重計算</h1>
+<p class="sub">
+  カーポートの「耐積雪20cm」と、地域の「垂直積雪量30cm」は、<strong>同じcmでも雪の重さの前提が違うことがあるので、そのままでは比べられません</strong>。
+  地域の垂直積雪量と屋根の勾配から、建築基準法施行令 第86条の式で<strong>1㎡あたりの積雪荷重（N/㎡）</strong>を出し、
+  製品の耐積雪荷重が足りるかを判定します。その製品で耐えられる垂直積雪量の逆算と、新雪・締雪・粗目雪で何cmに当たるかも出します。
+</p>
+
+<div class="card">
+  <p class="grp">地域の雪（特定行政庁の規則で決まる値）</p>
+  <div class="opts">
+    <div>
+      <label for="zone">区域</label>
+      <select id="zone">
+        <option value="general" selected>一般の区域（単位荷重 20N）</option>
+        <option value="heavy">多雪区域（規則の単位荷重を入力）</option>
+      </select>
+    </div>
+    <div id="unitBox" hidden>
+      <label for="unit">単位荷重（N/㎡ 積雪1cmあたり）</label>
+      <input id="unit" type="number" inputmode="decimal" value="30" min="20" max="100" step="0.1">
+    </div>
+    <div>
+      <label for="depth">垂直積雪量（cm）</label>
+      <input id="depth" type="number" inputmode="numeric" value="30" min="1" max="1000" step="1">
+    </div>
+  </div>
+  <p class="hint">垂直積雪量と多雪区域の指定は、都道府県や市の規則で決まります。市区町村の建築指導の窓口で確認できます。</p>
+
+  <p class="grp">屋根</p>
+  <div class="opts">
+    <div>
+      <label for="slope">屋根の勾配（度）</label>
+      <input id="slope" type="number" inputmode="decimal" value="0" min="0" max="90" step="0.1">
+    </div>
+    <div>
+      <label class="chk"><input id="guard" type="checkbox">雪止めがある</label>
+    </div>
+    <div id="snowOffBox">
+      <label class="chk"><input id="snowOff" type="checkbox">雪下ろしの慣習がある地方で1mまで減らす</label>
+    </div>
+  </div>
+
+  <p class="grp">カーポートの耐積雪（取扱説明書・カタログの値）</p>
+  <div class="opts">
+    <div>
+      <label for="mode">表示の単位</label>
+      <select id="mode">
+        <option value="n" selected>N/㎡（荷重で書かれている）</option>
+        <option value="cm">cm（LIXILと同じ換算: 20cm＝600N/㎡）</option>
+      </select>
+    </div>
+    <div>
+      <label for="product" id="productLabel">耐積雪荷重（N/㎡）</label>
+      <input id="product" type="number" inputmode="decimal" value="600" min="1" max="100000" step="1">
+    </div>
+  </div>
+  <p class="hint" id="modeHint" hidden>cm表記の換算はメーカーによって違うことがあります。取扱説明書に N/㎡ の値があれば、そちらで比べてください。</p>
+
+  <div class="actions">
+    <button type="button" data-preset="g30">一般 30cm</button>
+    <button type="button" data-preset="g60">一般 60cm</button>
+    <button type="button" data-preset="h100">多雪 100cm（30N）</button>
+    <button type="button" data-preset="h200">多雪 200cm・雪下ろし</button>
+  </div>
+</div>
+
+<div class="result" aria-live="polite">
+  <div>1㎡あたりの積雪荷重（令86条）</div>
+  <p class="big" id="headline">— <small>N/㎡</small></p>
+  <p id="verdictLine"><span class="verdict" id="verdict"></span></p>
+  <p class="sub2" id="summary">数値を入力してください。</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>項目</th><th>値</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <div id="typesBox">
+    <p class="cap" id="typesCap">この製品の耐積雪荷重を、雪の種類ごとの深さに直すと</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>雪の種類</th><th>雪比重</th><th>耐えられる深さの目安</th></tr></thead>
+        <tbody id="types"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <ul class="checks" id="checks"></ul>
+</div>
+
+<div class="note">
+  <strong>この結果は概算です。</strong>
+  計算は建築基準法施行令 第86条の式に基づきますが、垂直積雪量・多雪区域の単位荷重・屋根形状係数は
+  <strong>特定行政庁（都道府県や市の建築指導の担当）が規則で定める値</strong>によって変わります。
+  母屋の屋根からの落雪や吹きだまりで雪が偏って積もる場所では、ここで出す値より重くなります。
+  製品の耐積雪荷重は、メーカーが指定する施工（基礎の大きさなど）どおりに設置された場合の値です。
+  <strong>製品の選定や設置は、施工業者・メーカー・建築士などの専門家、または特定行政庁の窓口にご確認ください。</strong>
+</div>
+
+<h2>この計算の根拠</h2>
+
+<h3>積雪荷重 ＝ 単位荷重 × 垂直積雪量 × 屋根形状係数</h3>
+<div class="law">
+  <p>積雪荷重は、積雪の単位荷重に屋根の水平投影面積及びその地方における垂直積雪量を乗じて計算しなければならない。（建築基準法施行令 第86条第1項）</p>
+  <p>前項に規定する積雪の単位荷重は、積雪量一センチメートルごとに一平方メートルにつき二十ニュートン以上としなければならない。ただし、特定行政庁は、規則で、国土交通大臣が定める基準に基づいて多雪区域を指定し、その区域につきこれと異なる定めをすることができる。（同 第2項）</p>
+</div>
+<div class="formula">1㎡あたりの積雪荷重（N/㎡）＝ 単位荷重（N/㎡・cm）× 垂直積雪量（cm）× 屋根形状係数 μb</div>
+<p>
+  製品の耐積雪荷重も1㎡あたりで書かれているので、屋根の面積は掛けずに1㎡あたりで比べます。
+  一般の区域の単位荷重 20N は、雪比重に直すと約0.2（1cm・1㎡で約2.04kg）です。
+  多雪区域では規則で別の値が定められます。たとえば長野県は、垂直積雪量が1m以上となる区域の単位荷重を「30N/(m2・cm)以上」としています。
+</p>
+<p>
+  結果は N/㎡ の整数に<strong>切り上げ</strong>てから製品の値と比べます。製品が「足りる」と誤って示さない向きにそろえるためです。
+</p>
+
+<h3>屋根の勾配による低減（屋根形状係数）</h3>
+<div class="law">
+  <p>屋根の積雪荷重は、屋根に雪止めがある場合を除き、その勾配が六十度以下の場合においては、その勾配に応じて第一項の積雪荷重に次の式によつて計算した屋根形状係数…を乗じた数値とし、その勾配が六十度を超える場合においては、零とすることができる。μｂ＝√ｃｏｓ（１．５β）（同 第4項）</p>
+</div>
+<p>
+  βは屋根の勾配（度）です。0度なら μb＝1 で低減なし、10度で約0.98、30度で約0.84、40度で約0.71、60度で0です。
+  カーポートの屋根はほぼ水平なので、低減はわずかです。<strong>雪止めがある場合は勾配によらず1</strong>です。
+  特定行政庁が規則で別の値を定めている場合は、その値が優先します。
+</p>
+
+<h3>雪下ろしによる軽減</h3>
+<div class="law">
+  <p>雪下ろしを行う慣習のある地方においては、その地方における垂直積雪量が一メートルを超える場合においても、積雪荷重は、雪下ろしの実況に応じて垂直積雪量を一メートルまで減らして計算することができる。（同 第6項）</p>
+</div>
+<p>
+  減らせるのは<strong>垂直積雪量が1mを超える場合だけ</strong>で、1m以下では変わりません。
+  減らして計算した建築物は、出入口などの見やすい場所に軽減の実況などを表示しなければなりません（同 第7項）。
+</p>
+
+<h3>製品の「耐積雪○cm」の読み替え</h3>
+<p>
+  LIXIL のカーポートの取扱説明書（TOS00380）は、「積雪荷重600N／m2（61.2Kg／m2）に耐えられる設計」と書き、
+  安心して使える積雪量の目安を<strong>新雪（雪比重0.3）20cm・締雪（0.5）12cm・粗目雪（0.7）8cm</strong>と示しています。
+  つまり「20cm」は新雪を前提にした深さで、1cmあたり 600÷20＝30N/㎡ で換算されています。
+  法の一般の区域の20N（雪比重約0.2）とは前提が違うため、cm どうしで比べると食い違います。
+</p>
+<p>
+  「cm」で入力した場合はこの換算（1cm＝30N/㎡）で N/㎡ に直します。<strong>他のメーカーが同じ換算とは限りません。</strong>
+  取扱説明書やカタログに N/㎡（または kg/㎡）の値があれば、そちらを入力してください（kg/㎡ は 9.80665 を掛けると N/㎡ になります）。
+</p>
+<p>
+  雪の種類ごとの深さは、雪比重 × 1cm × 1㎡ の重さ（雪比重0.3なら3kg＝約29.4N）で耐積雪荷重を割り、切り捨てています。
+  600N/㎡ で計算すると新雪20cm・締雪12cm・粗目雪8cm となり、取扱説明書の表と一致します。
+</p>
+
+<h3>扱っていないもの</h3>
+<ul>
+  <li>垂直積雪量の算定（標高や地域の係数を使う式。係数は都道府県の規則ごとに違うので、値をそのまま入力してください）</li>
+  <li>勾配の緩い大きな屋根に対する割増（平成19年国土交通省告示第594号 第2第三号ホ）</li>
+  <li>雪が偏って積もる場合の考慮（同 第5項。母屋の屋根からの落雪・吹きだまりなど）</li>
+  <li>風圧力（同 第87条）</li>
+</ul>
+
+<h2>よくある質問</h2>
+
+<h3>耐積雪20cmのカーポートで足りますか</h3>
+<p>
+  LIXIL の表示と同じ換算なら、20cm＝600N/㎡ です。一般の区域で屋根がほぼ水平（μb＝1）なら、積雪荷重は 20N × 垂直積雪量 なので、
+  <strong>垂直積雪量30cmまでなら600N/㎡に収まり、31cmからは足りません</strong>。
+  お住まいの地域の垂直積雪量を確認して入力してください。
+</p>
+
+<h3>「新雪で20cm」なら、重い雪では何cmまでですか</h3>
+<p>
+  同じ600N/㎡でも、締雪なら12cm、粗目雪なら8cmが目安です（LIXIL の取扱説明書の表）。
+  春先の雪や雨を含んだ雪は重くなるので、表示の深さより早めに雪下ろしをするよう取扱説明書でも注意しています。
+</p>
+
+<h3>多雪区域かどうかはどこで分かりますか</h3>
+<p>
+  多雪区域の指定と単位荷重、垂直積雪量は、特定行政庁（都道府県や一部の市）が規則で定めています。
+  市区町村の建築指導の窓口や、都道府県のホームページの「構造計算の基準値」などのページで確認できます。
+</p>
+
+<h3>ほかの外まわりの計算もできますか</h3>
+<p>
+  カーポートを付けたときの<a href="../carport-coverage/">建ぺい率の計算</a>、
+  <a href="../parking-space/">駐車スペースの寸法計算</a>、
+  <a href="../doma-concrete/">土間コンクリートの材料計算</a>、
+  <a href="../roof-area/">屋根面積の計算</a>があります。
+</p>
+
+<h2>出典</h2>
+<ul class="src">
+  <li>建築基準法施行令（昭和25年政令第338号）第86条
+    <a href="https://laws.e-gov.go.jp/law/325CO0000000338" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>長野県「構造計算における各基準値について」（多雪区域の単位荷重 30N/(m2・cm) 以上の例。更新日 2026年10月1日）
+    <a href="https://www.pref.nagano.lg.jp/kenchiku/infra/kensetsu/kakunin/kijunchi.html" rel="nofollow noopener" target="_blank">長野県</a></li>
+  <li>LIXIL カーポート 取扱説明書 TOS00380（積雪荷重600N／m2・雪の種類ごとの積雪量の目安）
+    <a href="https://assets.lixil.com/content/dam/lixil-assets/manual/oldext/189912/TOS00380.pdf" rel="nofollow noopener" target="_blank">LIXIL（PDF）</a></li>
+  <li>条文は e-Gov 法令API で取得した現行版（2026年11月1日施行版）を逐語で確認しています。
+    導出は<a href="./calc.js">計算コード</a>のコメントに、境界値の検証は<a href="./calc.test.mjs">テスト</a>に残してあります</li>
+</ul>
+<p class="src">最終確認日: 2026年11月1日</p>
+
+</main>
+
+<footer class="wrap">
+  <a href="../../">トップ</a>
+  <a href="../../privacy.html">プライバシーポリシー</a>
+  <a href="../../contact.html">お問い合わせ</a>
+  <p>&copy; 2026 くらしの計算室</p>
+</footer>
+
+<script type="module">
+import { calculate, SNOW_OFF_CAP_CM } from "./calc.js";
+
+const PRESETS = {
+  g30: { zone: "general", depth: 30, snowOff: false },
+  g60: { zone: "general", depth: 60, snowOff: false },
+  h100: { zone: "heavy", unit: 30, depth: 100, snowOff: false },
+  h200: { zone: "heavy", unit: 30, depth: 200, snowOff: true },
+};
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const n = (v, d = 0) => Number(v).toLocaleString("ja-JP", { maximumFractionDigits: d });
+const num = (id) => ($(id).value === "" ? NaN : Number($(id).value));
+
+function render() {
+  const zone = $("zone").value;
+  const mode = $("mode").value;
+  $("unitBox").hidden = zone !== "heavy";
+  $("modeHint").hidden = mode !== "cm";
+  $("productLabel").textContent = mode === "cm" ? "耐積雪（cm）" : "耐積雪荷重（N/㎡）";
+
+  const productValue = $("product").value === "" ? null : Number($("product").value);
+  const res = calculate({
+    zone,
+    unitN: num("unit"),
+    depthCm: num("depth"),
+    slopeDeg: num("slope"),
+    snowGuard: $("guard").checked,
+    snowOff: $("snowOff").checked,
+    productMode: mode,
+    productValue,
+  });
+
+  if (!res.ok) {
+    $("headline").innerHTML = '— <small>N/㎡</small>';
+    $("verdict").className = "verdict";
+    $("verdict").textContent = "";
+    $("summary").textContent = res.errors[0];
+    $("rows").innerHTML = "";
+    $("types").innerHTML = "";
+    $("checks").innerHTML = "";
+    return;
+  }
+
+  const i = res.input;
+  const p = res.product;
+  $("headline").innerHTML = `${n(res.loadN)} <small>N/㎡</small>`;
+  if (p) {
+    $("verdict").className = `verdict ${p.fits ? "ok" : "ng"}`;
+    $("verdict").textContent = p.fits ? "製品の耐積雪荷重は足りる" : "製品の耐積雪荷重が足りない";
+  } else {
+    $("verdict").className = "verdict info";
+    $("verdict").textContent = "製品の値を入れると判定します";
+  }
+  $("summary").textContent =
+    `約 ${n(res.loadKgf, 1)}kg/㎡ ／ ${zone === "heavy" ? "多雪区域" : "一般の区域"}・単位荷重 ${n(res.unitN, 1)}N・垂直積雪量 ${n(res.usedDepthCm)}cm` +
+    (res.reduced ? `（${n(i.depthCm)}cm を雪下ろしで1mに軽減）` : "") +
+    `・μb ${n(res.mu, 3)}`;
+
+  const tr = (k, v, cls = "") => `<tr><td>${k}</td><td${cls ? ` class="${cls}"` : ""}>${v}</td></tr>`;
+  const rows = [
+    tr("単位荷重", esc(`${n(res.unitN, 1)} N/㎡（積雪1cmあたり）`)),
+    tr("計算に使う垂直積雪量", esc(`${n(res.usedDepthCm)} cm` + (res.reduced ? `（入力 ${n(i.depthCm)}cm）` : ""))),
+    tr("屋根形状係数 μb", esc(i.snowGuard ? "1（雪止めあり）" : `${n(res.mu, 3)}（勾配 ${n(i.slopeDeg, 1)}度）`)),
+    tr("<strong>積雪荷重（1㎡あたり）</strong>", `<strong>${esc(`${n(res.loadN)} N/㎡（約 ${n(res.loadKgf, 1)}kg/㎡）`)}</strong>`),
+    tr("LIXILと同じ換算のcmに直すと", esc(`${n(res.lixilCm)} cm 以上の表示が目安`)),
+  ];
+  if (p) {
+    rows.push(tr("製品の耐積雪荷重", esc(`${n(p.productN)} N/㎡` + (i.productMode === "cm" ? `（${n(i.productValue, 1)}cm × 30）` : ""))));
+    rows.push(p.fits
+      ? tr("余裕", esc(`${n(p.marginN)} N/㎡`), "ok")
+      : tr("不足", esc(`${n(-p.marginN)} N/㎡`), "ng"));
+    const md = p.maxDepthCm;
+    rows.push(tr("この製品で耐えられる垂直積雪量",
+      esc(md === null ? "上限なし（μb＝0）" : p.anyDepthWithSnowOff ? `${n(md)} cm まで（雪下ろしの軽減で1mに減らすので、垂直積雪量によらず足りる）` : `${n(md)} cm まで（この区域・勾配で）`)));
+  }
+  $("rows").innerHTML = rows.join("");
+
+  $("typesBox").hidden = !p;
+  $("types").innerHTML = p
+    ? p.bySnowType.map((s) => `<tr><td>${esc(s.name)}</td><td>${s.gravity}</td><td>${n(s.cm)} cm</td></tr>`).join("")
+    : "";
+
+  const checks = [];
+  if (i.snowOff && !res.reduced) {
+    checks.push({ title: "雪下ろしの軽減は使われていません", detail: `垂直積雪量が ${SNOW_OFF_CAP_CM}cm を超える場合だけ減らせます（令86条6項）。` });
+  }
+  if (res.reduced) {
+    checks.push({ title: "雪下ろしで軽減した場合は表示が必要です", detail: "軽減の実況などを、出入口などの見やすい場所に表示しなければなりません（令86条7項）。雪下ろしを前提にした計算なので、雪下ろしができないと荷重を超えます。" });
+  }
+  if (res.slopeOver60) {
+    checks.push({ title: "60度を超える屋根は0とすることができます", detail: "令86条4項。雪止めがある場合は低減しません。" });
+  }
+  if (i.productMode === "cm") {
+    checks.push({ title: "cm表記はLIXILの換算（20cm＝600N/㎡）で読み替えています", detail: "他のメーカーが同じ換算とは限りません。取扱説明書・カタログの N/㎡ の値で確かめてください（kg/㎡ なら 9.80665 を掛ける）。" });
+  }
+  checks.push({ title: "雪が偏って積もる場所では重くなります", detail: "母屋の屋根からの落雪や吹きだまりは計算に入っていません（令86条5項）。" });
+  $("checks").innerHTML = checks.map((x) =>
+    `<li><p class="hd"><span class="tag info">参考</span>${esc(x.title)}</p><p class="dt">${esc(x.detail)}</p></li>`).join("");
+}
+
+for (const id of ["zone", "unit", "depth", "slope", "guard", "snowOff", "mode", "product"]) {
+  $(id).addEventListener("input", render);
+  $(id).addEventListener("change", render);
+}
+for (const btn of document.querySelectorAll("[data-preset]")) {
+  btn.addEventListener("click", () => {
+    const pr = PRESETS[btn.dataset.preset];
+    $("zone").value = pr.zone;
+    if (pr.unit !== undefined) $("unit").value = pr.unit;
+    $("depth").value = pr.depth;
+    $("snowOff").checked = pr.snowOff;
+    render();
+  });
+}
+render();
+</script>
+
+</body>
+</html>

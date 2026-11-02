@@ -1,7 +1,7 @@
 {
   "meta": {
     "created": "2026-08-05",
-    "last_run": "2026-11-01",
+    "last_run": "2026-11-02",
     "handoff_for_2026-10-05": "probe_index.mjs の問い合わせ順を『当サイト→陽性対照→陰性対照』に入れ替えて1回だけ実行する。当サイトのクエリは常に3本目で、10/04 は対照 200・当サイトだけ 202（引き直しも 202）。順序（連続リクエストの流量制限）とクエリ内容のどちらが原因かを切り分けるため。isQueryUsable は緩めない。詳細は decisions.md 2026-10-04（追補）",
     "gap_days_2026-09-30": 2,
     "gap_note_2026-09-30": "前回完走 2026-09-28 → 本日 2026-09-30（水）。9/29 はセッション上限で exit 1（ループ本体は動かず、notify_human だけ走った）。起動時チェックで【異常を検出】: git status が clean でなく、submit_indexnow.mjs / .test.mjs（parseArgs 追加・テスト14件追加）と metrics_latest.json が未コミットで残っていた。HEAD と origin/main は一致（9a4bbd7）＝一致だけでは push 済みの証明にならない例がまた出た。修正は 45/45 PASS を確認して本日コミットした。notify_receipt の any_opened は直近4回とも false。",
@@ -146,7 +146,8 @@
       "resolution": "(1) 本日 11/01 は日曜。週次は別タスク KurashiKeisan-Weekly（10:23 起動予定）に任せ、日次では行わない。問い『外を探す順を先に案件→テーマに変えるべきか』は research/niches.md の 2026-11-01 の節に材料を足した（単価が見えるのはログイン不要の住宅系だけという偏りの可能性）。(2) ゴルフ（WHS）を最初に調べた→単価つき案件を確認できず見送り（niches.md）。(3) probe_index.mjs のツール固有タイトル照会は未着手のまま（本日の1手は #8）。(4) law_revisions/325CO0000000338 の先頭が 325CO0000000338_20261101_508CO0000000284・CurrentEnforced に切り替わったことを確認。その上に UnEnforced の版は無い。(5) 建築基準法 第52条の再確認期限 11/26（T012）は未到来・持ち越し"
     },
     "handoff_for_next_run_2026-11-01_DONE": "(1) 週次は 11/01 10:23 に別タスクで起動する予定。動かなかった場合は weekly_reviews 末尾（10/30）から8日目＝11/07 以降の最初の起動で取り返す。週次で問うこと: 11/01 の外側探索は第1候補が『単価つき案件を確認できない』で落ちた。ASP の単価は未ログインでは見えず、確かめやすいのは9月に集めた住宅系だけ——項目4 の確かめやすさがクラスタを内側に引き戻している可能性。ASP アカウント（人間作業）が無いことの影響を評価すること。(2) T018 の cm 表記の読み替えは LIXIL の古い取扱説明書（TOS00380）1冊が根拠。新しい LIXIL の説明書（UZ15103C）と YKK AP・三協アルミの公式資料を確認できたら、本文の『他のメーカーが同じ換算とは限りません』を具体化する（PDF は Shift_JIS 以外の符号化だと pypdf で文字を取り出せない——UZ15103C・UM07408C はそれで失敗した）。(3) probe_index.mjs のツール固有タイトル照会の改修は未着手（10/30 の handoff (2) から持ち越し）。(4) 建築基準法 第52条の再確認期限 11/26（T012） ——【11/01 週次で消化】(1) 週次は 11/01 10:23 に定例で起動した。単価の確かめやすさの仮説は記録でほとんど支持されなかった（外の7候補のうち6件は項目2だけで落ちていた） (3) probe の改修は週次で実装（--rotate-tool）。(2)(4) は handoff_for_next_run_2026-11-01_weekly に引き継いだ",
-    "handoff_for_next_run_2026-11-01_weekly": "(1) probe は `node scripts/probe_index.mjs --ours-first --rotate-tool` で回す（11/01 週次で追加）。11/02 は T004 石膏ボード、以後 id 順に1日1本・17日で一巡。出力の tool_probe.found_tool_page は true＝そのツールのURLが出た／false＝クエリは成立したが出なかった（1ページ目に無いだけかもしれない＝未索引の証明ではない）／null＝202・0件で測れなかった。トップだけが出た日は false で、ホスト単位の found とは別に読む。note_discovery にツールの結果も書くこと。 (2)（2回目）T018 の cm 表記の読み替えは LIXIL の古い取扱説明書 TOS00380 の1冊が根拠。新しい LIXIL（UZ15103C）・YKK AP・三協アルミの公式資料で換算を確かめられたら『他のメーカーが同じ換算とは限りません』を具体化する（Shift_JIS 以外の CMap の PDF は pypdf で読めない）。CLAUDE.md の持ち越し3回ルールにより、もう一度載ったら次の起動の1手はこれの決着になる。 (3) 建築基準法 第52条（T012）の再確認期限 11/26。これは期限であって持ち越しではない。 (4) #8 で外を探すときは、CLAUDE.md『外の探し方』のとおり生活の話題からではなく、他の分野で仕事の実務・施工・法定の基準を計算に落とす土俵から当たる。単価は『どこで・いつ見たか』を書けば古くても内外どちらにも使える。 (5) 次の週次は 11/08（日）。動かなければ weekly_reviews 末尾（11/01）から8日目＝11/09 以降の最初の起動で取り返す。"
+    "handoff_for_next_run_2026-11-01_weekly_DONE": "(1) probe は `node scripts/probe_index.mjs --ours-first --rotate-tool` で回す（11/01 週次で追加）。11/02 は T004 石膏ボード、以後 id 順に1日1本・17日で一巡。出力の tool_probe.found_tool_page は true＝そのツールのURLが出た／false＝クエリは成立したが出なかった（1ページ目に無いだけかもしれない＝未索引の証明ではない）／null＝202・0件で測れなかった。トップだけが出た日は false で、ホスト単位の found とは別に読む。note_discovery にツールの結果も書くこと。 (2)（2回目）T018 の cm 表記の読み替えは LIXIL の古い取扱説明書 TOS00380 の1冊が根拠。新しい LIXIL（UZ15103C）・YKK AP・三協アルミの公式資料で換算を確かめられたら『他のメーカーが同じ換算とは限りません』を具体化する（Shift_JIS 以外の CMap の PDF は pypdf で読めない）。CLAUDE.md の持ち越し3回ルールにより、もう一度載ったら次の起動の1手はこれの決着になる。 (3) 建築基準法 第52条（T012）の再確認期限 11/26。これは期限であって持ち越しではない。 (4) #8 で外を探すときは、CLAUDE.md『外の探し方』のとおり生活の話題からではなく、他の分野で仕事の実務・施工・法定の基準を計算に落とす土俵から当たる。単価は『どこで・いつ見たか』を書けば古くても内外どちらにも使える。 (5) 次の週次は 11/08（日）。動かなければ weekly_reviews 末尾（11/01）から8日目＝11/09 以降の最初の起動で取り返す。 ——【11/02 日次で消化】(1) --rotate-tool で実行（T004 が1位で出た） (3) 期限のまま (4) 外を実務・法定基準の向きで探した（2件とも不成立） (5) 変更なし。(2) は実施せず、11/02 の handoff に3回目として載せた",
+    "handoff_for_next_run_2026-11-02": "(1)（3回目・持ち越し3回ルール発火）T018 の cm 表記の読み替え（LIXIL TOS00380 の1冊が根拠）を、YKK AP・三協アルミ・新しい LIXIL の公式資料で確かめて具体化する作業。【次の起動の1手はこれの決着】——やるか、やらないと決めて理由を書き handoff から消すか。4回目は載せない。 (2) probe は `node scripts/probe_index.mjs --ours-first --rotate-tool`（11/03 は T005 屋根面積）。11/02 は T004 のページが1位で出た（初観測）が、同じ回の陽性対照が失敗＝detector_broken。tool_probe は陽性対照と独立に読むか、対照が通った日だけ数えるかを、次の週次で決める。 (3) 建築基準法 第52条（T012）の再確認期限 11/26（期限であって持ち越しではない）。 (4) 外を探すときの再訪候補: 事務所のトイレの必要数（項目2は通りうる・単価をどこにも見られず不成立）。 (5) 次の週次は 11/08（日）。動かなければ 11/09 以降の最初の起動で取り返す。"
   },
   "north_star": {
     "metric": "monthly_clicks",
@@ -1682,6 +1683,49 @@
       "published_url": "https://keisanshitsu.github.io/tools/carport-snow-load/",
       "published_verified_live": "push（a846b91）後に本番 GET 200・title 一致・calc.js 200・トップにリンクあり・sitemap（loc 18）に収録。IndexNow --url で HTTP 200（受理・鍵検証済み。索引の証明ではない）",
       "recheck": "facts_to_recheck に施行令 第86条と、LIXIL TOS00380・長野県の基準値ページを公開と同日に登録"
+    },
+    {
+      "id": "T019",
+      "slug": "ventilation-volume",
+      "title": "24時間換気の必要換気量計算（建築基準法施行令 第20条の8 の Vr＝nAh を部屋ごとに出して合計し、換気設備の有効換気量と比べる）",
+      "path": "docs/tools/ventilation-volume/",
+      "score": 26,
+      "score_scale": "35点満点（7項目）。内訳は項目1=4 / 項目2=3 / 項目3=5 / 項目4=3 / 項目5=5 / 項目6=4 / 項目7=2",
+      "score_and_condition": "18本目なので AND条件が適用される。3 と 3 で成立（ぎりぎり・6本連続）。項目2: 上位は公的機関・大学の PDF・自治体の計算書様式・掲示板・三菱電機の解説で計算ツール0本（2クエリ）。メーカーの解説が混じるので 4 にしない。項目4: リショップナビ A8.net 6,100円・felmat 7,476円（2026-09-17 に Affisearch で確認・本日未再確認。CLAUDE.md の『見た場所と日付』の規則で使用）",
+      "score_order": "クラスタ外2候補の落選理由と #019 の採点（research/niches.md）を先にコミット（7403f01）してから実装した",
+      "built_on": "2026-11-02",
+      "gate_passed": "node scripts/verify.mjs exit 0（HTML21枚・ツール18本・1019アサーション・375px 21枚＋操作後416状態・WARN 0）。T019 単体は47ケース（n 0.5/0.3・2.1m の定数／手計算との一致・切り上げ表示／3部屋の厳密な和 3.1815 と表示の和 3.3 が分かれる例で 3.2 が足りる判定／必要量ちょうどは足りる・0.1少ないと不足／換気回数の切り捨て／浮動小数（2.3m・4.35㎡・33.3㎡×2.4m）／入力検証）。欠陥4種（表示を四捨五入・等号を外す・n を取り違え・浮動小数の切り捨て）を注入しすべて FAIL で検出",
+      "visual_check_375px": "実施（verify.mjs の実レンダリング）。初期表示と操作後の状態すべて横溢れなし。加えて headless Chrome の DOM で初期表示（2階建て5室）の合計 74.6㎥/h・容積 149.18㎥ が手計算と一致することを確認",
+      "basis": [
+        {
+          "fact": "必要有効換気量 Vr＝nAh（住宅等の居室 n=0.5・その他の居室 0.3）。一の機械換気設備が二以上の居室に係る場合は合計以上",
+          "source": "https://laws.e-gov.go.jp/api/2/law_data/325CO0000000338（建築基準法施行令 第20条の8 第1項第1号イ（１）（２））",
+          "verbatim": "「有効換気量（立方メートル毎時で表した量とする。（２）において同じ。）が、次の式によつて計算した必要有効換気量以上であること。Ｖｒ＝ｎＡｈ」ｎ「前条第一項第二号の表備考一の号に規定する住宅等の居室（次項において単に「住宅等の居室」という。）にあつては〇・五、その他の居室にあつては〇・三」「（２）一の機械換気設備が二以上の居室に係る場合にあつては、当該換気設備の有効換気量が、当該二以上の居室のそれぞれの必要有効換気量の合計以上であること。」",
+          "checked_on": "2026-11-02"
+        },
+        {
+          "fact": "住宅等の居室の定義と、居室に常時開放の開口部で通じる廊下等を含むこと",
+          "source": "https://laws.e-gov.go.jp/api/2/law_data/325CO0000000338（第20条の7 第1項第1号・第2号の表 備考一）",
+          "verbatim": "「住宅等の居室とは、住宅の居室並びに下宿の宿泊室、寄宿舎の寝室及び家具その他これに類する物品の販売業を営む店舗の売場（常時開放された開口部を通じてこれらと相互に通気が確保される廊下その他の建築物の部分を含む。）をいうものとする。」「居室（常時開放された開口部を通じてこれと相互に通気が確保される廊下その他の建築物の部分を含む。以下この節において同じ。）」",
+          "checked_on": "2026-11-02"
+        },
+        {
+          "fact": "居室の天井高 2.1m 以上・異なる部分があれば平均",
+          "source": "https://laws.e-gov.go.jp/api/2/law_data/325CO0000000338（第21条）",
+          "verbatim": "「居室の天井の高さは、二・一メートル以上でなければならない。」「前項の天井の高さは、室の床面から測り、一室で天井の高さの異なる部分がある場合においては、その平均の高さによるものとする。」",
+          "checked_on": "2026-11-02"
+        }
+      ],
+      "basis_caveat": "条文の版は 325CO0000000338_20261101_508CO0000000284（CurrentEnforced）。有効換気量（圧力損失を考えた値）は入力で、計算しない",
+      "error_direction": "整数（0.01㎡・1cm・n×10）で厳密に比較。表示は 0.1㎥/h に切り上げ、換気回数は切り捨て（どちらも足りていると見せない側）",
+      "deliberately_omitted": "ホルムアルデヒド発散建築材料の面積制限（1台で複数室のとき部屋ごとの換気回数が条文から決まらない）・浄化供給方式（ロ）・中央管理方式（ハ）・大臣の構造方法／認定・ダクトの圧力損失の計算",
+      "cluster": "住まいの建築（内側）の内装・設備側。外構ではない。クラスタ外2候補（事務所トイレの必要数・改善基準告示）を先に探して落とした",
+      "seasonality": "無し（通年）",
+      "monetization": "リショップナビ（A8.net 6,100円・felmat 7,476円、2026-09-17 Affisearch で確認・本日未再確認）。未提携（ASP登録は人間作業）",
+      "published_on": "2026-11-02",
+      "published_url": "https://keisanshitsu.github.io/tools/ventilation-volume/",
+      "published_verified_live": "push（ac45b48）後に本番 GET 200・title 一致・calc.js 200・トップにリンクあり・sitemap（loc 19）に収録。IndexNow --url で HTTP 200（受理・鍵検証済み。索引の証明ではない）",
+      "recheck": "facts_to_recheck に施行令 第20条の7・第20条の8・第21条を公開と同日に登録"
     }
   ],
   "backlog": [
@@ -2113,6 +2157,17 @@
       "impressions": null,
       "note": "未計測（measured=false）。ゼロではない。88日目。",
       "note_discovery": "Google への発見経路は本日も0本（sitemap 未送信88日目）。probe_index.mjs --ours-first で【7回連続の found】（10/19〜10/22・10/30・10/31・11/01。runs 21 / found 7 / not_found 10 / detector_broken 4）。出たURLは本日も https://keisanshitsu.github.io/ のみ。陰性対照は 202＝未検査。T018 は IndexNow --url で 200（受理・鍵検証済み。索引の証明ではない）"
+    },
+    {
+      "date": "2026-11-02",
+      "source": "scripts/fetch_metrics.py",
+      "status": "no_credentials",
+      "measured": false,
+      "sessions": null,
+      "clicks": null,
+      "impressions": null,
+      "note": "未計測（measured=false）。ゼロではない。89日目。",
+      "note_discovery": "Google への発見経路は本日も0本（sitemap 未送信89日目）。probe_index.mjs --ours-first --rotate-tool の初回: ホスト単位の verdict は detector_broken（陽性対照が出なかった。runs 22 / found 7 / not_found 10 / detector_broken 5）。一方 tool_probe（T004 石膏ボードの固有タイトル）は HTTP 200・結果10件で、1位に https://keisanshitsu.github.io/tools/gypsum-board-quantity/ が出た＝found_tool_page=true。【非Google でツールのページが検索結果に出たのを初めて観測】。ただし同じ回の陽性対照が失敗しているので経路の健全性は未確認で、DuckDuckGo（Bing 由来）であって Google ではない。T019 は IndexNow --url で 200（受理。索引の証明ではない）"
     }
   ],
   "facts_to_recheck": [
@@ -2459,6 +2514,17 @@
       "confirmed_how": "LIXIL は PDF を取得し、内容ストリームの文字列を Shift_JIS（83pv-RKSJ-H）で復号して逐語確認。長野県はページ本文を取得して確認",
       "recheck_by": "2027-09-30",
       "recheck_how": "冬の前（9月）に、(a) LIXIL の PDF が 200 を返し文言が同じか (b) 長野県のページの単位荷重の表記が同じか を確認する。PDF が消えていたら、本文の LIXIL の記述を現行製品の公式資料に差し替えるか削除する"
+    },
+    {
+      "topic": "建築基準法施行令 第20条の7（住宅等の居室の定義）・第20条の8（必要有効換気量 Vr＝nAh・n 0.5/0.3・複数居室の合計）・第21条（天井高2.1m・平均）",
+      "backs_shipped_tool": "T019 ventilation-volume（calc.js の N10・CEILING_MIN_CM と本文の条文引用）",
+      "basis_year": "2026-11-01 施行版（令和8年政令第284号による改正後）325CO0000000338_20261101_508CO0000000284",
+      "source": "https://laws.e-gov.go.jp/api/2/law_data/325CO0000000338",
+      "confirmed": true,
+      "confirmed_on": "2026-11-02",
+      "confirmed_how": "e-Gov 法令API v2 で3条を取得し逐語確認（CurrentEnforced・未施行版なし）",
+      "recheck_by": "2027-04-01",
+      "recheck_how": "law_revisions で UnEnforced の改正が無いかを見て、あれば3条を本文比較。n（0.5/0.3）・2.1m・合計の規定が変わっていたら calc.js とテストを直す"
     }
   ],
   "weekly_reviews": [

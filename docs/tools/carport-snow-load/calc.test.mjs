@@ -7,7 +7,8 @@
 //   (3) 雪下ろしの軽減は「1mを超える場合」だけ。ちょうど1mは変わらない
 //   (4) 積雪荷重は N/m² の整数に切り上げ。判定は「ちょうど」で足りる、1N 少ないと足りない（浮動小数で判定しない）
 //   (5) 逆算した垂直積雪量は、その値で足り、1cm 多いと足りないこと（μb が無理数でも）
-//   (6) 雪の種類ごとの深さが LIXIL の表（600N/m² → 新雪20・締雪12・粗目雪8）と一致すること
+//   (6) 雪の種類ごとの深さが LIXIL の表（TOS00380 の600N/m²、UD125N の 600〜3000N/m² の4段・12個）と一致し、
+//       物理的な重さで割った深さを超えないこと
 //   (7) 入力の検証（単位荷重は20未満にできない・範囲外・製品の値が空）
 
 import {
@@ -15,14 +16,14 @@ import {
   SLOPE_ZERO_DEG,
   SNOW_OFF_CAP_CM,
   N_PER_KGF,
-  LIXIL_REF,
-  LIXIL_N_PER_CM,
+  MAKER_REF,
+  MAKER_N_PER_CM,
   shapeFactor,
   designDepthCm,
   snowLoadN,
   maxDepthCm,
-  lixilCmToN,
-  nToLixilCm,
+  makerCmToN,
+  nToMakerCm,
   depthBySnowType,
   calculate,
 } from "./calc.js";
@@ -49,7 +50,7 @@ export default function cases() {
   t.push(eq("令86条4項 60度", SLOPE_ZERO_DEG, 60));
   t.push(eq("令86条6項 1m", SNOW_OFF_CAP_CM, 100));
   t.push(eq("1kgf＝9.80665N", N_PER_KGF, 9.80665));
-  t.push(eq("LIXIL TOS00380 600N/m²＝新雪20cm → 1cm あたり30N", [LIXIL_REF.loadN, LIXIL_REF.depthCm, LIXIL_N_PER_CM], [600, 20, 30]));
+  t.push(eq("600N/m²＝新雪20cm → 1cm あたり30N（LIXIL TOS00380・YKK AP RA-16・三協アルミ）", [MAKER_REF.loadN, MAKER_REF.depthCm, MAKER_N_PER_CM], [600, 20, 30]));
   t.push(eq("LIXIL の併記 61.2kg/m²（600N を小数1桁に丸め）", Math.round((600 / N_PER_KGF) * 10) / 10, 61.2));
 
   // ── (2) 屋根形状係数 ───────────────────────────────
@@ -82,8 +83,9 @@ export default function cases() {
   t.push(eq("一般区域では単位荷重の入力を無視して20N", calc({ zone: "general", unitN: 35 }).loadN, 600));
   t.push(eq("多雪区域では入力の単位荷重を使う（30N × 30cm）", calc({ zone: "heavy", unitN: 30 }).loadN, 900));
   t.push(near("kgf 換算 600N → 61.18…", calc({}).loadKgf, 600 / 9.80665, 1e-12));
-  t.push(eq("積雪荷重を LIXIL 換算の cm に（600 → 20・601 → 21・425 → 15）", [nToLixilCm(600), nToLixilCm(601), nToLixilCm(425)], [20, 21, 15]));
-  t.push(eq("cm 表記 → N/m²（20cm → 600・50cm → 1500）", [lixilCmToN(20), lixilCmToN(50)], [600, 1500]));
+  t.push(eq("積雪荷重をメーカー表示の cm に（600 → 20・601 → 21・425 → 15）", [nToMakerCm(600), nToMakerCm(601), nToMakerCm(425)], [20, 21, 15]));
+  t.push(eq("cm 表記 → N/m²（三協 20cm → 600・50cm → 1500／UD125N 30cm → 900・100cm → 3000）",
+    [makerCmToN(20), makerCmToN(50), makerCmToN(30), makerCmToN(100)], [600, 1500, 900, 3000]));
   t.push(eq("cm モード 20cm 表記の製品は一般 30cm でちょうど足りる", calc({ productMode: "cm", productValue: 20 }).product.fits, true));
   t.push(eq("cm モード 20cm 表記の製品は一般 31cm で足りない", calc({ productMode: "cm", productValue: 20, depthCm: 31 }).product.fits, false));
   {
@@ -121,6 +123,19 @@ export default function cases() {
   // ── (6) 雪の種類ごとの深さ（LIXIL の表） ───────────
   t.push(eq("600N/m² → 新雪20・締雪12・粗目雪8（TOS00380 の表と一致）", depthBySnowType(600).map((x) => x.cm), [20, 12, 8]));
   t.push(eq("雪の種類の並びと比重", depthBySnowType(600).map((x) => [x.name, x.gravity]), [["新雪", 0.3], ["締雪", 0.5], ["粗目雪", 0.7]]));
+  // LIXIL 取扱説明書 UD125N（2026年4月版）の表は4段・12個。600N だけでは物理的な重さ（雪比重×98.0665N）で割っても一致してしまい、
+  // 900N の粗目雪と 3000N の3つで表より1cm 多く出る（危ない側）ことを見逃した（2026-11-05 に検出）
+  for (const [p, cms] of [[600, [20, 12, 8]], [900, [30, 18, 12]], [1500, [50, 30, 21]], [3000, [100, 60, 42]]]) {
+    t.push(eq(`${p}N/m² → 新雪${cms[0]}・締雪${cms[1]}・粗目雪${cms[2]}（UD125N の表と一致）`, depthBySnowType(p).map((x) => x.cm), cms));
+  }
+  t.push(eq("UD125N の併記 kg/m²（600・900・1500・3000N → 61.2・91.8・153.0・305.9）",
+    [600, 900, 1500, 3000].map((p) => Math.round((p / N_PER_KGF) * 10) / 10), [61.2, 91.8, 153, 305.9]));
+  t.push(eq("切り捨ての境界 700N → 23・14・10（ちょうど）／699N → 23・13・9", [depthBySnowType(700), depthBySnowType(699)].map((r) => r.map((x) => x.cm)), [[23, 14, 10], [23, 13, 9]]));
+  {
+    let never = true;
+    for (let p = 1; p <= 10000; p++) for (const s of depthBySnowType(p)) if (s.cm > p / (s.gravity * 10 * N_PER_KGF)) never = false;
+    t.push(eq("どの耐積雪荷重（1〜10000N）でも、物理的な重さで割った深さを超えない", never, true));
+  }
 
   // ── (7) 入力の検証 ─────────────────────────────────
   t.push(eq("多雪区域で単位荷重19は不可（20以上）", calc({ zone: "heavy", unitN: 19 }).ok, false));

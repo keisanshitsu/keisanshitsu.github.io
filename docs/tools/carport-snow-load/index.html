@@ -173,7 +173,7 @@
       <label for="mode">表示の単位</label>
       <select id="mode">
         <option value="n" selected>N/㎡（荷重で書かれている）</option>
-        <option value="cm">cm（LIXILと同じ換算: 20cm＝600N/㎡）</option>
+        <option value="cm">cm（20cm＝600N/㎡ で換算）</option>
       </select>
     </div>
     <div>
@@ -181,7 +181,7 @@
       <input id="product" type="number" inputmode="decimal" value="600" min="1" max="100000" step="1">
     </div>
   </div>
-  <p class="hint" id="modeHint" hidden>cm表記の換算はメーカーによって違うことがあります。取扱説明書に N/㎡ の値があれば、そちらで比べてください。</p>
+  <p class="hint" id="modeHint" hidden>1cm＝30N/㎡ で換算します（LIXIL・YKK AP・三協アルミの公式資料で確認）。ほかのメーカーの製品は、取扱説明書に N/㎡ の値があればそちらで比べてください。</p>
 
   <div class="actions">
     <button type="button" data-preset="g30">一般 30cm</button>
@@ -270,12 +270,22 @@
   法の一般の区域の20N（雪比重約0.2）とは前提が違うため、cm どうしで比べると食い違います。
 </p>
 <p>
-  「cm」で入力した場合はこの換算（1cm＝30N/㎡）で N/㎡ に直します。<strong>他のメーカーが同じ換算とは限りません。</strong>
+  この換算は3社で同じです。YKK AP の技術資料は「製品仕様は積雪量1㎝あたり30N/㎡の積雪量を標記しています（積雪20㎝:20×30=600N/㎡)」、
+  三協アルミのニュースリリースは「耐積雪量 20cm仕様：600N/㎡、耐積雪量 50cm仕様：1500N/㎡」と書いています。
+  LIXIL の新しい取扱説明書（UD125N）の表も、600・900・1500・3000N/㎡ を新雪 20・30・50・100cm としています。
+</p>
+<p>
+  「cm」で入力した場合はこの換算（1cm＝30N/㎡）で N/㎡ に直します。<strong>3社以外のメーカーや古い製品は確かめていません。</strong>
   取扱説明書やカタログに N/㎡（または kg/㎡）の値があれば、そちらを入力してください（kg/㎡ は 9.80665 を掛けると N/㎡ になります）。
 </p>
 <p>
-  雪の種類ごとの深さは、雪比重 × 1cm × 1㎡ の重さ（雪比重0.3なら3kg＝約29.4N）で耐積雪荷重を割り、切り捨てています。
-  600N/㎡ で計算すると新雪20cm・締雪12cm・粗目雪8cm となり、取扱説明書の表と一致します。
+  雪の種類ごとの深さは、取扱説明書の表と同じ換算で出しています。新雪の 1cm＝30N/㎡ を雪比重の比で割り増し、
+  締雪（0.5）は 1cm＝50N/㎡、粗目雪（0.7）は 1cm＝70N/㎡ として耐積雪荷重を割り、切り捨てています。
+  UD125N の表の12個（600N/㎡ なら新雪20・締雪12・粗目雪8cm、3000N/㎡ なら100・60・42cm など）はすべてこの計算と一致します。
+</p>
+<p>
+  雪の重さそのもの（雪比重0.3なら1cmで3kg＝約29.4N）で割ると、3000N/㎡ の新雪は101cm になり、表より1cm 多くなります。
+  耐えられる深さを多く見せる側なので、表の換算に合わせています。
 </p>
 
 <h3>扱っていないもの</h3>
@@ -290,7 +300,7 @@
 
 <h3>耐積雪20cmのカーポートで足りますか</h3>
 <p>
-  LIXIL の表示と同じ換算なら、20cm＝600N/㎡ です。一般の区域で屋根がほぼ水平（μb＝1）なら、積雪荷重は 20N × 垂直積雪量 なので、
+  LIXIL・YKK AP・三協アルミの表示なら、20cm＝600N/㎡ です。一般の区域で屋根がほぼ水平（μb＝1）なら、積雪荷重は 20N × 垂直積雪量 なので、
   <strong>垂直積雪量30cmまでなら600N/㎡に収まり、31cmからは足りません</strong>。
   お住まいの地域の垂直積雪量を確認して入力してください。
 </p>
@@ -298,6 +308,7 @@
 <h3>「新雪で20cm」なら、重い雪では何cmまでですか</h3>
 <p>
   同じ600N/㎡でも、締雪なら12cm、粗目雪なら8cmが目安です（LIXIL の取扱説明書の表）。
+  耐積雪50cm（1500N/㎡）なら締雪30cm・粗目雪21cm、100cm（3000N/㎡）なら締雪60cm・粗目雪42cm です。
   春先の雪や雨を含んだ雪は重くなるので、表示の深さより早めに雪下ろしをするよう取扱説明書でも注意しています。
 </p>
 
@@ -323,10 +334,17 @@
     <a href="https://www.pref.nagano.lg.jp/kenchiku/infra/kensetsu/kakunin/kijunchi.html" rel="nofollow noopener" target="_blank">長野県</a></li>
   <li>LIXIL カーポート 取扱説明書 TOS00380（積雪荷重600N／m2・雪の種類ごとの積雪量の目安）
     <a href="https://assets.lixil.com/content/dam/lixil-assets/manual/oldext/189912/TOS00380.pdf" rel="nofollow noopener" target="_blank">LIXIL（PDF）</a></li>
+  <li>LIXIL カーポート・駐輪場・テラス独立 取扱説明書 UD125N（2026年4月版。耐積雪荷重 600〜3000N/㎡ の4段と雪の種類ごとの積雪量の目安）
+    <a href="https://assets.lixil.com/content/dam/lixil-assets/manual/202604/UD125N.pdf" rel="nofollow noopener" target="_blank">LIXIL（PDF）</a></li>
+  <li>YKK AP 告示第410号 適合確認書 レイナポートREグランミニ（2021年7月発行。積雪量1cmあたり30N/㎡）
+    <a href="https://www.ykkap.co.jp/business/bizdata/carport/asset/pdf/kakunin/KAKUNIN_RA-16.pdf" rel="nofollow noopener" target="_blank">YKK AP（PDF）</a>
+    （2026年11月5日はメーカーのサイトがメンテナンス中のため、ウェブアーカイブの写しで確認）</li>
+  <li>三協アルミ ニュースリリース「FⅡ リンクロス」（2024年12月12日。耐積雪量20cm仕様 600N/㎡・50cm仕様 1500N/㎡）
+    <a href="https://alumi.st-grp.co.jp/news/2024news/ex20241212.html" rel="nofollow noopener" target="_blank">三協アルミ</a></li>
   <li>条文は e-Gov 法令API で取得した現行版（2026年11月1日施行版）を逐語で確認しています。
     導出は<a href="./calc.js">計算コード</a>のコメントに、境界値の検証は<a href="./calc.test.mjs">テスト</a>に残してあります</li>
 </ul>
-<p class="src">最終確認日: 2026年11月1日</p>
+<p class="src">最終確認日: 2026年11月5日（メーカーの換算と雪の種類ごとの目安）／2026年11月1日（条文）</p>
 
 </main>
 
@@ -403,7 +421,7 @@ function render() {
     tr("計算に使う垂直積雪量", esc(`${n(res.usedDepthCm)} cm` + (res.reduced ? `（入力 ${n(i.depthCm)}cm）` : ""))),
     tr("屋根形状係数 μb", esc(i.snowGuard ? "1（雪止めあり）" : `${n(res.mu, 3)}（勾配 ${n(i.slopeDeg, 1)}度）`)),
     tr("<strong>積雪荷重（1㎡あたり）</strong>", `<strong>${esc(`${n(res.loadN)} N/㎡（約 ${n(res.loadKgf, 1)}kg/㎡）`)}</strong>`),
-    tr("LIXILと同じ換算のcmに直すと", esc(`${n(res.lixilCm)} cm 以上の表示が目安`)),
+    tr("メーカーの表示（1cm＝30N/㎡）に直すと", esc(`耐積雪 ${n(res.makerCm)} cm 以上の表示が目安`)),
   ];
   if (p) {
     rows.push(tr("製品の耐積雪荷重", esc(`${n(p.productN)} N/㎡` + (i.productMode === "cm" ? `（${n(i.productValue, 1)}cm × 30）` : ""))));
@@ -432,7 +450,7 @@ function render() {
     checks.push({ title: "60度を超える屋根は0とすることができます", detail: "令86条4項。雪止めがある場合は低減しません。" });
   }
   if (i.productMode === "cm") {
-    checks.push({ title: "cm表記はLIXILの換算（20cm＝600N/㎡）で読み替えています", detail: "他のメーカーが同じ換算とは限りません。取扱説明書・カタログの N/㎡ の値で確かめてください（kg/㎡ なら 9.80665 を掛ける）。" });
+    checks.push({ title: "cm表記は 20cm＝600N/㎡ の換算で読み替えています", detail: "LIXIL・YKK AP・三協アルミの公式資料で確認した換算です。ほかのメーカーの製品は、取扱説明書・カタログの N/㎡ の値で確かめてください（kg/㎡ なら 9.80665 を掛ける）。" });
   }
   checks.push({ title: "雪が偏って積もる場所では重くなります", detail: "母屋の屋根からの落雪や吹きだまりは計算に入っていません（令86条5項）。" });
   $("checks").innerHTML = checks.map((x) =>

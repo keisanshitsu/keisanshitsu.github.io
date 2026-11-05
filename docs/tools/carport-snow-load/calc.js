@@ -19,6 +19,11 @@
 //   製品の耐積雪の表示例: LIXIL 取扱説明書 TOS00380（assets.lixil.com）
 //     「本製品は、積雪荷重600N／m2（61.2Kg／m2）に耐えられる設計になっています。」
 //     「安心してお使いいただける積雪量の目安」新雪（雪比重0.3）20cm・締雪（0.5）12cm・粗目雪（0.7）8cm
+//   cm 表記の換算（2026-11-05 に3社の公式資料で確認）:
+//     LIXIL 取扱説明書 UD125N（2026年4月版）の表 耐積雪荷重 600・900・1500・3000N/m² → 新雪 20・30・50・100cm、
+//       締雪 12・18・30・60cm、粗目雪 8・12・21・42cm（雪比重 0.3・0.5・0.7）
+//     YKK AP 技術資料 KAKUNIN_RA-16（2021年7月発行）「※製品仕様は積雪量1㎝あたり30N/㎡の積雪量を標記しています（積雪20㎝:20×30=600N/㎡)」
+//     三協アルミ ニュースリリース（2024-12-12）「耐積雪量 20cm仕様：600N/㎡、耐積雪量 50cm仕様：1500N/㎡」
 //
 // 計算（荷重は 1㎡あたりの N。屋根の面積を掛ける前の値で比べる。製品の耐積雪荷重も 1㎡あたりで表示されるため）:
 //   使う垂直積雪量 d' ＝ 雪下ろしの軽減を使い、かつ d > 100cm なら 100cm、それ以外は d
@@ -26,11 +31,13 @@
 //   積雪荷重 S ＝ 単位荷重 w × d' × μb  → N/m² の整数に【切り上げ】（製品が「足りる」と誤って言わない側）
 //   判定 ＝ 製品の耐積雪荷重 P ≧ S
 //
-// 製品の「○cm相当」表記の読み替え: LIXIL の表示（600N/m² ＝ 新雪20cm）と同じ換算なら 1cm ＝ 600 ÷ 20 ＝ 30N/m²。
-// 他社が同じ換算とは限らない（公式資料を確認できていない）ので、画面では N/m² の値で比べることを主にする。
+// 製品の「○cm相当」表記の読み替え: 1cm ＝ 30N/m²（新雪・雪比重0.3）。LIXIL・YKK AP・三協アルミの公式資料で同じ。
+// 3社以外のメーカーや古い製品は確かめていないので、画面では N/m² の値で比べることを主にする。
 //
-// 雪の種類ごとの深さ: 雪比重 g の雪 1cm の重さは g × 1cm × 1㎡ ＝ g × 10 kg ＝ g × 98.0665 N。
-//   P ÷ (g × 98.0665) を切り捨て。P＝600 で 新雪20・締雪12・粗目雪8 となり、LIXIL の表と一致する（テストで確認）。
+// 雪の種類ごとの深さ: 新雪の 1cm＝30N/m² を雪比重の比で割り増し、雪比重 g の雪 1cm を g × 100 N/m² として
+//   P ÷ (g × 100) を切り捨て。UD125N の表の12個すべてと一致する（テストで確認）。
+//   物理的な重さ（g × 10kg × 9.80665 ＝ g × 98.0665N）で割ると、900N の粗目雪と 3000N の3つで表より1cm 多く出る
+//   （製品が耐えられる深さを多く言う側）。表の換算はどの P でも物理的な重さで割った値を超えない。
 //
 // 扱わないもの: 垂直積雪量の算定式（係数が都道府県の細則ごとに違う）、特定緩勾配屋根の割増（平19国告第594号 第2第三号ホ）、
 // 屋根の不均等な積雪（第5項。母屋からの落雪・吹きだまり）、風圧力（第87条）。
@@ -39,10 +46,10 @@ export const UNIT_GENERAL_N = 20; // 令86条2項「一平方メートルにつ�
 export const SLOPE_ZERO_DEG = 60; // 令86条4項「その勾配が六十度を超える場合においては、零とすることができる」（式も60度で0）
 export const SNOW_OFF_CAP_CM = 100; // 令86条6項「垂直積雪量を一メートルまで減らして計算することができる」
 export const N_PER_KGF = 9.80665; // 標準重力加速度（1kgf ＝ 9.80665N）
-export const LIXIL_REF = { loadN: 600, depthCm: 20 }; // TOS00380「積雪荷重600N／m2」＝ 新雪（比重0.3）20cm
-export const LIXIL_N_PER_CM = LIXIL_REF.loadN / LIXIL_REF.depthCm; // 30
+export const MAKER_REF = { loadN: 600, depthCm: 20 }; // 3社とも 20cm ＝ 600N/m²（新雪・比重0.3）
+export const MAKER_N_PER_CM = MAKER_REF.loadN / MAKER_REF.depthCm; // 30
 export const SNOW_TYPES = [
-  // TOS00380 の表と同じ並び・比重
+  // TOS00380・UD125N の表と同じ並び・比重
   { key: "new", name: "新雪", gravity: 0.3 },
   { key: "compact", name: "締雪", gravity: 0.5 },
   { key: "granular", name: "粗目雪", gravity: 0.7 },
@@ -85,15 +92,15 @@ export function maxDepthCm(productN, unitN, mu) {
   return d;
 }
 
-// 製品の cm 表記 → N/m²（LIXIL の表示と同じ換算の場合）
-export const lixilCmToN = (cm) => cm * LIXIL_N_PER_CM;
+// 製品の cm 表記 → N/m²（1cm ＝ 30N/m²）
+export const makerCmToN = (cm) => cm * MAKER_N_PER_CM;
 
-// 積雪荷重 S を、LIXIL の表示と同じ換算の cm に直す（切り上げ: その cm 以上の表示の製品なら足りる）
-export const nToLixilCm = (n) => Math.ceil(n / LIXIL_N_PER_CM - EPS);
+// 積雪荷重 S を、メーカー表示の cm に直す（切り上げ: その cm 以上の表示の製品なら足りる）
+export const nToMakerCm = (n) => Math.ceil(n / MAKER_N_PER_CM - EPS);
 
 // 耐積雪荷重を雪の種類ごとの深さ（cm・切り捨て）に直す
 export function depthBySnowType(productN) {
-  return SNOW_TYPES.map((s) => ({ ...s, cm: Math.floor(productN / (s.gravity * 10 * N_PER_KGF) + EPS) }));
+  return SNOW_TYPES.map((s) => ({ ...s, cm: Math.floor(productN / (s.gravity * 100) + EPS) }));
 }
 
 const inRange = (v, [lo, hi]) => Number.isFinite(v) && v >= lo && v <= hi;
@@ -121,7 +128,7 @@ export function calculate(input) {
 
   let product = null;
   if (hasProduct) {
-    const productN = productMode === "cm" ? lixilCmToN(productValue) : productValue;
+    const productN = productMode === "cm" ? makerCmToN(productValue) : productValue;
     const maxD = maxDepthCm(productN, unitN, mu);
     product = {
       productN,
@@ -144,7 +151,7 @@ export function calculate(input) {
     slopeOver60: !snowGuard && slopeDeg > SLOPE_ZERO_DEG,
     loadN,
     loadKgf,
-    lixilCm: nToLixilCm(loadN),
+    makerCm: nToMakerCm(loadN),
     product,
   };
 }

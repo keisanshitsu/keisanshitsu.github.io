@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>保育士の配置基準 計算 — 年齢別の子どもの数から必要な保育士数を国の算式で</title>
+<meta name="description" content="0〜5歳児の人数を入れると、保育所の最低基準（児童福祉施設の設備及び運営に関する基準 第33条）の比率と、こども家庭庁が示す端数処理（年齢別に小数点第1位まで切り捨て→合計を四捨五入）で必要な保育士数を出します。2024年改正の3歳15:1・4歳以上25:1と経過措置の旧基準を並べて表示します。">
+<link rel="canonical" href="https://keisanshitsu.github.io/tools/childcare-staff-ratio/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="くらしの計算室">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="保育士の配置基準 計算 — 年齢別の子どもの数から必要な保育士数を国の算式で">
+<meta property="og:description" content="0〜5歳児の人数から、保育所の最低基準の比率と国の端数処理で必要な保育士数を計算。3歳15:1・4歳以上25:1の新基準と経過措置の旧基準を並べて表示します。">
+<meta property="og:url" content="https://keisanshitsu.github.io/tools/childcare-staff-ratio/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "保育士の配置基準の計算",
+  "description": "年齢別の子どもの数から、児童福祉施設の設備及び運営に関する基準 第33条第2項の比率と、こども家庭庁の公定価格FAQが示す端数処理で、保育所に必要な保育士の数を計算します。",
+  "url": "https://keisanshitsu.github.io/tools/childcare-staff-ratio/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (web browser)",
+  "inLanguage": "ja",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "くらしの計算室",
+    "url": "https://keisanshitsu.github.io/"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1b19; --muted:#6b6862;
+    --line:#e5e2dc; --card:#fff; --accent:#0f6cbd; --accent-soft:#eef5fc;
+    --ok:#1f7a45; --ok-soft:#eaf6ef; --ng:#b3261e; --ng-soft:#fdeeed;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#17181a; --fg:#e9e8e5; --muted:#a3a09a;
+           --line:#2e3033; --card:#1f2123; --accent:#6cb6f5; --accent-soft:#1b2733;
+           --ok:#5fd08a; --ok-soft:#16261d; --ng:#ff8a80; --ng-soft:#2a1a19; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  header{border-bottom:1px solid var(--line);padding:16px 0}
+  .site{font-size:.85rem;color:var(--muted);text-decoration:none}
+  h1{font-size:1.35rem;margin:28px 0 6px;line-height:1.5}
+  .sub{color:var(--muted);font-size:.92rem;margin:0 0 28px}
+  h2{font-size:1.05rem;margin:36px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
+  h3{font-size:.95rem;margin:22px 0 6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+  input,select{width:100%;padding:9px 10px;font-size:1rem;color:var(--fg);
+    background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--fg);padding:9px 14px}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .ages{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media (max-width:420px){ .ages{grid-template-columns:repeat(2,1fr)} }
+  .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:16px}
+  .result{margin-top:20px;border:1px solid var(--accent);background:var(--accent-soft);
+    border-radius:12px;padding:18px}
+  .big{font-size:2rem;font-weight:700;color:var(--accent);line-height:1.2;margin:2px 0 0}
+  .big small{font-size:1rem;font-weight:600;margin-left:2px}
+  .sub2{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+  .checks{list-style:none;padding:0;margin:14px 0 0}
+  .checks li{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin-bottom:8px}
+  .checks .hd{font-size:.9rem;font-weight:600;margin:0}
+  .checks .dt{font-size:.82rem;color:var(--muted);margin:3px 0 0}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;border-radius:5px;
+    padding:1px 7px;margin-right:7px;vertical-align:2px}
+  .tag.ok{background:var(--ok-soft);color:var(--ok)}
+  .tag.ng{background:var(--ng-soft);color:var(--ng)}
+  .tag.info{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+  .tablewrap{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;white-space:nowrap}
+  th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:600}
+  .cap{font-size:.85rem;font-weight:600;margin:18px 0 0}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:14px 16px;border-radius:0 8px 8px 0;font-size:.88rem;margin:24px 0}
+  .law{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;margin:14px 0;font-size:.86rem}
+  .law p{margin:0 0 6px;font-size:.86rem}
+  .law p:last-child{margin-bottom:0}
+  .formula{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:10px 14px;margin:12px 0;font-size:.9rem;overflow-x:auto;white-space:nowrap}
+  p,li{font-size:.94rem}
+  ul{padding-left:1.2em}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src li{font-size:.85rem;overflow-wrap:anywhere}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:20px 0 40px;
+    color:var(--muted);font-size:.85rem}
+  footer a{color:var(--muted);margin-right:14px}
+  a{color:var(--accent)}
+  @media (max-width:400px){
+    .big{font-size:1.7rem}
+  }
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><a class="site" href="../../">← くらしの計算室</a></div></header>
+
+<main class="wrap">
+
+<h1>保育士の配置基準の計算（必要な保育士の数）</h1>
+<p class="sub">
+  0〜5歳児の人数を入れると、保育所の最低基準（<strong>児童福祉施設の設備及び運営に関する基準 第33条第2項</strong>）の比率で、必要な保育士の数を出します。
+  端数は<strong>こども家庭庁が示す国の算式</strong>（年齢別に小数点第1位まで切り捨て→合計を四捨五入）で処理します。
+  2024年4月からの基準（3歳児15:1・4歳以上児25:1）と、経過措置で使える旧基準（20:1・30:1）を並べて表示します。
+</p>
+
+<div class="card">
+  <div class="ages">
+    <div><label for="age0">0歳児（人）</label><input id="age0" type="number" inputmode="numeric" min="0" max="1000" step="1" value=""></div>
+    <div><label for="age1">1歳児（人）</label><input id="age1" type="number" inputmode="numeric" min="0" max="1000" step="1" value=""></div>
+    <div><label for="age2">2歳児（人）</label><input id="age2" type="number" inputmode="numeric" min="0" max="1000" step="1" value=""></div>
+    <div><label for="age3">3歳児（人）</label><input id="age3" type="number" inputmode="numeric" min="0" max="1000" step="1" value=""></div>
+    <div><label for="age4">4歳児（人）</label><input id="age4" type="number" inputmode="numeric" min="0" max="1000" step="1" value=""></div>
+    <div><label for="age5">5歳児（人）</label><input id="age5" type="number" inputmode="numeric" min="0" max="1000" step="1" value=""></div>
+  </div>
+  <div class="opts">
+    <div>
+      <label for="age3Rule">3歳児の基準</label>
+      <select id="age3Rule">
+        <option value="new" selected>15人に1人（2024年4月から）</option>
+        <option value="old">20人に1人（経過措置・2028年3月31日まで）</option>
+      </select>
+    </div>
+    <div>
+      <label for="age4Rule">4歳以上児の基準</label>
+      <select id="age4Rule">
+        <option value="new" selected>25人に1人（2024年4月から）</option>
+        <option value="old">30人に1人（経過措置・当分の間）</option>
+      </select>
+    </div>
+    <div>
+      <label for="staff">配置している保育士の数（人・任意）</label>
+      <input id="staff" type="number" inputmode="decimal" min="0" max="1000" step="0.1" value="" placeholder="例: 11">
+    </div>
+  </div>
+  <div class="actions">
+    <button type="button" data-preset="p60">定員60人の例</button>
+    <button type="button" data-preset="p90">定員90人の例</button>
+    <button type="button" data-preset="p30">0〜2歳中心の30人の例</button>
+    <button type="button" data-preset="clear">すべて消す</button>
+  </div>
+</div>
+
+<div class="result" aria-live="polite">
+  <div>必要な保育士の数（最低基準）</div>
+  <p class="big" id="headline">— <small>人</small></p>
+  <p class="sub2" id="summary">年齢ごとの子どもの数を入力してください。</p>
+
+  <p class="cap">年齢区分ごとの計算（国の算式）</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>区分</th><th>子どもの数</th><th>比率</th><th>人数÷比率</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <p class="cap">基準ごとの比較</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>使う基準</th><th>合計</th><th>必要な保育士</th></tr></thead>
+      <tbody id="compare"></tbody>
+    </table>
+  </div>
+
+  <ul class="checks" id="checks"></ul>
+</div>
+
+<div class="note">
+  <strong>この結果は概算です。</strong>
+  国が定める保育所（認可保育所）の最低基準の比率に、こども家庭庁の公定価格FAQが示す端数処理を当てはめた人数です。
+  <strong>自治体によっては、条例や要綱で国より手厚い基準や独自の計算方法を定めています。</strong>
+  公定価格の加算（1歳児5:1の1歳児配置改善加算など）の要件も、この最低基準とは別です。
+  小規模保育・家庭的保育・認定こども園は別の基準で、このツールは扱いません。
+  短時間勤務の保育士の数え方（常勤換算）や、保育士とみなせる職員の扱いも自治体の運用によります。
+  <strong>実際の配置が基準を満たすかは、所在地の市区町村・都道府県の保育担当課や、指導監査の担当などの専門家にご確認ください。</strong>
+</div>
+
+<h2>この計算の根拠</h2>
+
+<h3>年齢別の比率（第33条第2項）</h3>
+<div class="law">
+  <p>保育士の数は、乳児おおむね三人につき一人以上、満一歳以上満三歳に満たない幼児おおむね六人につき一人以上、満三歳以上満四歳に満たない幼児おおむね十五人につき一人以上、満四歳以上の幼児おおむね二十五人につき一人以上とする。ただし、保育所一につき二人を下ることはできない。</p>
+  <p>（児童福祉施設の設備及び運営に関する基準 第33条第2項）</p>
+</div>
+<p>
+  0歳児は3人に1人、1・2歳児は6人に1人、3歳児は15人に1人、4・5歳児は25人に1人です。
+  3歳児と4歳以上児の比率は2024年4月の改正で変わりました（それまでは20人に1人・30人に1人）。
+</p>
+
+<h3>経過措置で旧基準も使える（令和6年内閣府令第18号 附則）</h3>
+<div class="law">
+  <p>保育士及び保育従事者の配置の状況に鑑み、保育の提供に支障を及ぼすおそれがあるときは、令和十年三月三十一日までの間、この府令による改正後の児童福祉施設の設備及び運営に関する基準…第三十三条第二項…の規定（満三歳以上満四歳に満たない児童に対し保育を提供する保育士及び保育従事者の数に関する部分に限る。）は、適用しない。この場合において、この府令による改正前の…規定…は、この府令の施行の日以後においても、なおその効力を有する。（附則第2項）</p>
+  <p>4歳以上児についても同じ形の規定があり、期間は「当分の間」です（附則第3項）。</p>
+</div>
+<p>
+  つまり3歳児は<strong>2028年3月31日まで</strong>、4歳以上児は<strong>当分の間</strong>、保育士の確保が難しいときは旧基準（20人に1人・30人に1人）によることができます。
+  どちらを使うかは園の状況と自治体の運用によるので、このツールは両方の人数を並べて出します。
+  なお、保育所の基準は国の府令に従って<strong>都道府県・市の条例</strong>で定められており、経過措置の期間も条例によって書き方が違います（たとえば川崎市の通知は3歳児も「当分の間」としています）。
+</p>
+
+<h3>端数の処理（国の算式）</h3>
+<div class="formula">｛4歳以上児数 ÷ 25｝＋｛3歳児数 ÷ 15｝＋｛1・2歳児数 ÷ 6｝＋｛乳児数 ÷ 3｝　各｛ ｝は小数点第1位まで（第2位以下切り捨て）→ 合計の小数点以下を四捨五入</div>
+<div class="law">
+  <p>配置すべき教育・保育に従事する者の数の具体的な算定方法は、年齢別に、子どもの数を配置基準で除して小数点第1位まで求め（小数点第２位以下切捨て）、各々を合計した後に小数点以下を四捨五入した数になります。</p>
+  <p>（こども家庭庁「公定価格に関するFAQ（よくある質問）」No.8。FAQの算式は公定価格の基本分の比率 1/30・1/20 で書かれています）</p>
+</div>
+<p>
+  省令は「おおむね」と書くだけで、端数の処理を定めていません。このツールは国が公定価格で示しているこの算式を、省令の比率（15・25）と経過措置の比率（20・30）に当てはめています。
+  自治体の通知にも同じ形の算式が出てきます（たとえば川崎市の令和7年10月31日の通知は、1歳児配置改善加算の要件となる保育士数をこの形で示しています）。
+  <strong>1歳児と2歳児、4歳児と5歳児は、それぞれ人数を合わせてから割ります。</strong>別々に切り捨てると、少なく出ることがあります。
+</p>
+
+<h3>最低2人と、その特例（附則第94条）</h3>
+<div class="law">
+  <p>保育の需要に応ずるに足りる保育所…が不足していることに鑑み、当分の間、第三十三条第二項ただし書の規定を適用しないことができる。この場合において、同項本文の規定により必要な保育士が一人となる時は、当該保育士に加えて、都道府県知事（指定都市にあつては当該指定都市の市長とし、中核市にあつては当該中核市の市長とする。）が保育士と同等の知識及び経験を有すると認める者を置かなければならない。</p>
+</div>
+<p>
+  算式の結果が2人を下回るときは、第33条第2項ただし書の「2人」を表示します。
+</p>
+
+<h3>保育士とみなせる職員</h3>
+<p>
+  第33条第2項の保育士の数には、条件つきで次の人を含められます。看護師・保健師・准看護師を1人まで（平成10年厚生省令第51号 附則第2項）、
+  理学療法士・作業療法士などの特定理学療法士等を1人まで（第33条第3項）、当分の間、幼稚園・小学校教諭や養護教諭の免許を持つ人（附則第95条）など。
+  ただし附則第95条・第96条を使うときは、みなしの職員を除いた保育士を、第33条第2項で算定される保育士の数の<strong>3分の2以上</strong>置く必要があります（附則第97条）。
+</p>
+
+<h2>よくある質問</h2>
+
+<h3>年齢ごとに切り上げて足すのとは違うのですか</h3>
+<p>
+  違います。国の算式は、年齢区分ごとに<strong>小数点第1位まで切り捨て</strong>てから合計し、最後に<strong>四捨五入</strong>します。
+  たとえば定員60人の例（0歳6人・1歳10人・2歳12人・3歳12人・4歳10人・5歳10人）では 2.0＋3.6＋0.8＋0.8＝7.2 で <strong>7人</strong>です。
+  年齢ごとに切り上げると 2＋4＋1＋1＝8人になり、国の算式より1人多くなります。
+</p>
+
+<h3>子どもの年齢はいつの時点で数えますか</h3>
+<p>
+  国の公定価格の算式では「年度の初日の前日における満年齢」で数えます（こども家庭庁 公定価格FAQ No.8）。
+  省令の比率は「乳児」「満一歳以上満三歳に満たない幼児」のような満年齢で書かれているので、年度の途中で誕生日を迎えた子の扱いは、所在地の自治体の運用を確認してください。
+</p>
+
+<h3>クラスごとに何人いればよいですか</h3>
+<p>
+  この算式で出るのは<strong>保育所全体</strong>で必要な人数です。クラスごとの配置や、朝夕の時間帯の配置は、自治体の基準や指導によって決まります。
+</p>
+
+<h3>自治体の基準が国より手厚い場合は</h3>
+<p>
+  自治体の条例・要綱の比率が優先されます（国の基準は最低基準です）。このツールの結果は「国の最低基準ならこの人数」という下限の目安として使ってください。
+</p>
+
+<h2>出典</h2>
+<ul class="src">
+  <li>児童福祉施設の設備及び運営に関する基準（昭和23年厚生省令第63号）第33条・附則第94条〜第98条、令和6年内閣府令第18号 附則、平成10年厚生省令第51号 附則
+    <a href="https://laws.e-gov.go.jp/law/323M40000100063" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>こども家庭庁「公定価格に関するFAQ（よくある質問）」No.8
+    <a href="https://www.cfa.go.jp/assets/contents/node/basic_page/field_ref_resources/3a1576c7-071d-4325-8be8-edced6d12ee1/58c3df4d/20241223_policies_kokoseido_88.pdf" rel="nofollow noopener" target="_blank">第26版（令和6年12月23日時点・PDF）</a>
+    （令和8年3月31日時点の第29版も同じ文言です）</li>
+  <li>条文は e-Gov 法令API で取得した現行版（2026年10月1日施行の版）を逐語で確認しています。
+    導出は<a href="./calc.js">計算コード</a>のコメントに、境界値の検証は<a href="./calc.test.mjs">テスト</a>に残してあります</li>
+</ul>
+<p class="src">最終確認日: 2026年11月6日</p>
+
+</main>
+
+<footer class="wrap">
+  <a href="../../">トップ</a>
+  <a href="../../privacy.html">プライバシーポリシー</a>
+  <a href="../../contact.html">お問い合わせ</a>
+  <p>&copy; 2026 くらしの計算室</p>
+</footer>
+
+<script type="module">
+import { calculate } from "./calc.js";
+
+const AGES = ["age0", "age1", "age2", "age3", "age4", "age5"];
+const PRESETS = {
+  p60: [6, 10, 12, 12, 10, 10],
+  p90: [9, 15, 18, 16, 16, 16],
+  p30: [6, 12, 12, 0, 0, 0],
+  clear: ["", "", "", "", "", ""],
+};
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const t1 = (tenths) => (tenths / 10).toFixed(1);
+const RULE = { new: "新基準", old: "経過措置" };
+
+function render() {
+  const input = Object.fromEntries(AGES.map((a) => [a, $(a).value]));
+  const res = calculate({ ...input, age3Rule: $("age3Rule").value, age4Rule: $("age4Rule").value, staff: $("staff").value });
+
+  if (!res.ok) {
+    $("headline").innerHTML = '— <small>人</small>';
+    $("summary").textContent = res.errors[0];
+    $("rows").innerHTML = "";
+    $("compare").innerHTML = "";
+    $("checks").innerHTML = "";
+    return;
+  }
+
+  const s = res.selected;
+  $("headline").innerHTML = `${s.required} <small>人</small>`;
+  $("summary").textContent =
+    `子ども${res.totalChildren}人。年齢区分ごとの合計 ${t1(s.totalTenths)} を四捨五入して ${s.rounded}人` +
+    (s.raisedToMin ? `、省令の最低2人により ${s.required}人。` : "。") +
+    (res.staff ? ` 配置 ${res.staff.count}人は${res.staff.enough ? "基準を満たしています" : `${res.staff.shortfall}人 足りません`}。` : "");
+
+  $("rows").innerHTML = s.rows.map((r) =>
+    `<tr><td>${esc(r.label)}</td><td>${r.children}人</td><td>${r.ratio}人に1人</td><td>${t1(r.tenths)}</td></tr>`).join("") +
+    `<tr><td><strong>合計</strong></td><td>${res.totalChildren}人</td><td></td><td><strong>${t1(s.totalTenths)}</strong></td></tr>`;
+
+  const variants = [
+    ["新基準（3歳15:1・4歳以上25:1）", res.newRule],
+    ["経過措置（3歳20:1・4歳以上30:1）", res.oldRule],
+  ];
+  const mixed = res.rule.age3 !== res.rule.age4;
+  if (mixed) variants.push([`選択中（3歳${RULE[res.rule.age3]}・4歳以上${RULE[res.rule.age4]}）`, s]);
+  $("compare").innerHTML = variants.map(([name, v]) =>
+    `<tr><td>${esc(name)}</td><td>${t1(v.totalTenths)}</td><td>${v.required}人</td></tr>`).join("");
+
+  const checks = [];
+  if (res.staff) {
+    checks.push(res.staff.enough
+      ? { status: "ok", title: `配置 ${res.staff.count}人は必要な ${s.required}人以上です`,
+          detail: "国の最低基準と国の算式による判定です。自治体の上乗せ基準がある場合は、そちらでも確かめてください。" }
+      : { status: "ng", title: `配置 ${res.staff.count}人では ${res.staff.shortfall}人足りません`,
+          detail: `必要な保育士は ${s.required}人です（${RULE[res.rule.age3]}の3歳児・${RULE[res.rule.age4]}の4歳以上児で計算）。` });
+  }
+  if (res.newRule.required !== res.oldRule.required) {
+    checks.push({ status: "info", title: `新基準と経過措置で ${res.newRule.required - res.oldRule.required}人変わります`,
+      detail: "経過措置は「保育の提供に支障を及ぼすおそれがあるとき」に使えるもので、国の府令では3歳児は2028年3月31日まで、4歳以上児は当分の間です。期間は自治体の条例でも確かめてください。" });
+  }
+  if (s.raisedToMin) {
+    checks.push({ status: "info", title: `算式では ${s.rounded}人ですが、保育所1か所につき2人を下ることはできません`,
+      detail: "第33条第2項ただし書。当分の間、必要な保育士が1人となる時は、保育士に加えて知事等が保育士と同等と認める者を置く特例があります（附則第94条）。" });
+  }
+  checks.push({ status: "info", title: "1・2歳児と4・5歳児は人数を合わせてから割っています",
+    detail: "国の算式どおりです。年齢ごとに別々に切り捨てると、合計が少なく出ることがあります。" });
+  $("checks").innerHTML = checks.map((x) =>
+    `<li><p class="hd"><span class="tag ${x.status}">${{ ok: "足りる", ng: "不足", info: "参考" }[x.status]}</span>${esc(x.title)}</p>` +
+    `<p class="dt">${esc(x.detail)}</p></li>`).join("");
+}
+
+function applyPreset(list) {
+  AGES.forEach((a, i) => { $(a).value = list[i]; });
+  render();
+}
+
+for (const el of document.querySelectorAll(".card input, .card select")) {
+  el.addEventListener("input", render);
+  el.addEventListener("change", render);
+}
+for (const btn of document.querySelectorAll("[data-preset]")) {
+  btn.addEventListener("click", () => applyPreset(PRESETS[btn.dataset.preset]));
+}
+applyPreset(PRESETS.p60);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>介護の人員配置基準 計算 — 特養・老健・介護付き有料の看護・介護職員の必要数（3対1）</title>
+<meta name="description" content="入所者（利用者）の数を入れると、特別養護老人ホーム・介護老人保健施設・介護付き有料老人ホーム等の看護・介護職員の総数（常勤換算・3又はその端数ごとに1）と看護職員の必要数を、厚生労働省令の条文どおりに出します。前年度平均の端数処理、要支援の利用者の10分の3、2024年度の0.9の特例、ユニット型の昼夜の配置にも対応。">
+<link rel="canonical" href="https://keisanshitsu.github.io/tools/care-staff-ratio/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="くらしの計算室">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="介護の人員配置基準 計算 — 特養・老健・介護付き有料の看護・介護職員の必要数（3対1）">
+<meta property="og:description" content="入所者の数から、看護・介護職員の総数（3対1）と看護職員の必要数を厚生労働省令の条文どおりに計算。配置している人数（常勤換算）で足りるかも判定します。">
+<meta property="og:url" content="https://keisanshitsu.github.io/tools/care-staff-ratio/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "介護施設の人員配置基準の計算",
+  "description": "入所者（利用者）の数から、特別養護老人ホーム・介護老人保健施設・指定特定施設入居者生活介護の看護・介護職員の総数と看護職員の必要数を、厚生労働省令の条文と解釈通知の端数処理で計算します。",
+  "url": "https://keisanshitsu.github.io/tools/care-staff-ratio/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (web browser)",
+  "inLanguage": "ja",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "くらしの計算室",
+    "url": "https://keisanshitsu.github.io/"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1b19; --muted:#6b6862;
+    --line:#e5e2dc; --card:#fff; --accent:#0f6cbd; --accent-soft:#eef5fc;
+    --ok:#1f7a45; --ok-soft:#eaf6ef; --ng:#b3261e; --ng-soft:#fdeeed;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#17181a; --fg:#e9e8e5; --muted:#a3a09a;
+           --line:#2e3033; --card:#1f2123; --accent:#6cb6f5; --accent-soft:#1b2733;
+           --ok:#5fd08a; --ok-soft:#16261d; --ng:#ff8a80; --ng-soft:#2a1a19; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  header{border-bottom:1px solid var(--line);padding:16px 0}
+  .site{font-size:.85rem;color:var(--muted);text-decoration:none}
+  h1{font-size:1.35rem;margin:28px 0 6px;line-height:1.5}
+  .sub{color:var(--muted);font-size:.92rem;margin:0 0 28px}
+  h2{font-size:1.05rem;margin:36px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
+  h3{font-size:.95rem;margin:22px 0 6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+  input,select{width:100%;padding:9px 10px;font-size:1rem;color:var(--fg);
+    background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  input[type=checkbox]{width:auto;margin:0 6px 0 0;vertical-align:-2px}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--fg);padding:9px 14px}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:12px}
+  .check{display:block;font-size:.88rem;color:var(--fg);margin-top:12px}
+  .hint{font-size:.78rem;color:var(--muted);margin:4px 0 0}
+  [hidden]{display:none !important}
+  .result{margin-top:20px;border:1px solid var(--accent);background:var(--accent-soft);
+    border-radius:12px;padding:18px}
+  .big{font-size:2rem;font-weight:700;color:var(--accent);line-height:1.2;margin:2px 0 0}
+  .big small{font-size:1rem;font-weight:600;margin-left:2px}
+  .sub2{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+  .checks{list-style:none;padding:0;margin:14px 0 0}
+  .checks li{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin-bottom:8px}
+  .checks .hd{font-size:.9rem;font-weight:600;margin:0}
+  .checks .dt{font-size:.82rem;color:var(--muted);margin:3px 0 0}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;border-radius:5px;
+    padding:1px 7px;margin-right:7px;vertical-align:2px}
+  .tag.ok{background:var(--ok-soft);color:var(--ok)}
+  .tag.ng{background:var(--ng-soft);color:var(--ng)}
+  .tag.info{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+  .tablewrap{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:.86rem}
+  th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+  th{color:var(--muted);font-weight:600;white-space:nowrap}
+  td.n{white-space:nowrap}
+  .cap{font-size:.85rem;font-weight:600;margin:18px 0 0}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:14px 16px;border-radius:0 8px 8px 0;font-size:.88rem;margin:24px 0}
+  .law{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;margin:14px 0;font-size:.86rem}
+  .law p{margin:0 0 6px;font-size:.86rem}
+  .law p:last-child{margin-bottom:0}
+  .formula{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:10px 14px;margin:12px 0;font-size:.9rem;overflow-x:auto}
+  p,li{font-size:.94rem}
+  ul{padding-left:1.2em}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src li{font-size:.85rem;overflow-wrap:anywhere}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:20px 0 40px;
+    color:var(--muted);font-size:.85rem}
+  footer a{color:var(--muted);margin-right:14px}
+  a{color:var(--accent)}
+  @media (max-width:400px){
+    .big{font-size:1.7rem}
+  }
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><a class="site" href="../../">← くらしの計算室</a></div></header>
+
+<main class="wrap">
+
+<h1>介護施設の人員配置基準の計算（看護・介護職員の必要数）</h1>
+<p class="sub">
+  入所者（利用者）の数を入れると、<strong>看護・介護職員の総数</strong>（常勤換算で「3又はその端数を増すごとに1以上」＝いわゆる3対1）と、<strong>看護職員の必要数</strong>を、厚生労働省令の条文どおりに出します。
+  特別養護老人ホーム・介護老人保健施設・介護付き有料老人ホーム等（指定特定施設入居者生活介護）に対応。
+  配置している人数（常勤換算）を入れると、足りているかも判定します。
+</p>
+
+<div class="card">
+  <label for="facility">施設の種類</label>
+  <select id="facility">
+    <option value="tokuyou" selected>特別養護老人ホーム（指定介護老人福祉施設）</option>
+    <option value="rouken">介護老人保健施設（老健）</option>
+    <option value="tokutei">介護付き有料老人ホーム等（特定施設入居者生活介護）</option>
+  </select>
+
+  <div class="grid" id="boxResidents">
+    <div>
+      <label for="residents">入所者の数（前年度の平均・人）</label>
+      <input id="residents" type="number" inputmode="decimal" min="0" max="1000" step="0.1" value="">
+    </div>
+    <div>
+      <label for="units">ユニット型ならユニット数（任意）</label>
+      <input id="units" type="number" inputmode="numeric" min="1" max="100" step="1" value="" placeholder="例: 10">
+    </div>
+  </div>
+
+  <div id="boxTokutei" hidden>
+    <div class="grid">
+      <div>
+        <label for="careUsers">要介護の利用者（前年度の平均・人）</label>
+        <input id="careUsers" type="number" inputmode="decimal" min="0" max="1000" step="0.1" value="">
+      </div>
+      <div>
+        <label for="supportUsers">要支援（介護予防）の利用者（人・任意）</label>
+        <input id="supportUsers" type="number" inputmode="decimal" min="0" max="1000" step="0.1" value="">
+      </div>
+    </div>
+    <label class="check"><input id="relaxed" type="checkbox">生産性向上の取組の4要件をすべて満たす（第175条第9項・「1」を「0.9」とする特例）</label>
+  </div>
+
+  <div class="grid">
+    <div>
+      <label for="staffTotal">配置している看護・介護職員（常勤換算・任意）</label>
+      <input id="staffTotal" type="number" inputmode="decimal" min="0" max="1000" step="0.1" value="" placeholder="例: 30.5">
+    </div>
+    <div>
+      <label for="staffNurse">うち看護職員（常勤換算・任意）</label>
+      <input id="staffNurse" type="number" inputmode="decimal" min="0" max="1000" step="0.1" value="" placeholder="例: 4">
+    </div>
+  </div>
+  <p class="hint">入所者の数に小数第2位以下を入れた場合は、厚生労働省の通知どおり切り上げて計算します。</p>
+
+  <div class="actions">
+    <button type="button" data-preset="tokuyou">特養 入所者78.3人の例</button>
+    <button type="button" data-preset="unit">ユニット型特養 100人・10ユニットの例</button>
+    <button type="button" data-preset="rouken">老健 100人の例</button>
+    <button type="button" data-preset="tokutei">介護付き有料 要介護54・要支援6の例</button>
+  </div>
+</div>
+
+<div class="result" aria-live="polite">
+  <div id="headLabel">看護・介護職員の総数（常勤換算）</div>
+  <p class="big" id="headline">— <small>人以上</small></p>
+  <p class="sub2" id="summary">入所者の数を入力してください。</p>
+
+  <p class="cap">職種ごとの必要数</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>職種</th><th>必要数</th><th>条文</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <ul class="checks" id="checks"></ul>
+</div>
+
+<div class="note">
+  <strong>この結果は概算です。</strong>
+  国の厚生労働省令の条文と、厚生労働省の解釈通知の端数処理による人数です。
+  実際の基準は、省令に従って<strong>都道府県・市町村の条例</strong>で定められています（員数は省令に「従い定める」事項です。介護保険法 第74条第3項・第88条第3項・第97条第4項）。
+  常勤換算の数え方（勤務延時間・休暇・兼務の扱い）、夜勤の配置、介護報酬の加算・減算の要件は、このツールでは判定しません。
+  地域密着型（定員29人以下）・サテライト型・医療機関併設型の小規模老健・グループホームは別の基準です。
+  <strong>実際の配置が基準を満たすかは、指定権者（都道府県・市町村の介護保険担当課）や社会保険労務士などの専門家にご確認ください。</strong>
+</div>
+
+<h2>この計算の根拠</h2>
+
+<h3>特別養護老人ホーム（平成11年厚生省令第39号 第2条）</h3>
+<div class="law">
+  <p>イ 介護職員及び看護職員の総数は、常勤換算方法で、入所者の数が三又はその端数を増すごとに一以上とすること。</p>
+  <p>ロ 看護職員の数は、次のとおりとすること。（１）入所者の数が三十を超えない指定介護老人福祉施設にあっては、常勤換算方法で、一以上（２）入所者の数が三十を超えて五十を超えない…二以上（３）入所者の数が五十を超えて百三十を超えない…三以上（４）入所者の数が百三十を超える…三に、入所者の数が百三十を超えて五十又はその端数を増すごとに一を加えて得た数以上</p>
+  <p>（指定介護老人福祉施設の人員、設備及び運営に関する基準 第2条第1項第3号）</p>
+</div>
+<p>
+  「三又はその端数を増すごとに一」は、入所者の数を3で割って<strong>切り上げ</strong>た数です。90人なら30人、90.1人なら31人です。
+  看護職員は段階の表で決まり、30人・50人・130人ちょうどは下の段に入ります。看護職員のうち1人以上は常勤でなければなりません（同条第6項）。
+</p>
+
+<h3>介護老人保健施設（平成11年厚生省令第40号 第2条）</h3>
+<div class="law">
+  <p>三 看護師若しくは准看護師（以下「看護職員」という。）又は介護職員（以下「看護・介護職員」という。） 常勤換算方法で、入所者の数が三又はその端数を増すごとに一以上（看護職員の員数は看護・介護職員の総数の七分の二程度を、介護職員の員数は看護・介護職員の総数の七分の五程度をそれぞれ標準とする。）</p>
+  <p>（介護老人保健施設の人員、施設及び設備並びに運営に関する基準 第2条第1項第3号）</p>
+</div>
+<p>
+  総数は特養と同じ式です。看護職員は段階の表ではなく「総数の7分の2<strong>程度</strong>を標準」とされているので、このツールは<strong>目安を表示するだけで、足りる・足りないの判定はしません</strong>。
+</p>
+
+<h3>介護付き有料老人ホーム等（平成11年厚生省令第37号 第175条）</h3>
+<div class="law">
+  <p>イ 看護職員及び介護職員の合計数は、常勤換算方法で、要介護者である利用者の数が三又はその端数を増すごとに一以上であること。</p>
+  <p>ロ 看護職員の数は、次のとおりとすること。（１）利用者の数が三十を超えない指定特定施設にあっては、常勤換算方法で、一以上（２）利用者の数が三十を超える指定特定施設にあっては、常勤換算方法で、一に利用者の数が三十を超えて五十又はその端数を増すごとに一を加えて得た数以上</p>
+  <p>ハ 常に一以上の指定特定施設入居者生活介護の提供に当たる介護職員が確保されること。</p>
+  <p>（指定居宅サービス等の事業の人員、設備及び運営に関する基準 第175条第1項第2号）</p>
+</div>
+<p>
+  介護予防（要支援の人）と一体的に運営している場合は第2項によります。
+</p>
+<div class="law">
+  <p>イ 看護職員又は介護職員の合計数は、常勤換算方法で、利用者の数及び介護予防サービスの利用者の数に十分の三を乗じて得た数の合計数が三又はその端数を増すごとに一以上であること。</p>
+  <p>（同 第175条第2項第2号。看護職員の段階は、要介護と要支援を合わせた「総利用者数」で数えます）</p>
+</div>
+<div class="formula">看護・介護職員の総数 ＝（要介護の利用者 ＋ 要支援の利用者 × 3/10）÷ 3 を切り上げ</div>
+<p>
+  要支援の人は3/10人として数えてから<strong>合計し、そのあとで切り上げ</strong>ます。要介護と要支援を別々に切り上げて足すと、多く出ることがあります（要介護58人・要支援5人なら、条文どおりは 59.5÷3 → 20人、別々に切り上げると 20＋1＝21人）。
+  看護職員と介護職員は、それぞれ1人以上が常勤でなければなりません（同条第5項）。
+</p>
+
+<h3>0.9の特例（第175条第9項・2024年4月から）</h3>
+<div class="law">
+  <p>次に掲げる要件のいずれにも適合する場合における第一項第二号イ及び第二項第二号イの規定の適用については、これらの規定中「一」とあるのは、「〇・九」とする。</p>
+  <p>（要件は、利用者の安全とケアの質の確保・職員の負担軽減などを検討する委員会での検討と定期的な確認、介護機器の複数種類の活用、職員間の適切な役割分担、取組によって質の確保と負担軽減が行われていると認められること、の4つです）</p>
+</div>
+<p>
+  特例が使えるときは、総数が「3又はその端数を増すごとに<strong>0.9</strong>以上」になります。看護職員の段階（ロ）には掛かりません。
+  要件を満たすかどうかは、このツールでは判定しません。
+</p>
+
+<h3>ユニット型の昼夜の配置（特養 第47条第2項・老健 第48条第2項）</h3>
+<div class="law">
+  <p>一 昼間については、ユニットごとに常時一人以上の介護職員又は看護職員を配置すること。</p>
+  <p>二 夜間及び深夜については、二ユニットごとに一人以上の介護職員又は看護職員を夜間及び深夜の勤務に従事する職員として配置すること。</p>
+</div>
+<p>
+  ユニット数を入れると、昼間の常時配置（ユニット数と同じ人数）と、夜間・深夜の配置（ユニット数÷2を切り上げ）を表示します。
+  従来型（ユニット型でない施設）の夜勤の人数は、介護報酬の減算の基準（厚生労働大臣が定める夜勤を行う職員の勤務条件に関する基準）で決まるもので、このツールは扱いません。
+</p>
+
+<h3>入所者の数は「前年度の平均」（小数点第2位以下は切り上げ）</h3>
+<div class="law">
+  <p>前項の入所者の数は、前年度の平均値とする。ただし、新規に指定を受ける場合は、推定数による。（特養 第2条第2項。老健 第2条第2項・特定施設 第175条第3項も同じ形）</p>
+  <p>「前年度の平均値」は、当該年度の前年度…の入所者延数を当該前年度の日数で除して得た数とする。この算定に当たっては、小数点第二位以下を切り上げるものとする。（平成12年老企第43号。老企第44号・平成11年老企第25号も同じ）</p>
+</div>
+<p>
+  たとえば前年度の入所者延べ28,580人・日数365日なら、28,580÷365＝78.30… → <strong>78.4人</strong>（第2位以下を切り上げ）です。
+</p>
+
+<h2>よくある質問</h2>
+
+<h3>「3対1」は、いつも3人に1人の職員がそばにいるという意味ですか</h3>
+<p>
+  違います。省令の数は<strong>常勤換算</strong>の人数で、施設全体の勤務時間の合計を常勤の人の勤務時間で割った値です。
+  夜勤・休み・交代があるので、ある時間帯に入所者3人に1人の職員がいるという意味ではありません。
+</p>
+
+<h3>常勤換算とは何ですか</h3>
+<div class="law">
+  <p>当該指定介護老人福祉施設の従業者の勤務延時間数を当該施設において常勤の従業者が勤務すべき時間数（一週間に勤務すべき時間数が三二時間を下回る場合は三二時間を基本とする。）で除することにより、当該施設の従業者の員数を常勤の従業者の員数に換算する方法をいうものである。</p>
+  <p>（老企第43号）</p>
+</div>
+<p>
+  たとえば常勤が週40時間の施設で、常勤20人と、週の勤務時間の合計が600時間のパートがいれば、20＋600÷40＝35人です。
+  休暇・兼務・併設事業所との按分の扱いは細かな決まりがあるので、指定権者の手引きで確かめてください。
+</p>
+
+<h3>130人を超える特養の看護職員は何人ですか</h3>
+<p>
+  3人に、130人を超える部分の「50又はその端数」ごとに1人を足します。131人なら4人、180人なら4人、181人なら5人です。
+</p>
+
+<h3>要支援の人だけを受け入れている場合は</h3>
+<p>
+  介護予防特定施設入居者生活介護だけを行う場合は別の省令（指定介護予防サービス等の基準）で、このツールは扱いません。
+</p>
+
+<h2>出典</h2>
+<ul class="src">
+  <li>指定介護老人福祉施設の人員、設備及び運営に関する基準（平成11年厚生省令第39号）第2条・第38条・第47条
+    <a href="https://laws.e-gov.go.jp/law/411M50000100039" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>介護老人保健施設の人員、施設及び設備並びに運営に関する基準（平成11年厚生省令第40号）第2条・第39条・第48条
+    <a href="https://laws.e-gov.go.jp/law/411M50000100040" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>指定居宅サービス等の事業の人員、設備及び運営に関する基準（平成11年厚生省令第37号）第175条
+    <a href="https://laws.e-gov.go.jp/law/411M50000100037" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>介護保険法 第74条第3項・第88条第3項・第97条第4項
+    <a href="https://laws.e-gov.go.jp/law/409AC0000000123" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>厚生労働省「指定介護老人福祉施設の人員、設備及び運営に関する基準について」（平成12年3月17日 老企第43号）
+    <a href="https://www.mhlw.go.jp/web/t_doc?dataId=00ta4387&amp;dataType=1&amp;pageNo=1" rel="nofollow noopener" target="_blank">厚生労働省 法令等データベース</a></li>
+  <li>厚生労働省「介護老人保健施設の人員、施設及び設備並びに運営に関する基準について」（平成12年3月17日 老企第44号）
+    <a href="https://www.mhlw.go.jp/web/t_doc?dataId=00ta4388&amp;dataType=1&amp;pageNo=1" rel="nofollow noopener" target="_blank">厚生労働省 法令等データベース</a></li>
+  <li>厚生労働省「指定居宅サービス等の事業の人員、設備及び運営に関する基準について」（平成11年9月17日 老企第25号）
+    <a href="https://www.mhlw.go.jp/web/t_doc?dataId=00ta4369&amp;dataType=1&amp;pageNo=1" rel="nofollow noopener" target="_blank">厚生労働省 法令等データベース</a></li>
+  <li>省令は e-Gov 法令API で取得した現行版（特養・特定施設は2025年4月1日施行、老健は2024年4月1日施行の版）を逐語で確認しています。
+    導出は<a href="./calc.js">計算コード</a>のコメントに、境界値の検証は<a href="./calc.test.mjs">テスト</a>に残してあります</li>
+</ul>
+<p class="src">最終確認日: 2026年11月7日</p>
+
+</main>
+
+<footer class="wrap">
+  <a href="../../">トップ</a>
+  <a href="../../privacy.html">プライバシーポリシー</a>
+  <a href="../../contact.html">お問い合わせ</a>
+  <p>&copy; 2026 くらしの計算室</p>
+</footer>
+
+<script type="module">
+import { calculate } from "./calc.js";
+
+const PRESETS = {
+  tokuyou: { facility: "tokuyou", residents: "78.3", units: "" },
+  unit: { facility: "tokuyou", residents: "100", units: "10" },
+  rouken: { facility: "rouken", residents: "100", units: "" },
+  tokutei: { facility: "tokutei", careUsers: "54", supportUsers: "6" },
+};
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const t1 = (tenths) => (tenths / 10).toFixed(1);
+const BASIS = { tokuyou: "特養 第2条", rouken: "老健 第2条", tokutei: "第175条" };
+
+function syncBoxes() {
+  const tk = $("facility").value === "tokutei";
+  $("boxResidents").hidden = tk;
+  $("boxTokutei").hidden = !tk;
+}
+
+function render() {
+  syncBoxes();
+  const f = $("facility").value;
+  const res = calculate({
+    facility: f,
+    residents: $("residents").value,
+    careUsers: $("careUsers").value,
+    supportUsers: $("supportUsers").value,
+    relaxed: $("relaxed").checked,
+    units: $("units").value,
+    staffTotal: $("staffTotal").value,
+    staffNurse: $("staffNurse").value,
+  });
+
+  if (!res.ok) {
+    $("headline").innerHTML = '— <small>人以上</small>';
+    $("summary").textContent = res.errors[0];
+    $("rows").innerHTML = "";
+    $("checks").innerHTML = "";
+    return;
+  }
+
+  const p = res.people;
+  const cn = res.careNurse;
+  $("headline").innerHTML = `${t1(cn.requiredTenths)} <small>人以上</small>`;
+  const who = f === "tokutei"
+    ? `要介護 ${t1(p.care10)}人` + (p.support10 > 0 ? `＋要支援 ${t1(p.support10)}人×3/10` : "")
+    : `入所者 ${t1(p.total10)}人`;
+  $("summary").textContent =
+    `${res.facilityLabel}。${who} ÷ 3 を切り上げて ${cn.perThree}` +
+    (cn.relaxed ? `、0.9の特例で ${cn.perThree}×0.9＝${t1(cn.requiredTenths)}人。` : "人。") +
+    (p.roundedUp ? " 入所者の数の小数第2位以下は切り上げました。" : "");
+
+  const rows = [];
+  rows.push(["看護・介護職員の総数", `常勤換算 ${t1(cn.requiredTenths)}人以上`, f === "tokutei" ? `${p.clause}第2号イ` + (cn.relaxed ? "・第9項" : "") : `${BASIS[f]}第1項第3号`]);
+  if (res.nurse.required !== null) {
+    rows.push(["うち看護職員", `常勤換算 ${res.nurse.required}人以上（1人以上は常勤）`, f === "tokutei" ? `${p.clause}第2号ロ` : "特養 第2条第1項第3号ロ"]);
+  } else {
+    rows.push(["うち看護職員（目安）", `総数の7分の2程度＝約${t1(res.nurse.guideTenths)}人（介護職員は約${t1(res.nurse.careGuideTenths)}人）`, "老健 第2条第1項第3号（標準）"]);
+  }
+  if (f === "tokutei") rows.push(["介護職員", "常に1人以上（1人以上は常勤）", `${p.clause}第2号ハ`]);
+  if (res.unit) {
+    rows.push(["昼間（ユニット型）", `ユニットごとに常時1人以上＝${res.unit.day}人`, f === "rouken" ? "老健 第48条第2項第1号" : "特養 第47条第2項第1号"]);
+    rows.push(["夜間・深夜（ユニット型）", `2ユニットごとに1人以上＝${res.unit.night}人`, f === "rouken" ? "老健 第48条第2項第2号" : "特養 第47条第2項第2号"]);
+  }
+  for (const o of res.others) rows.push([o.label, o.value, o.basis]);
+  $("rows").innerHTML = rows.map(([a, b, c]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td><td class="n">${esc(c)}</td></tr>`).join("");
+
+  const checks = [];
+  const st = res.staff;
+  if (st && st.total) {
+    checks.push(st.total.enough
+      ? { status: "ok", title: `看護・介護職員 ${t1(st.total.tenths)}人は必要な ${t1(cn.requiredTenths)}人以上です`,
+          detail: "国の省令の条文による判定です。常勤換算の数え方が正しいかは、このツールでは確かめていません。" }
+      : { status: "ng", title: `看護・介護職員 ${t1(st.total.tenths)}人では ${t1(st.total.shortfallTenths)}人足りません`,
+          detail: `必要なのは常勤換算 ${t1(cn.requiredTenths)}人以上です。` });
+  }
+  if (st && st.nurse) {
+    if (st.nurse.enough === null) {
+      checks.push({ status: "info", title: `看護職員 ${t1(st.nurse.tenths)}人（目安は約${t1(res.nurse.guideTenths)}人）`,
+        detail: "老健の看護職員は「総数の7分の2程度を標準」とされているだけなので、足りる・足りないは判定しません。" });
+    } else {
+      checks.push(st.nurse.enough
+        ? { status: "ok", title: `看護職員 ${t1(st.nurse.tenths)}人は必要な ${res.nurse.required}人以上です`,
+            detail: "看護職員のうち1人以上は常勤である必要があります。" }
+        : { status: "ng", title: `看護職員 ${t1(st.nurse.tenths)}人では ${t1(st.nurse.shortfallTenths)}人足りません`,
+            detail: `必要なのは常勤換算 ${res.nurse.required}人以上です。` });
+    }
+  }
+  if (f === "tokutei" && p.support10 > 0) {
+    checks.push({ status: "info", title: "要支援の利用者は 3/10 人として数えてから合計しています",
+      detail: "第175条第2項（介護予防と一体的に運営する場合）。看護職員の段階は、要介護と要支援を合わせた総利用者数で数えます。" });
+  }
+  if (cn.relaxed) {
+    checks.push({ status: "info", title: "0.9の特例で計算しています",
+      detail: "第175条第9項の4要件をすべて満たす場合に限ります。要件を満たすかは指定権者に確認してください。" });
+  }
+  if (f !== "tokutei" && !res.unit) {
+    checks.push({ status: "info", title: "夜勤の人数はこの計算に入っていません",
+      detail: "ユニット型ならユニット数を入れると昼夜の配置を表示します。従来型の夜勤の人数は介護報酬の基準で決まり、このツールは扱いません。" });
+  }
+  $("checks").innerHTML = checks.map((x) =>
+    `<li><p class="hd"><span class="tag ${x.status}">${{ ok: "足りる", ng: "不足", info: "参考" }[x.status]}</span>${esc(x.title)}</p>` +
+    `<p class="dt">${esc(x.detail)}</p></li>`).join("");
+}
+
+function applyPreset(p) {
+  $("facility").value = p.facility;
+  for (const k of ["residents", "units", "careUsers", "supportUsers"]) $(k).value = p[k] ?? "";
+  $("relaxed").checked = false;
+  $("staffTotal").value = "";
+  $("staffNurse").value = "";
+  render();
+}
+
+for (const el of document.querySelectorAll(".card input, .card select")) {
+  el.addEventListener("input", render);
+  el.addEventListener("change", render);
+}
+for (const btn of document.querySelectorAll("[data-preset]")) {
+  btn.addEventListener("click", () => applyPreset(PRESETS[btn.dataset.preset]));
+}
+applyPreset(PRESETS.tokuyou);
+</script>
+
+</body>
+</html>

@@ -81,6 +81,34 @@ Check 'C5 未公開なら見出しは停止日数を出す'                   $t
 $h5 = Get-NoticeHeadline -PendingCount 5 -Published $false -Days 7 -LiveUrl '' -SinceStr ''
 Check 'C6 未公開・複数件でも件数を出す'                       $true ($h5.lead -like '*5 件*')
 
+# ── Get-LoopFailure: ループが死んだことを掲示に載せるか（2026-11-08 週次）────────
+# L1 が本命。logs\run_2026-11-03.log の実物そのもの。この日も notify_human は走って
+# トーストまで出したが、載せたのは sitemap の依頼だけで、ループが死んだことは載らなかった。
+$auth1103 = @(
+    '===== 2026-11-03 20:21:11 開始 =====',
+    'Failed to authenticate: OAuth session expired and could not be refreshed',
+    '----- 終了コード: 1 -----'
+)
+$f1 = Get-LoopFailure $auth1103
+Check 'L1 11/03 の認証切れ → auth'                     'auth' $f1.kind
+Check 'L1b 認証切れは人間に知らせる'                    $true  $f1.needs_human
+Check 'L1c 記録の行を添える'                            $true  ($f1.evidence -like '*OAuth session expired*')
+Check 'L2 正常終了 → 知らせない'                        $true  ($null -eq (Get-LoopFailure @('===== 2026-11-08 09:17:00 開始 =====', '完了', '----- 終了コード: 0 -----')))
+$lim = Get-LoopFailure @('===== 2026-09-29 09:00:00 開始 =====', "You've hit your session limit · resets 2pm", '----- 終了コード: 1 -----')
+Check 'L3 利用上限 → usage_limit'                       'usage_limit' $lim.kind
+Check 'L3b 利用上限は知らせない（待てば戻る。人間にできることが無い）' $false $lim.needs_human
+# 同じ日に2回動いた: 1回目は認証切れ、2回目は正常。最後の1回だけを見る
+$two = $auth1103 + @('===== 2026-11-03 21:00:00 開始 =====', '完了', '----- 終了コード: 0 -----')
+Check 'L4 同じログの最後の実行が正常なら知らせない'     $true  ($null -eq (Get-LoopFailure $two))
+$two2 = @('===== 2026-11-03 08:00:00 開始 =====', '完了', '----- 終了コード: 0 -----') + $auth1103
+Check 'L5 最後の実行が認証切れなら知らせる'             'auth' (Get-LoopFailure $two2).kind
+Check 'L6 週次ランナーの開始行でも区切れる'             'auth' (Get-LoopFailure (@('===== 2026-11-08 10:23:02 週次レビュー開始 =====') + $auth1103[1..2])).kind
+$oth = Get-LoopFailure @('===== 2026-11-03 20:21:11 開始 =====', 'something unexpected', '----- 終了コード: 1 -----')
+Check 'L7 見たことの無い失敗 → other・知らせない'       $false $oth.needs_human
+Check 'L8 実行エラー（catch 側）→ runner_error'         'runner_error' (Get-LoopFailure @('===== 2026-11-03 20:21:11 開始 =====', '!!! 実行エラー: claude が見つからない')).kind
+Check 'L9 空のログ → $null'                             $true  ($null -eq (Get-LoopFailure @()))
+Check 'L10 まだ終了コードが無い（実行中）→ $null'       $true  ($null -eq (Get-LoopFailure @('===== 2026-11-03 20:21:11 開始 =====', '作業中')))
+
 foreach ($f in $fails) { Write-Output $f }
 Write-Output "$pass/$total PASS"
 if ($fails.Count -gt 0) { exit 1 }

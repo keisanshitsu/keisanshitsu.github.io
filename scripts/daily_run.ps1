@@ -73,7 +73,8 @@ catch {
 # ローカルファイルである。人間が自発的に開かないかぎり依頼は1文字も届かない。
 # claude の実行後に呼ぶ（pipeline.json が最新になってから読むため）。
 # notify_human.ps1 は何が起きても exit 0 で返す。ループを止めない。
-& powershell -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'notify_human.ps1') |
+# -LogPath（2026-11-08）: claude が認証切れで死んだ日に、それを掲示とトーストの先頭に出させる。
+& powershell -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'notify_human.ps1') -LogPath $Log |
     Add-Content $Log -Encoding utf8
 
 "===== $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') 終了 =====`n" | Add-Content $Log -Encoding utf8

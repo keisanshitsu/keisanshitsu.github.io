@@ -613,6 +613,34 @@ let probeStatus = "未実行";
   }
 }
 
+// ── 3.13. 再検証の台帳の網羅（公開ツールが引く法令が台帳にあるか） ─────────
+// 2026-11-08 週次で追加。CLAUDE.md は 10/11 から「法令の根拠は公開日に facts_to_recheck にも積む」と
+// 書いているが、守られているかを機械で見る検査が無かった。11/08 の週次で突き合わせると、
+// T014 が本文で引く車庫法（337AC0000000145）が台帳に1件も無かった。
+// 見るのは「法令IDが台帳のどこかに出てくるか」だけで、条まで見ない（T022 の民法 第140・143条のように、
+// 同じ法令の別の条を別のツールが台帳に載せていると通ってしまう）。条の網羅は週次の手順で見る。
+// 誤りの向き: 見逃す側（法令名だけで e-Gov のリンクも basis の URL も無い根拠は数えられない）。
+let ledgerStatus = "未実行";
+{
+  const ledgerText = JSON.stringify(pipeline.facts_to_recheck ?? []);
+  // 法令ID: 129AC0000000089（法律）・418CO0000000379（政令）・411M50000100037（省令）の形
+  const lawIdRe = /laws\.e-gov\.go\.jp\/[^"'\s<>]*?(\d{3}(?:[A-Z]{2}\d{10}|M\d{11}))/g;
+  let checked = 0, missingCount = 0;
+  for (const t of (pipeline.tools ?? []).filter((x) => x.published_url && x.path)) {
+    const page = join(ROOT, t.path, "index.html");
+    const text = (existsSync(page) ? readFileSync(page, "utf8") : "") + JSON.stringify(t.basis ?? []);
+    const ids = [...new Set([...text.matchAll(lawIdRe)].map((m) => m[1]))];
+    checked += ids.length;
+    for (const id of ids) {
+      if (!ledgerText.includes(id)) {
+        missingCount++;
+        err(`${t.path}index.html`, `${t.id} が引く法令 ${id} が facts_to_recheck に無い（公開日に台帳へ積む規則・CLAUDE.md 絶対原則）`);
+      }
+    }
+  }
+  ledgerStatus = missingCount ? `台帳に無い法令 ${missingCount}件` : `法令ID ${checked}件すべて台帳にあり`;
+}
+
 // ── 4. 実レンダリング検証（インストール済み Chrome / Edge を直接操作） ──
 // 2026-10-01 置き換え。旧実装は puppeteer 前提で、node_modules を作らない方針のため
 // 一度も実行されなかった（6本すべて静的検査のみで公開）。render_check.mjs は依存ゼロ。
@@ -666,6 +694,7 @@ console.log(`インフラ検査: notify_human.ps1 — ${notifyStatus}`);
 console.log(`インフラ検査: submit_indexnow.mjs — ${indexnowStatus}`);
 console.log(`インフラ検査: probe_index.mjs — ${probeStatus}`);
 console.log(`人間キューの整合: SETUP_HUMAN.md — ${queueStatus}`);
+console.log(`再検証の台帳の網羅: facts_to_recheck — ${ledgerStatus}`);
 console.log(`状態ファイルの整合: state/pipeline.json — ${stateStatus}`);
 console.log(`「公開済み」の実体: origin/main と突き合わせ — ${publishStatus}`);
 console.log(`サイト内の到達性: トップ＋sitemap と突き合わせ — ${orphanStatus}`);

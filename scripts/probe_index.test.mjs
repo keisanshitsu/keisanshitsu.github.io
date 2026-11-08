@@ -10,7 +10,7 @@
 import {
   extractResultUrls, normalizeHost, hostsOf, containsHost, verdict, isQueryUsable, PROVES,
   summarizeHistory, parseHistory, shouldRetry, ourHostUrls, negControlTested,
-  pickRotatingTool, extractTitle, normalizeUrl, toolPageVerdict,
+  pickRotatingTool, extractTitle, normalizeUrl, toolPageVerdict, usableHostRows,
 } from "./probe_index.mjs";
 
 const results = [];
@@ -137,21 +137,45 @@ const TOOLS = [
   { id: "T001", path: "docs/tools/x/" }, // 未公開（published_url なし）
   { id: "T004", path: "docs/tools/c/", published_url: "https://keisanshitsu.github.io/tools/c/" },
 ];
-eq("P1 同じ日は同じツール",
-  pickRotatingTool(TOOLS, "2026-11-02").id, pickRotatingTool(TOOLS, "2026-11-02").id);
-eq("P2 連続3日で公開済み3本を1回ずつ引く",
-  ["2026-11-02", "2026-11-03", "2026-11-04"].map((d) => pickRotatingTool(TOOLS, d).id).sort(),
-  ["T002", "T003", "T004"]);
-eq("P3 未公開のツールは引かない",
-  Array.from({ length: 6 }, (_, i) => pickRotatingTool(TOOLS, `2026-11-${String(i + 1).padStart(2, "0")}`).id)
-    .includes("T001"), false);
-eq("P4 入力の並び順に依存しない（id 順）",
-  pickRotatingTool([...TOOLS].reverse(), "2026-11-05").id, pickRotatingTool(TOOLS, "2026-11-05").id);
-eq("P5 公開済みが0本なら null", pickRotatingTool([{ id: "T001", path: "x" }], "2026-11-01"), null);
-eq("P6 壊れた日付なら null", pickRotatingTool(TOOLS, "not-a-date"), null);
-eq("P7 月末をまたいでも欠けない（10/31→11/01→11/02）",
-  ["2026-10-31", "2026-11-01", "2026-11-02"].map((d) => pickRotatingTool(TOOLS, d).id).sort(),
-  ["T002", "T003", "T004"]);
+// 2026-11-08 週次: 日付ではなく履歴で選ぶ（最後に測れた日がいちばん古いもの）。
+const probed = (id, at, found = true) => ({ ran_at: at, tool_probe: { id, http: 200, found_tool_page: found } });
+// 履歴に1回ずつ積みながら n 回選ぶ。本数が途中で増える（add）場合も再現する
+const simulate = (n, add = {}) => {
+  const hist = [];
+  let tools = [...TOOLS];
+  const picked = [];
+  for (let i = 0; i < n; i++) {
+    if (add[i]) tools = [...tools, add[i]];
+    const t = pickRotatingTool(tools, hist);
+    picked.push(t.id);
+    hist.push(probed(t.id, new Date(Date.UTC(2026, 10, 2 + i)).toISOString()));
+  }
+  return picked;
+};
+eq("P1 同じ履歴なら同じツール（決定的）",
+  pickRotatingTool(TOOLS, [probed("T002", "2026-11-02T00:00:00Z")]).id,
+  pickRotatingTool(TOOLS, [probed("T002", "2026-11-02T00:00:00Z")]).id);
+eq("P2 履歴が空なら公開済みの最小 id", pickRotatingTool(TOOLS, []).id, "T002");
+eq("P3 一度も測れていないものを先に引く",
+  pickRotatingTool(TOOLS, [probed("T002", "2026-11-02T00:00:00Z")]).id, "T003");
+eq("P4 全部測ったら、最後に測れた日がいちばん古いもの",
+  pickRotatingTool(TOOLS, [probed("T003", "2026-11-02T00:00:00Z"), probed("T002", "2026-11-03T00:00:00Z"),
+    probed("T004", "2026-11-04T00:00:00Z")]).id, "T003");
+eq("P5 連続3回で公開済み3本を1回ずつ引く", simulate(3).sort(), ["T002", "T003", "T004"]);
+eq("P6 本数が途中で増えても一巡するまで重複しない（旧版は日付 % 本数で飛んだ・11/02〜11/08 の実例）",
+  simulate(4, { 1: { id: "T005", path: "docs/tools/d/", published_url: "https://keisanshitsu.github.io/tools/d/" } }).sort(),
+  ["T002", "T003", "T004", "T005"]);
+eq("P7 202 で測れなかった回（null）は引いたことにしない",
+  pickRotatingTool(TOOLS, [probed("T002", "2026-11-02T00:00:00Z", null)]).id, "T002");
+eq("P8 未公開のツールは引かない", simulate(6).includes("T001"), false);
+eq("P9 入力の並び順に依存しない（id 順）",
+  pickRotatingTool([...TOOLS].reverse(), [probed("T002", "2026-11-02T00:00:00Z")]).id, "T003");
+eq("P10 公開済みが0本なら null", pickRotatingTool([{ id: "T001", path: "x" }], []), null);
+eq("P12 2回測ったツールは新しいほうの日で比べる",
+  pickRotatingTool(TOOLS, [probed("T002", "2026-11-01T00:00:00Z"), probed("T003", "2026-11-03T00:00:00Z"),
+    probed("T004", "2026-11-04T00:00:00Z"), probed("T002", "2026-11-05T00:00:00Z")]).id, "T003");
+eq("P11 tool_probe の無い行・壊れた日時は無視する",
+  pickRotatingTool(TOOLS, [{ ran_at: "2026-11-01T00:00:00Z", state: "found" }, probed("T002", "not-a-date")]).id, "T002");
 
 eq("T1 <title> を取り出す", extractTitle("<head><title>壁紙の計算 — 巾数</title></head>"), "壁紙の計算 — 巾数");
 eq("T2 &amp; を戻す", extractTitle("<title>A &amp; B</title>"), "A & B");
@@ -174,6 +198,27 @@ eq("V5 当ホストが1件も無ければ false",
   toolPageVerdict({ http: 200, result_count: 10, our_urls: [] }, toolUrl), false);
 eq("V6 別のツールのページが出ても、そのツールの found にしない",
   toolPageVerdict({ http: 200, result_count: 10, our_urls: ["https://keisanshitsu.github.io/tools/b/"] }, toolUrl), false);
+// 2026-11-08 週次: 出なかった（false）は陽性対照が通った日だけ。出た（true）は対照に依らない
+eq("V7 陽性対照が落ちた日に出なければ null（false にしない）",
+  toolPageVerdict({ http: 200, result_count: 10, our_urls: [] }, toolUrl, false), null);
+eq("V8 陽性対照が落ちた日でも、出れば true",
+  toolPageVerdict({ http: 200, result_count: 10, our_urls: [toolUrl] }, toolUrl, false), true);
+eq("V9 陽性対照が通った日に出なければ false",
+  toolPageVerdict({ http: 200, result_count: 10, our_urls: [] }, toolUrl, true), false);
+
+// ホスト単位の判定にツールのクエリを数えない（タイトルで出ないことはホスト未索引の証拠にならない）
+const rowsH = [
+  { query: "フェンスの計算", http: 200, result_count: 10 },
+  { query: "keisanshitsu.github.io", http: 202, result_count: 0 },
+];
+eq("H1 ツールのクエリだけ成立した日は、ホスト単位では0本（not_found を言わない）",
+  usableHostRows(rowsH, "フェンスの計算").length, 0);
+eq("H2 その日の verdict は not_found ではない",
+  verdict({ posControlFound: true, negControlFound: false, ourFound: false,
+    usableQueries: usableHostRows(rowsH, "フェンスの計算").length }).state, "detector_broken");
+eq("H3 ツールを引かない日はすべて数える", usableHostRows(rowsH, undefined).length, 1);
+eq("H4 ホスト名のクエリが成立すれば数える",
+  usableHostRows([...rowsH, { query: "keisanshitsu.github.io", http: 200, result_count: 3 }], "フェンスの計算").length, 1);
 
 const pass = results.filter((r) => r.ok).length;
 for (const r of results.filter((r) => !r.ok)) {

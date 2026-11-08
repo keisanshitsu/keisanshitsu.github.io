@@ -51,6 +51,14 @@
 #   全体を try/catch で包み、常に exit 0 で返す。通知は本業ではない。
 #
 # 手動で試すとき: powershell -ExecutionPolicy Bypass -File scripts\notify_human.ps1
+#
+# -LogPath（2026-11-08 週次で追加）: ランナーが自分のログを渡す。そのログから、今回の
+#   claude の実行が死んだか・人間の操作で直るか（認証切れ）を読み、直るなら掲示の先頭に出す。
+#   9/04 と 11/03・11/04 の認証切れでループは丸ごと止まり、その事実は logs\ にしか出なかった。
+#   一方このスクリプトは、claude が死んだ日も毎回走ってトーストまで出していた——
+#   経路はあったのに、載せる中身を渡していなかった。
+
+param([string]$LogPath = '')
 
 $ErrorActionPreference = 'Continue'
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -178,6 +186,51 @@ function Get-WalStamp {
     try { return (Get-Item $wal).LastWriteTime } catch { return $null }
 }
 
+function Get-LoopFailure {
+    # ランナーのログ（その日の run_*.log / weekly_*.log）から、**最後の1回**の claude 実行が
+    # 死んだかを読む。1日のログに複数回の実行が入ることがあるので、最後の「開始」行より後だけを見る。
+    #   返り値: $null（正常終了・または判定材料が無い）／
+    #           { exit_code; kind = auth|usage_limit|runner_error|other; needs_human; evidence }
+    # 人間に知らせるのは needs_human（＝認証切れ）だけ。利用上限は待てば戻るので、
+    # 知らせても人間にできることが無い。できることの無い通知は雑音になり、本命の依頼まで読まれなくなる。
+    # 誤りの向き: 見たことの無い文言の失敗は other（知らせない）に倒れる。知らせすぎて
+    # 掲示を雑音にするより、見逃して翌日の起動時チェック（logs\ を読む）で拾うほうを選んだ。
+    param([string[]]$Lines)
+    if (-not $Lines -or $Lines.Count -eq 0) { return $null }
+    $start = -1
+    for ($i = $Lines.Count - 1; $i -ge 0; $i--) {
+        if ($Lines[$i] -match '^===== .*開始 =====\s*$') { $start = $i; break }
+    }
+    $run = if ($start -ge 0) { @($Lines[($start + 1)..($Lines.Count - 1)]) } else { @($Lines) }
+    if ($run.Count -eq 0) { return $null }
+
+    $code = $null
+    foreach ($l in $run) { if ($l -match '^----- 終了コード: (-?\d+) -----') { $code = [int]$Matches[1] } }
+    $runnerError = @($run | Where-Object { $_ -match '^!!! 実行エラー' }) | Select-Object -First 1
+
+    if ($null -eq $code -and -not $runnerError) { return $null }
+    if ($code -eq 0 -and -not $runnerError) { return $null }
+
+    $auth  = @($run | Where-Object { $_ -match 'OAuth session expired|Failed to authenticate|Please run /login|Invalid API key|not logged in' }) | Select-Object -First 1
+    $limit = @($run | Where-Object { $_ -match 'session limit|usage limit|weekly limit|hit your .*limit|Rate limit' }) | Select-Object -First 1
+
+    $kind = 'other'; $evidence = $null
+    if ($auth)            { $kind = 'auth';         $evidence = $auth }
+    elseif ($limit)       { $kind = 'usage_limit';  $evidence = $limit }
+    elseif ($runnerError) { $kind = 'runner_error'; $evidence = $runnerError }
+    else {
+        $evidence = @($run | Where-Object { $_ -and $_ -notmatch '^----- 終了コード' }) | Select-Object -Last 1
+    }
+    if ($evidence -and $evidence.Length -gt 200) { $evidence = $evidence.Substring(0, 200) }
+
+    return [pscustomobject]@{
+        exit_code   = $code
+        kind        = $kind
+        needs_human = ($kind -eq 'auth')
+        evidence    = $evidence
+    }
+}
+
 # テストから dot-source するときは本体を動かさない（掲示を書き換えないため）。
 # 判定関数だけを読み込みたいので、ここで抜ける。exit ではなく return にすること——
 # dot-source 中の exit は呼び出し側のセッションごと落とす。
@@ -187,6 +240,16 @@ try {
     if (-not (Test-Path $Pipeline)) { "pipeline.json が無いので通知しない"; exit 0 }
 
     $p = Get-Content $Pipeline -Raw -Encoding UTF8 | ConvertFrom-Json
+
+    # ── -1. 今回の claude の実行が死んだか（2026-11-08 週次）─────────────────
+    $loopFailure = $null
+    if ($LogPath -and (Test-Path $LogPath)) {
+        try { $loopFailure = Get-LoopFailure @(Get-Content $LogPath -Encoding UTF8) } catch { $loopFailure = $null }
+    }
+    if ($loopFailure) {
+        "今回の自動実行は異常終了（終了コード $($loopFailure.exit_code)・種類 $($loopFailure.kind)・人間の操作で直る=$($loopFailure.needs_human)）"
+    }
+    $authFail = [bool]($loopFailure -and $loopFailure.needs_human)
 
     # ── 0. 前回置いた掲示が読まれたかを、**上書きする前に**判定する ──────────
     $prev = $null
@@ -259,7 +322,7 @@ try {
 
     # ── 1. 未完了の人間タスクを取る ──────────────────────────────────────
     $pending = @($p.blocked_on_human | Where-Object { $_.status -eq 'pending' })
-    if ($pending.Count -eq 0) {
+    if ($pending.Count -eq 0 -and -not $authFail) {
         foreach ($f in @($NoteProject, $NoteDesktop)) {
             if ($f -and (Test-Path $f)) { Remove-Item $f -Force -ErrorAction SilentlyContinue }
         }
@@ -274,7 +337,12 @@ try {
     }
 
     $top = $pending | Where-Object { $_.is_now_the_recommended_unblock -eq $true } | Select-Object -First 1
-    if ($null -eq $top) { $top = $pending[0] }
+    if ($null -eq $top -and $pending.Count -gt 0) { $top = $pending[0] }
+    if ($null -eq $top) {
+        # 人間タスクは無いが、認証切れでループが死んでいる（上の分岐で抜けなかった＝$authFail）
+        $top = [pscustomobject]@{ id = 'LOGIN'; what = 'claude にログインし直す（自動実行のログインが切れています）'
+                                  human_minutes = 1; cost_jpy = 0; url = $null; why_human_only = 'ログインは本人の操作が要るため' }
+    }
 
     # 経過日数は「起票日から今日まで」。前回実行からの差ではない
     # （日次ループは日次で動いていないため。CLAUDE.md 環境メモ参照）。
@@ -304,6 +372,21 @@ try {
 
     $body = "{0}`n所要 {1}{2}。デスクトップの「★くらし計算室 いま必要な作業.txt」に手順があります" `
             -f $top.what, $minutes, $cost_s
+
+    # 認証切れでループが死んだ日は、見出しとトーストをそれに差し替え、掲示の先頭に直し方を置く。
+    # ループが動かなければ他の依頼が片づいても先へ進めないので、こちらを先に出す。
+    $failBlock = ''
+    if ($authFail) {
+        $title = 'くらし計算室 — 自動実行が止まっています（ログインが切れました）'
+        $body  = "ターミナルで claude を起動し、ログインし直してください（1分）。デスクトップの「★くらし計算室 いま必要な作業.txt」に手順があります"
+        $failBlock = @"
+■ 先にこちら: 自動実行が止まっています
+  今回（$(Get-Date -Format 'yyyy-MM-dd HH:mm')）の自動実行は、ログインが切れていて動きませんでした。
+  記録: $($loopFailure.evidence)
+  直し方: PowerShell などのターミナルで claude と入力して起動し、表示に従ってログインし直してください（1分）。
+  終わったら閉じて構いません。次の自動実行から元に戻ります。
+"@ + "`n`n"
+    }
 
     # 空の項目は行ごと出さない。「URL  : 」のような空欄は、書いたつもりで
     # 何も伝えていない状態になる（2026-09-09 に実際に出力してしまった）。
@@ -338,7 +421,7 @@ try {
     $note = @"
 $title
 
-$lead
+$failBlock$lead
 
   [$($top.id)] $($top.what)
 
@@ -443,6 +526,7 @@ $restBlock
         task_ids     = @($pending | ForEach-Object { $_.id })
         pending_count = $pending.Count
         elapsed_days = $days
+        loop_failure = $loopFailure
         targets      = $targets
         toast        = $toast
         history      = $history

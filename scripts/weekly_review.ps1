@@ -58,7 +58,7 @@ catch {
 }
 
 # ── 人間への通知（2026-09-06 追加。daily_run.ps1 と同じ理由）───────────
-& powershell -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'notify_human.ps1') |
+& powershell -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'notify_human.ps1') -LogPath $Log |
     Add-Content $Log -Encoding utf8
 
 "===== $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') 週次レビュー終了 =====`n" | Add-Content $Log -Encoding utf8

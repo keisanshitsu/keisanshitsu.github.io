@@ -196,17 +196,32 @@ export function shouldRetry(status) {
 // 10/30 の週次で気づいて handoff に置いたが、日次は毎回 #8 が取るので3回持ち越された。
 // 全ツールを毎日引くと DDG の流量制限（202）を自分で招くので、日付で1本ずつ回す。
 
-// 公開済みのツールを id 順に並べ、日付（YYYY-MM-DD）で1本選ぶ。
-// 同じ日は同じツール、連続 n 日で n 本すべてを1回ずつ引く。
-export function pickRotatingTool(tools, ymd) {
+// 公開済みのツールのうち、最後に測れた日がいちばん古いものを選ぶ
+// （一度も測れていないものが最優先・同点は id 順）。
+// なぜ（2026-11-08 週次）: 旧版は「日付 % 本数」で選んでいた。本数がほぼ毎日1本ずつ増えるので
+// 割る数が毎日変わり、11/02〜11/08 の5回は T004→T010→T011→T018→T007 と飛んだ。
+// 「連続 n 日で n 本を1回ずつ」は本数が変わらず毎日動くときしか成り立たなかった。
+// 履歴から選べば、本数が増えても PC が止まって日が飛んでも、一巡するまで同じツールを引かない。
+// 202 で測れなかった回（found_tool_page が null）は引いたことにしない。
+export function pickRotatingTool(tools, history = []) {
   const list = (tools || [])
     .filter((x) => x?.published_url && x?.path)
     .slice()
     .sort((a, b) => String(a.id).localeCompare(String(b.id)));
   if (list.length === 0) return null;
-  const day = Math.floor(Date.parse(`${ymd}T00:00:00Z`) / 86400000);
-  if (!Number.isFinite(day)) return null;
-  return list[((day % list.length) + list.length) % list.length];
+  const last = new Map();
+  for (const row of history || []) {
+    const tp = row?.tool_probe;
+    const at = Date.parse(row?.ran_at);
+    if (!tp?.id || typeof tp.found_tool_page !== "boolean" || !Number.isFinite(at)) continue;
+    last.set(tp.id, Math.max(last.get(tp.id) ?? -Infinity, at));
+  }
+  let best = null;
+  for (const t of list) {
+    const at = last.has(t.id) ? last.get(t.id) : -Infinity;
+    if (best === null || at < best.at) best = { t, at };
+  }
+  return best.t;
 }
 
 export function extractTitle(html) {
@@ -231,11 +246,23 @@ export function normalizeUrl(u) {
 //   false … クエリは成立したが出なかった（⚠ 1ページ目に無いだけかもしれない＝未索引の証明ではない）
 //   null  … クエリが成立しなかった（202・0件）。測れなかった日を false にしない
 // トップだけが出た日は false である。トップの found をツールの found に数えない。
-export function toolPageVerdict(row, toolUrl) {
+// 出た（true）は対照が無くても肯定の証拠になる——未索引のページが自分のタイトルで出る理由は無い。
+// 出なかった（false）は陽性対照が通った日だけ言う（2026-11-08 週次）。対照が落ちた日は、
+// 検索経路がクエリと無関係の結果を返していた可能性を消せないので null にする。
+export function toolPageVerdict(row, toolUrl, posControlFound = true) {
   if (!isQueryUsable(row)) return null;
   const want = normalizeUrl(toolUrl);
   if (!want) return null;
-  return (row.our_urls || []).some((u) => normalizeUrl(u) === want);
+  if ((row.our_urls || []).some((u) => normalizeUrl(u) === want)) return true;
+  return posControlFound ? false : null;
+}
+
+// ホスト単位の判定（verdict の usableQueries）に数えてよいクエリ。
+// 「見つからない」は、ホスト名で引いたクエリが成立した日だけ言う（2026-11-08 週次）。
+// ツールのタイトルで当ホストが出なかったことは、ホストが索引されていないことを意味しない。
+// （当ホストが出たことは、どのクエリでも found の根拠になる——ourFound は全クエリで見る）
+export function usableHostRows(rows, toolQuery) {
+  return (rows || []).filter((r) => isQueryUsable(r) && (!toolQuery || r.query !== toolQuery));
 }
 
 // ── 副作用のある部分 ───────────────────────────────────────────────
@@ -276,26 +303,43 @@ async function main() {
   // --ours-first は順序の切り分け用（10/04 追補）。当サイトのクエリは常に3本目で、
   // 対照 200・当サイトだけ 202 が続いた。順序（連続リクエストの流量制限）が原因かを見る。
   const oursFirst = process.argv.includes("--ours-first");
-  const order = oursFirst ? "ours,pos,neg" : "pos,neg,ours";
+  const historyPath = join(ROOT, "state", "probe_history.jsonl");
+  const pastRows = existsSync(historyPath) ? parseHistory(readFileSync(historyPath, "utf8")) : [];
 
-  // --rotate-tool: その日のツールを1本選び、ページの <title> そのままで引く（引用符は付けない。
-  // 付けると未索引の日に結果0件＝「測れなかった」になり、未索引と区別できなくなる）
+  // --rotate-tool: 最後に測れた日がいちばん古いツールを1本選び、ページの <title> そのままで引く
+  // （引用符は付けない。付けると未索引の日に結果0件＝「測れなかった」になり、未索引と区別できなくなる）
   let toolPick = null;
   if (process.argv.includes("--rotate-tool")) {
-    const tool = pickRotatingTool(pipeline.tools, new Date().toLocaleDateString("sv-SE"));
+    const tool = pickRotatingTool(pipeline.tools, pastRows);
     if (tool) {
       const title = extractTitle(readFileSync(join(ROOT, tool.path, "index.html"), "utf8"));
       if (title) toolPick = { id: tool.id, url: tool.published_url, query: title };
     }
   }
 
-  const queries = [
-    host,
-    ...(toolPick ? [toolPick.query] : []),
-    ...(process.argv.slice(2).filter((a) => !a.startsWith("--"))),
-  ];
+  const hostQueries = [host, ...(process.argv.slice(2).filter((a) => !a.startsWith("--")))];
+  // 1回の実行で DuckDuckGo が答えるのは最初の2本まで（2026-11-08 週次で履歴を並べて確認）。
+  // 10/10〜11/08 の17回、1・2本目は毎回 200、3本目以降は毎回 202 だった。
+  // 11/01 にツールのクエリを2本目に足したことで陽性対照が3本目に押し出され、
+  // 11/02 以降の5回はすべて陽性対照 202＝detector_broken になっていた（日次は「今日も 202」と5回書いて原因に気づかなかった）。
+  // 20秒後の引き直しも 10/03・10/04 に2回とも 202 で、11/08 には日次の約1時間後に1本目から 202 が返った——
+  // 間隔を空けて解ける制限ではないので、答えの欲しいクエリを1・2本目に置く。
+  // ホスト名のクエリは 10/19 以降すべて found で、答えはもう分かっている。今いちばん知りたいのは
+  // ツールのページなので、--rotate-tool のときは「ツール → 陽性対照 → ホスト名 → 陰性対照」の順にする。
+  let firstQueries, laterQueries, lastQueries;
+  if (oursFirst && toolPick) { firstQueries = [toolPick.query]; laterQueries = hostQueries; lastQueries = []; }
+  else if (oursFirst) { firstQueries = hostQueries; laterQueries = []; lastQueries = []; }
+  else { firstQueries = []; laterQueries = []; lastQueries = [...hostQueries, ...(toolPick ? [toolPick.query] : [])]; }
+  const order = [
+    firstQueries.length ? (oursFirst && toolPick ? "tool" : "ours") : null,
+    "pos",
+    laterQueries.length ? "ours" : null,
+    "neg",
+    lastQueries.length ? "ours" : null,
+  ].filter(Boolean).join(",");
+
   const ours = [];
-  const runOurs = async () => {
+  const runOurs = async (queries) => {
     for (const q of queries) {
       let r = await search(q);
       let retried = false;
@@ -309,12 +353,13 @@ async function main() {
     }
   };
 
-  if (oursFirst) await runOurs();
+  await runOurs(firstQueries);
   const pos = await search(POS_CONTROL_QUERY);
   await sleep(4000);
+  await runOurs(laterQueries);
   const neg = await search(NEG_CONTROL_QUERY);
   await sleep(4000);
-  if (!oursFirst) await runOurs();
+  await runOurs(lastQueries);
 
   const posFound = containsHost(pos.urls, POS_CONTROL_HOST);
   const negFound = containsHost(neg.urls, NEG_CONTROL_HOST);
@@ -326,13 +371,15 @@ async function main() {
   const ourUrls = [...new Set(queryRows.flatMap((r) => r.our_urls))];
   const negTested = negControlTested(neg.status);
   const usable = queryRows.filter(isQueryUsable);
+  const usableHost = usableHostRows(queryRows, toolPick?.query);
   let toolProbe = null;
   if (toolPick) {
     const row = queryRows.find((r) => r.query === toolPick.query);
     toolProbe = {
       id: toolPick.id, url: toolPick.url, query: toolPick.query,
       http: row?.http ?? null, usable: row ? isQueryUsable(row) : false,
-      found_tool_page: row ? toolPageVerdict(row, toolPick.url) : null,
+      pos_control_found: posFound,
+      found_tool_page: row ? toolPageVerdict(row, toolPick.url, posFound) : null,
     };
   }
 
@@ -349,15 +396,15 @@ async function main() {
     tool_probe: toolProbe,
     queries: queryRows.map((r) => ({ ...r, usable: isQueryUsable(r) })),
     usable_query_count: usable.length,
+    usable_host_query_count: usableHost.length,
     verdict: verdict({
       posControlFound: posFound, negControlFound: negFound, ourFound,
-      usableQueries: usable.length,
+      usableQueries: usableHost.length,
     }),
     ...PROVES,
   };
 
   // --no-record はテストや試し打ち用。既定では毎回積む（積まない日を作ると頻度が歪む）
-  const historyPath = join(ROOT, "state", "probe_history.jsonl");
   if (!process.argv.includes("--no-record")) {
     appendFileSync(historyPath, JSON.stringify({
       ran_at: result.ran_at,
@@ -369,7 +416,8 @@ async function main() {
       our_urls: ourUrls,
       retried: queryRows.some((r) => r.retried),
       usable_query_count: usable.length,
-      ...(toolProbe ? { tool_probe: { id: toolProbe.id, http: toolProbe.http, found_tool_page: toolProbe.found_tool_page } } : {}),
+      usable_host_query_count: usableHost.length,
+      ...(toolProbe ? { tool_probe: { id: toolProbe.id, http: toolProbe.http, pos_control_found: posFound, found_tool_page: toolProbe.found_tool_page } } : {}),
     }) + "\n", "utf8");
   }
   result.history = summarizeHistory(

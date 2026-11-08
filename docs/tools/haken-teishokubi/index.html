@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>派遣の3年ルール 抵触日の計算 — いつまで同じ職場で働けるかを条文どおりに</title>
+<meta name="description" content="派遣で働き始めた日を入れると、労働者派遣法の3年ルール（個人単位 第35条の3・事業所単位 第40条の2）の抵触日と、同じ課で最後に働ける日を出します。事業所単位の延長、意見聴取の期限、3か月を超える空白で数え直しになるか、無期雇用・60歳以上などの例外にも対応します。">
+<link rel="canonical" href="https://keisanshitsu.github.io/tools/haken-teishokubi/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="くらしの計算室">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="派遣の3年ルール 抵触日の計算 — いつまで同じ職場で働けるかを条文どおりに">
+<meta property="og:description" content="働き始めた日から、派遣の3年ルールの抵触日と最後に働ける日を計算。事業所単位の延長・意見聴取の期限・3か月の空白での数え直しにも対応します。">
+<meta property="og:url" content="https://keisanshitsu.github.io/tools/haken-teishokubi/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "派遣の3年ルール（抵触日）の計算",
+  "description": "派遣で働き始めた日と、事業所が派遣を受け入れ始めた日から、労働者派遣法の個人単位・事業所単位の期間制限の抵触日、延長の意見聴取の期限、3か月を超える空白で数え直しになるかを計算します。",
+  "url": "https://keisanshitsu.github.io/tools/haken-teishokubi/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (web browser)",
+  "inLanguage": "ja",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "くらしの計算室",
+    "url": "https://keisanshitsu.github.io/"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1b19; --muted:#6b6862;
+    --line:#e5e2dc; --card:#fff; --accent:#0f6cbd; --accent-soft:#eef5fc;
+    --ok:#1f7a45; --ok-soft:#eaf6ef; --ng:#b3261e; --ng-soft:#fdeeed;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#17181a; --fg:#e9e8e5; --muted:#a3a09a;
+           --line:#2e3033; --card:#1f2123; --accent:#6cb6f5; --accent-soft:#1b2733;
+           --ok:#5fd08a; --ok-soft:#16261d; --ng:#ff8a80; --ng-soft:#2a1a19; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  header{border-bottom:1px solid var(--line);padding:16px 0}
+  .site{font-size:.85rem;color:var(--muted);text-decoration:none}
+  h1{font-size:1.35rem;margin:28px 0 6px;line-height:1.5}
+  .sub{color:var(--muted);font-size:.92rem;margin:0 0 28px}
+  h2{font-size:1.05rem;margin:36px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
+  h3{font-size:.95rem;margin:22px 0 6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .card h3{margin:18px 0 8px}
+  .card h3:first-child{margin-top:0}
+  label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+  input,select{width:100%;min-width:0;padding:9px 10px;font-size:1rem;color:var(--fg);
+    background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--fg);padding:9px 14px}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+  .hint{font-size:.78rem;color:var(--muted);margin:4px 0 0}
+  .result{margin-top:20px;border:1px solid var(--accent);background:var(--accent-soft);
+    border-radius:12px;padding:18px}
+  .big{font-size:1.9rem;font-weight:700;color:var(--accent);line-height:1.25;margin:2px 0 0}
+  .big small{font-size:1rem;font-weight:600;margin-left:4px}
+  .sub2{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+  .checks{list-style:none;padding:0;margin:14px 0 0}
+  .checks li{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin-bottom:8px}
+  .checks .hd{font-size:.9rem;font-weight:600;margin:0}
+  .checks .dt{font-size:.82rem;color:var(--muted);margin:3px 0 0}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;border-radius:5px;
+    padding:1px 7px;margin-right:7px;vertical-align:2px}
+  .tag.ok{background:var(--ok-soft);color:var(--ok)}
+  .tag.ng{background:var(--ng-soft);color:var(--ng)}
+  .tag.info{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+  .tablewrap{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;white-space:nowrap}
+  th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:left}
+  th{color:var(--muted);font-weight:600}
+  .cap{font-size:.85rem;font-weight:600;margin:18px 0 0}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:14px 16px;border-radius:0 8px 8px 0;font-size:.88rem;margin:24px 0}
+  .law{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;margin:14px 0;font-size:.86rem}
+  .law p{margin:0 0 6px;font-size:.86rem}
+  .law p:last-child{margin-bottom:0}
+  p,li{font-size:.94rem}
+  ul{padding-left:1.2em}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src li{font-size:.85rem;overflow-wrap:anywhere}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:20px 0 40px;
+    color:var(--muted);font-size:.85rem}
+  footer a{color:var(--muted);margin-right:14px}
+  a{color:var(--accent)}
+  @media (max-width:400px){
+    .big{font-size:1.55rem}
+  }
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><a class="site" href="../../">← くらしの計算室</a></div></header>
+
+<main class="wrap">
+
+<h1>派遣の3年ルール（抵触日）の計算</h1>
+<p class="sub">
+  派遣で働き始めた日を入れると、<strong>同じ課で最後に働ける日</strong>と<strong>抵触日</strong>（期間制限に抵触することとなる最初の日）を出します。
+  労働者派遣法の<strong>個人単位（第35条の3）</strong>と<strong>事業所単位（第40条の2）</strong>の両方を数え、早く来るほうを示します。
+  事業所単位の延長と意見聴取の期限、前の派遣との空白が3か月を超えて数え直しになるかも確かめられます。
+</p>
+
+<div class="card">
+  <h3>あなたの派遣の形</h3>
+  <div>
+    <label for="kind">派遣会社との雇用契約など</label>
+    <select id="kind">
+      <option value="fixed" selected>有期雇用の派遣（派遣会社との契約に期間がある）</option>
+      <option value="indefinite">無期雇用の派遣（派遣会社に期間の定めなく雇われている）</option>
+      <option value="age60">60歳以上</option>
+      <option value="project">有期プロジェクトの業務</option>
+      <option value="fewdays">日数限定の業務</option>
+      <option value="leave">産休・育休・介護休業などの代わり</option>
+    </select>
+  </div>
+
+  <h3>個人単位（同じ課で3年まで）</h3>
+  <div class="grid">
+    <div>
+      <label for="personStart">いまの課（組織単位）で派遣として働き始めた日</label>
+      <input id="personStart" type="date" min="2015-09-30" max="2100-12-31" value="">
+      <p class="hint">派遣会社が変わっていても、同じ課で続けて働いているなら最初の日です。</p>
+    </div>
+  </div>
+
+  <h3>同じ課での前の派遣（任意）</h3>
+  <div class="grid">
+    <div><label for="prevStart">前の派遣を始めた日</label><input id="prevStart" type="date" min="2015-09-30" max="2100-12-31" value=""></div>
+    <div><label for="prevEnd">前の派遣が終わった日</label><input id="prevEnd" type="date" min="2015-09-30" max="2100-12-31" value=""></div>
+  </div>
+  <p class="hint">いちど途切れてから同じ課に戻ったときに入れます。空白が3か月を超えていなければ、前の派遣から続けて数えます。</p>
+
+  <h3>事業所単位（派遣先の事業所で3年まで・任意）</h3>
+  <div class="grid">
+    <div>
+      <label for="siteStart">派遣先の事業所が派遣を受け入れ始めた日</label>
+      <input id="siteStart" type="date" min="2015-09-30" max="2100-12-31" value="">
+      <p class="hint">分からなければ空のままで構いません。就業条件明示書に書かれた事業所単位の抵触日と見比べてください。</p>
+    </div>
+    <div>
+      <label for="extensions">事業所が延長した回数（1回3年）</label>
+      <select id="extensions">
+        <option value="0" selected>延長していない</option>
+        <option value="1">1回</option>
+        <option value="2">2回</option>
+        <option value="3">3回</option>
+        <option value="4">4回</option>
+        <option value="5">5回</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button type="button" data-preset="basic">2026年4月1日に始めた例</button>
+    <button type="button" data-preset="site">事業所の抵触日が先に来る例</button>
+    <button type="button" data-preset="gap">3か月の空白をはさんだ例</button>
+    <button type="button" data-preset="clear">すべて消す</button>
+  </div>
+</div>
+
+<div class="result" aria-live="polite">
+  <div id="headLabel">同じ課で最後に働ける日</div>
+  <p class="big" id="headline">—</p>
+  <p class="sub2" id="summary">働き始めた日を入力してください。</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>区分</th><th>起算日</th><th>抵触日</th><th>最後に働ける日</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <ul class="checks" id="checks"></ul>
+</div>
+
+<div class="note">
+  <strong>この結果は概算です。</strong>
+  労働者派遣法の条文と厚生労働省の派遣先指針の定めを、民法の期間の数え方で日付に当てはめたものです。
+  条文や業務取扱要領には抵触日の日付の計算例が載っていないため、「開始日を1日目に数え、3年後の同じ日付が抵触日」という数え方は、このツールが民法から導いたものです。
+  <strong>組織単位（課）がどこまでかは名称ではなく実態で判断され</strong>、例外（有期プロジェクト・日数限定など）に当たるかにも条件があります。
+  <strong>正式な抵触日は、派遣会社から渡される就業条件明示書に書かれています</strong>（第34条）。
+  食い違うときや判断に迷うときは、派遣会社の担当者、都道府県労働局の需給調整事業の窓口、社会保険労務士などの専門家にご確認ください。
+</div>
+
+<h2>この計算の根拠</h2>
+
+<h3>個人単位：同じ人を同じ課で3年まで（第35条の3・第40条の3）</h3>
+<div class="law">
+  <p>派遣元事業主は、派遣先の事業所その他派遣就業の場所における組織単位ごとの業務について、三年を超える期間継続して同一の派遣労働者に係る労働者派遣（第四十条の二第一項各号のいずれかに該当するものを除く。）を行つてはならない。</p>
+  <p>（労働者派遣法 第35条の3。派遣先の側からも第40条の3 が同じことを定め、事業所単位を延長した場合も変わりません）</p>
+</div>
+<p>
+  同じ人が同じ課（組織単位）で働けるのは3年までで、<strong>個人単位には延長の手続がありません</strong>。
+  課が変われば、同じ事業所の中でも個人単位は新しく数えます。
+</p>
+
+<h3>事業所単位：派遣先の事業所で3年まで、意見聴取で延長できる（第40条の2）</h3>
+<div class="law">
+  <p>派遣先は、当該派遣先の事業所その他派遣就業の場所ごとの業務について、派遣元事業主から派遣可能期間を超える期間継続して労働者派遣の役務の提供を受けてはならない。（第1項）</p>
+  <p>前項の派遣可能期間（以下「派遣可能期間」という。）は、三年とする。（第2項）</p>
+  <p>…労働者派遣の役務の提供が開始された日（この項の規定により派遣可能期間を延長した場合にあつては、当該延長前の派遣可能期間が経過した日）以後当該事業所その他派遣就業の場所ごとの業務について第一項の規定に抵触することとなる最初の日の一月前の日までの間（次項において「意見聴取期間」という。）に、厚生労働省令で定めるところにより、三年を限り、派遣可能期間を延長することができる。（第3項）</p>
+</div>
+<p>
+  事業所単位は、その事業所が最初に派遣を受け入れた日から数えます。派遣会社が変わっても数え直しにはなりません（奈良労働局の派遣先向け資料）。
+  派遣先は、抵触日の一月前の日までに過半数労働組合等の意見を聴けば、3年を限りに延長できます。異議が出たときの説明は、抵触日の前日までです（第40条の2第5項。業務取扱要領は「事業所単位の期間制限の抵触日の前日までに」と書いています）。
+</p>
+
+<h3>3か月を超える空白で数え直し（派遣先指針 第2の14）</h3>
+<div class="law">
+  <p>派遣先は、労働者派遣の役務の提供を受けていた当該派遣先の事業所等における組織単位ごとの業務について、同一の派遣労働者に係る新たな労働者派遣の役務の提供を受ける場合には、当該新たな労働者派遣の開始と当該新たな労働者派遣の役務の受入れの直前に受け入れていた労働者派遣の終了との間の期間が３月を超えない場合には、当該派遣先は、当該新たな労働者派遣の役務の受入れの直前に受け入れていた労働者派遣から継続して労働者派遣の役務の提供を受けているものとみなすこと。</p>
+  <p>（派遣先が講ずべき措置に関する指針 第2の14(4)。事業所単位は同じ形の(3)。(5)は延長の手続を避ける目的で3か月あけて受け入れ直すことを「趣旨に反する」としています）</p>
+</div>
+<p>
+  業務取扱要領も「就業の日と次回の就業の日との間の期間が３箇月以下であれば…継続して…みなす」と書いています（第7の6(4)イ）。
+  空白が<strong>ちょうど3か月なら続けて数え</strong>、3か月を1日でも超えれば数え直しです。
+  たとえば3月31日に終わったなら、空白の3か月は4月1日〜6月30日なので、7月1日に始まれば継続、7月2日以後なら数え直しです。
+</p>
+
+<h3>例外：期間制限がかからない派遣（第40条の2第1項各号）</h3>
+<ul>
+  <li>派遣会社に無期雇用されている派遣労働者（第1号）</li>
+  <li>60歳以上の人（第2号・施行規則 第32条の4「六十歳以上の者とする。」）</li>
+  <li>事業の開始・転換・拡大・縮小・廃止のための業務で、一定の期間内に完了することが予定されているもの（第3号イ）</li>
+  <li>1か月の日数が派遣先の通常の労働者の所定労働日数に比べて相当程度少なく、厚生労働大臣の定める日数以下の業務（第3号ロ）</li>
+  <li>産前産後休業・育児休業・介護休業などをする人の業務の代わり（第4号・第5号）</li>
+</ul>
+
+<h3>日付の数え方（民法 第140条・第143条）</h3>
+<div class="law">
+  <p>日、週、月又は年によって期間を定めたときは、期間の初日は、算入しない。ただし、その期間が午前零時から始まるときは、この限りでない。（民法 第140条）</p>
+  <p>週、月又は年の初めから期間を起算しないときは、その期間は、最後の週、月又は年においてその起算日に応当する日の前日に満了する。ただし、月又は年によって期間を定めた場合において、最後の月に応当する日がないときは、その月の末日に満了する。（同 第143条第2項）</p>
+</div>
+<p>
+  派遣は開始日の午前零時から始まるので、開始日を1日目に数えます。2026年4月1日に始めたなら、3年は2029年3月31日に満了し、<strong>抵触日はその翌日の2029年4月1日</strong>です。
+  2028年2月29日に始めたときは2031年2月に29日が無いので、2月28日に満了し、抵触日は3月1日です。
+  意見聴取期間の終わり（抵触日の一月前の日）は、前の月に同じ日付が無いとき（抵触日が3月31日など）その月の末日にしています。民法にさかのぼる向きの定めが無いため、<strong>期限を早めに見る側</strong>に倒しました。
+</p>
+
+<h2>よくある質問</h2>
+
+<h3>抵触日に働いてはいけないのですか</h3>
+<p>
+  はい。抵触日は「期間制限に抵触することとなる最初の日」で、その日から同じ課（事業所単位なら事業所）で派遣として働くことはできません。
+  最後に働ける日は抵触日の前日です。抵触日以後も受け入れると、派遣先が派遣労働者に労働契約の申込みをしたものとみなされる制度があります（第40条の6）。
+</p>
+
+<h3>3年たったら、どうなりますか</h3>
+<p>
+  同じ課で3年働く見込みがあり、本人が続けて働くことを希望しているときは、派遣会社は<strong>雇用安定措置</strong>を講じなければなりません（第30条第2項・施行規則 第25条）。
+  措置には、派遣先への直接雇用の依頼、新しい派遣先の提供、派遣会社での無期雇用などがあります。1年以上の見込みなら努力義務です（第30条第1項）。
+  別の課に移る・別の派遣先に移る・派遣会社に無期雇用される（例外に当たる）などで、働き続ける道があります。
+</p>
+
+<h3>抵触日はどこに書いてありますか</h3>
+<p>
+  派遣会社は、派遣の前に、個人単位と事業所単位の両方の抵触日を本人に明示しなければなりません（第34条第1項第3号・第4号）。
+  派遣先は、派遣契約を結ぶ前に事業所単位の抵触日を派遣会社に書面などで通知します（第26条第4項）。就業条件明示書を確かめてください。
+</p>
+
+<h3>派遣会社を変えれば、また3年働けますか</h3>
+<p>
+  同じ課で続けて働くなら、派遣会社を変えても期間はつながったままです。
+  個人単位について、業務取扱要領は空白が「３箇月以下であれば…継続して同一の派遣労働者に係る労働者派遣の役務の提供を受けているものとみなす。この場合、同一の派遣労働者について、派遣元事業主が異なる場合であっても同一の派遣労働者と評価される」と書いています（第7の6(4)イ）。
+  事業所単位についても、奈良労働局の派遣先向け資料は「派遣元が変わっても、その期間に影響は受けません。（リセットされません。）」と書いています。
+</p>
+
+<h2>出典</h2>
+<ul class="src">
+  <li>労働者派遣事業の適正な運営の確保及び派遣労働者の保護等に関する法律（昭和60年法律第88号）第26条・第30条・第34条・第35条の3・第40条の2・第40条の3・第40条の6
+    <a href="https://laws.e-gov.go.jp/law/360AC0000000088" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>同法施行規則（昭和61年労働省令第20号）第25条・第32条の4
+    <a href="https://laws.e-gov.go.jp/law/361M50002000020" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>派遣先が講ずべき措置に関する指針（平成11年労働省告示第138号・最終改正 令和8年厚生労働省告示第201号）第2の14
+    <a href="https://www.mhlw.go.jp/content/11600000/001754940.pdf" rel="nofollow noopener" target="_blank">厚生労働省（PDF）</a></li>
+  <li>労働者派遣事業関係業務取扱要領 第7 派遣先の講ずべき措置等（令和8年10月1日適用版）
+    <a href="https://www.mhlw.go.jp/content/11600000/001459049.pdf" rel="nofollow noopener" target="_blank">厚生労働省（PDF）</a></li>
+  <li>奈良労働局「派遣労働者を受け入れる事業主の皆さまへ」派遣先事業主セミナー資料（2024年10月23日）
+    <a href="https://jsite.mhlw.go.jp/nara-roudoukyoku/content/contents/001989117.pdf" rel="nofollow noopener" target="_blank">奈良労働局（PDF）</a></li>
+  <li>民法（明治29年法律第89号）第140条・第143条
+    <a href="https://laws.e-gov.go.jp/law/129AC0000000089" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>条文は e-Gov 法令API で取得した現行版（労働者派遣法・施行規則は2026年10月1日施行の版）を逐語で確認しています。2027年1月・4月に施行予定の改正版でも、上の条文の本文が変わらないことを確かめています。
+    導出は<a href="./calc.js">計算コード</a>のコメントに、境界値の検証は<a href="./calc.test.mjs">テスト</a>に残してあります</li>
+</ul>
+<p class="src">最終確認日: 2026年11月8日</p>
+
+</main>
+
+<footer class="wrap">
+  <a href="../../">トップ</a>
+  <a href="../../privacy.html">プライバシーポリシー</a>
+  <a href="../../contact.html">お問い合わせ</a>
+  <p>&copy; 2026 くらしの計算室</p>
+</footer>
+
+<script type="module">
+import { calculate, fmt } from "./calc.js";
+
+const FIELDS = ["kind", "personStart", "prevStart", "prevEnd", "siteStart", "extensions"];
+const PRESETS = {
+  basic: { kind: "fixed", personStart: "2026-04-01", prevStart: "", prevEnd: "", siteStart: "", extensions: "0" },
+  site: { kind: "fixed", personStart: "2026-04-01", prevStart: "", prevEnd: "", siteStart: "2025-10-01", extensions: "0" },
+  gap: { kind: "fixed", personStart: "2026-07-01", prevStart: "2025-04-01", prevEnd: "2026-03-31", siteStart: "", extensions: "0" },
+  clear: { kind: "fixed", personStart: "", prevStart: "", prevEnd: "", siteStart: "", extensions: "0" },
+};
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const WD = ["日", "月", "火", "水", "木", "金", "土"];
+const jp = (dt) => `${dt.y}年${dt.m}月${dt.d}日（${WD[new Date(Date.UTC(dt.y, dt.m - 1, dt.d)).getUTCDay()]}）`;
+const localToday = () => {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
+};
+
+function render() {
+  const input = Object.fromEntries(FIELDS.map((f) => [f, $(f).value]));
+  const res = calculate({ ...input, extensions: Number(input.extensions), today: localToday() });
+
+  if (!res.ok) {
+    $("headLabel").textContent = "同じ課で最後に働ける日";
+    $("headline").textContent = "—";
+    $("summary").textContent = res.errors[0];
+    $("rows").innerHTML = "";
+    $("checks").innerHTML = "";
+    return;
+  }
+
+  if (res.exempt) {
+    $("headLabel").textContent = "期間制限";
+    $("headline").textContent = "対象外";
+    $("summary").textContent = `${res.label}の派遣には、3年の期間制限（個人単位・事業所単位）がかかりません（労働者派遣法 ${res.basis}）。`;
+    $("rows").innerHTML = "";
+    $("checks").innerHTML =
+      `<li><p class="hd"><span class="tag info">参考</span>例外に当たるかには条件があります</p>` +
+      `<p class="dt">有期プロジェクトは一定の期間内に完了する予定の業務、日数限定は1か月の日数が通常の労働者より相当程度少なく厚生労働大臣の定める日数以下の業務に限られます。就業条件明示書に抵触日が書かれていないかも確かめてください。</p></li>`;
+    return;
+  }
+
+  const b = res.binding;
+  $("headLabel").textContent = "同じ課で最後に働ける日";
+  $("headline").textContent = jp(b.lastDay);
+  const left = b.daysLeft > 0 ? `抵触日 ${jp(b.teishokubi)} まで あと${b.daysLeft}日。` :
+    b.daysLeft === 0 ? `今日 ${jp(b.teishokubi)} が抵触日です。` : `抵触日 ${jp(b.teishokubi)} を${-b.daysLeft}日過ぎています。`;
+  $("summary").textContent = left + (b.by === "site"
+    ? " 事業所単位の抵触日が個人単位より先に来ます（派遣先が延長の手続をすれば延びます）。"
+    : " 個人単位の抵触日です（個人単位は延長できません）。");
+
+  const rows = [];
+  rows.push(`<tr><td>個人単位（同じ課）</td><td>${fmt(res.person.start)}</td><td>${fmt(res.person.teishokubi)}</td><td>${fmt(res.person.lastDay)}</td></tr>`);
+  if (res.site) {
+    const extLabel = res.site.extensions ? `（延長${res.site.extensions}回）` : "";
+    rows.push(`<tr><td>事業所単位${extLabel}</td><td>${fmt(res.site.start)}</td><td>${fmt(res.site.teishokubi)}</td><td>${fmt(res.site.lastDay)}</td></tr>`);
+  }
+  $("rows").innerHTML = rows.join("");
+
+  const checks = [];
+  if (res.gap) {
+    checks.push(res.gap.continuous
+      ? { status: "ng", title: `前の派遣との空白は${res.gap.gapDays}日で、3か月を超えていません。前の派遣から続けて数えます`,
+          detail: `個人単位の起算日は前の派遣を始めた ${jp(res.person.start)} です。数え直しになるのは、前の派遣の終了から3か月を超えて ${jp(res.gap.earliestResetStart)} 以後に始めた場合です（派遣先指針 第2の14(4)）。` }
+      : { status: "ok", title: `前の派遣との空白は${res.gap.gapDays}日で、3か月を超えています。いまの派遣から数え直します`,
+          detail: `${jp(res.gap.lastContinuousStart)} までに始めていれば継続とみなされるところでした。なお、延長の手続を避ける目的で3か月あけて受け入れ直すことは、指針が「趣旨に反する」としています（第2の14(5)）。` });
+  }
+  if (res.site) {
+    const s = res.site;
+    checks.push({ status: "info",
+      title: `${s.extensions ? "さらに" : ""}延長するには、派遣先が ${jp(s.hearingDeadline)} までに過半数労働組合等の意見を聴く必要があります`,
+      detail: `意見聴取期間は ${fmt(s.hearingFrom)} から抵触日の一月前の日まで（第40条の2第3項）。異議が出たら抵触日の前日 ${fmt(s.explainDeadline)} までに説明が要ります（第5項）。延長は1回につき3年までです。` });
+    if (s.extensions) checks.push({ status: "info", title: `延長のたびの抵触日: ${s.chain.join(" → ")}`,
+      detail: "このツールは1回の延長を3年として数えています。3年より短く延長した場合は、派遣会社から明示された延長後の抵触日を確かめてください。" });
+  } else {
+    checks.push({ status: "info", title: "事業所単位の抵触日が先に来ることがあります",
+      detail: "派遣先の事業所が、あなたより前から派遣を受け入れていると、事業所単位の抵触日のほうが早く来ます。就業条件明示書の「事業所単位の抵触日」と見比べてください。" });
+  }
+  checks.push({ status: "info", title: "3年の見込みがあれば、派遣会社に雇用安定措置の義務があります",
+    detail: "同じ課で継続して3年働く見込みがあり、本人が続けて働くことを希望しているとき、派遣会社は派遣先への直接雇用の依頼・新しい派遣先の提供・無期雇用などの措置を講じなければなりません（第30条第2項・施行規則 第25条）。" });
+  checks.push({ status: "info", title: "課（組織単位）が変われば、個人単位は新しく数えます",
+    detail: "組織単位は名称ではなく実態で判断されます（派遣先指針 第2の14(2)）。同じ事業所の中で課を移る場合でも、事業所単位の抵触日は変わりません。" });
+  $("checks").innerHTML = checks.map((x) =>
+    `<li><p class="hd"><span class="tag ${x.status}">${{ ok: "数え直し", ng: "継続", info: "参考" }[x.status]}</span>${esc(x.title)}</p>` +
+    `<p class="dt">${esc(x.detail)}</p></li>`).join("");
+}
+
+function applyPreset(p) {
+  for (const f of FIELDS) $(f).value = p[f];
+  render();
+}
+
+for (const el of document.querySelectorAll(".card input, .card select")) {
+  el.addEventListener("input", render);
+  el.addEventListener("change", render);
+}
+for (const btn of document.querySelectorAll("[data-preset]")) {
+  btn.addEventListener("click", () => applyPreset(PRESETS[btn.dataset.preset]));
+}
+applyPreset(PRESETS.basic);
+</script>
+
+</body>
+</html>

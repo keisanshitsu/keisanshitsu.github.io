@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>障害者グループホームの人員配置基準 計算 — 世話人・生活支援員・サビ管の必要数（区分別）</title>
+<meta name="description" content="障害支援区分ごとの利用者の数から、障害者グループホーム（共同生活援助）の世話人（6対1）・生活支援員（区分3は9・4は6・5は4・6は2.5で割った数の合計）・サービス管理責任者の必要数と週の勤務延べ時間を、厚生労働省令の条文どおりに出します。日中サービス支援型・外部サービス利用型にも対応。">
+<link rel="canonical" href="https://keisanshitsu.github.io/tools/group-home-staff-ratio/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="くらしの計算室">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="障害者グループホームの人員配置基準 計算 — 世話人・生活支援員・サビ管の必要数（区分別）">
+<meta property="og:description" content="区分ごとの利用者の数から、世話人・生活支援員・サービス管理責任者の必要数（常勤換算）と週の勤務延べ時間を厚生労働省令の条文どおりに計算。配置している時間で足りるかも判定します。">
+<meta property="og:url" content="https://keisanshitsu.github.io/tools/group-home-staff-ratio/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "障害者グループホーム（共同生活援助）の人員配置基準の計算",
+  "description": "障害支援区分ごとの利用者の数から、共同生活援助の世話人・生活支援員・サービス管理責任者の必要数と週の勤務延べ時間を、厚生労働省令（平成18年厚生労働省令第171号）の条文と解釈通知の端数処理で計算します。",
+  "url": "https://keisanshitsu.github.io/tools/group-home-staff-ratio/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (web browser)",
+  "inLanguage": "ja",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "くらしの計算室",
+    "url": "https://keisanshitsu.github.io/"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1b19; --muted:#6b6862;
+    --line:#e5e2dc; --card:#fff; --accent:#0f6cbd; --accent-soft:#eef5fc;
+    --ok:#1f7a45; --ok-soft:#eaf6ef; --ng:#b3261e; --ng-soft:#fdeeed;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#17181a; --fg:#e9e8e5; --muted:#a3a09a;
+           --line:#2e3033; --card:#1f2123; --accent:#6cb6f5; --accent-soft:#1b2733;
+           --ok:#5fd08a; --ok-soft:#16261d; --ng:#ff8a80; --ng-soft:#2a1a19; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  header{border-bottom:1px solid var(--line);padding:16px 0}
+  .site{font-size:.85rem;color:var(--muted);text-decoration:none}
+  h1{font-size:1.35rem;margin:28px 0 6px;line-height:1.5}
+  .sub{color:var(--muted);font-size:.92rem;margin:0 0 28px}
+  h2{font-size:1.05rem;margin:36px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
+  h3{font-size:.95rem;margin:22px 0 6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+  input,select{width:100%;padding:9px 10px;font-size:1rem;color:var(--fg);
+    background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  input[type=checkbox]{width:auto;margin:0 6px 0 0;vertical-align:-2px}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--fg);padding:9px 14px}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:12px}
+  .grid.k{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
+  .check{display:block;font-size:.88rem;color:var(--fg);margin-top:12px}
+  .hint{font-size:.78rem;color:var(--muted);margin:4px 0 0}
+  .lead{font-size:.85rem;font-weight:600;margin:16px 0 0}
+  [hidden]{display:none !important}
+  .result{margin-top:20px;border:1px solid var(--accent);background:var(--accent-soft);
+    border-radius:12px;padding:18px}
+  .bigs{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+  .big{font-size:2rem;font-weight:700;color:var(--accent);line-height:1.2;margin:2px 0 0}
+  .big small{font-size:1rem;font-weight:600;margin-left:2px}
+  .sub2{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+  .checks{list-style:none;padding:0;margin:14px 0 0}
+  .checks li{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin-bottom:8px}
+  .checks .hd{font-size:.9rem;font-weight:600;margin:0}
+  .checks .dt{font-size:.82rem;color:var(--muted);margin:3px 0 0}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;border-radius:5px;
+    padding:1px 7px;margin-right:7px;vertical-align:2px}
+  .tag.ok{background:var(--ok-soft);color:var(--ok)}
+  .tag.ng{background:var(--ng-soft);color:var(--ng)}
+  .tag.info{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+  .tablewrap{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:.86rem}
+  th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+  th{color:var(--muted);font-weight:600;white-space:nowrap}
+  td.n{white-space:nowrap}
+  td.in{padding-left:22px;color:var(--muted)}
+  .cap{font-size:.85rem;font-weight:600;margin:18px 0 0}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:14px 16px;border-radius:0 8px 8px 0;font-size:.88rem;margin:24px 0}
+  .law{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;margin:14px 0;font-size:.86rem}
+  .law p{margin:0 0 6px;font-size:.86rem}
+  .law p:last-child{margin-bottom:0}
+  .formula{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:10px 14px;margin:12px 0;font-size:.9rem;overflow-x:auto}
+  p,li{font-size:.94rem}
+  ul{padding-left:1.2em}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src li{font-size:.85rem;overflow-wrap:anywhere}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:20px 0 40px;
+    color:var(--muted);font-size:.85rem}
+  footer a{color:var(--muted);margin-right:14px}
+  a{color:var(--accent)}
+  @media (max-width:400px){
+    .big{font-size:1.7rem}
+  }
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><a class="site" href="../../">← くらしの計算室</a></div></header>
+
+<main class="wrap">
+
+<h1>障害者グループホームの人員配置基準の計算（世話人・生活支援員・サービス管理責任者）</h1>
+<p class="sub">
+  障害支援区分ごとの利用者の数を入れると、共同生活援助（障害者グループホーム）の<strong>世話人</strong>（利用者の数を6で割った数）・<strong>生活支援員</strong>（区分3は9・区分4は6・区分5は4・区分6は2.5で割った数の合計）・<strong>サービス管理責任者</strong>の必要数を、厚生労働省令の条文どおりに出します。
+  常勤換算の人数と、1週間に必要な勤務延べ時間の両方を表示し、配置している時間で足りるかも判定します。
+  介護サービス包括型・日中サービス支援型・外部サービス利用型に対応。
+</p>
+
+<div class="card">
+  <label for="type">類型</label>
+  <select id="type">
+    <option value="hokatsu" selected>介護サービス包括型</option>
+    <option value="nicchu">日中サービス支援型</option>
+    <option value="gaibu">外部サービス利用型</option>
+  </select>
+  <label class="check" id="boxLegacy" hidden><input id="legacyGaibu" type="checkbox">平成26年4月1日に既にあった旧指定共同生活援助事業所（世話人を「10」で割る経過措置）</label>
+
+  <p class="lead">利用者の数（前年度の平均・人）</p>
+  <div class="grid k">
+    <div>
+      <label for="k6">区分6</label>
+      <input id="k6" type="number" inputmode="decimal" min="0" max="1000" step="0.1" value="">
+    </div>
+    <div>
+      <label for="k5">区分5</label>
+      <input id="k5" type="number" inputmode="decimal" min="0" max="1000" step="0.1" value="">
+    </div>
+    <div>
+      <label for="k4">区分4</label>
+      <input id="k4" type="number" inputmode="decimal" min="0" max="1000" step="0.1" value="">
+    </div>
+    <div>
+      <label for="k3">区分3</label>
+      <input id="k3" type="number" inputmode="decimal" min="0" max="1000" step="0.1" value="">
+    </div>
+    <div>
+      <label for="kLow">区分2以下・非該当</label>
+      <input id="kLow" type="number" inputmode="decimal" min="0" max="1000" step="0.1" value="">
+    </div>
+  </div>
+  <p class="hint">小数第2位以下を入れた場合は、厚生労働省の通知どおり切り上げて計算します。区分2以下・非該当の人は、世話人とサービス管理責任者の計算にだけ入ります。</p>
+
+  <div class="grid">
+    <div>
+      <label for="fulltime">常勤の人が1週間に勤務すべき時間</label>
+      <input id="fulltime" type="number" inputmode="decimal" min="1" max="60" step="0.5" value="40">
+    </div>
+    <div id="boxHouses" hidden>
+      <label for="houses">共同生活住居の数（任意）</label>
+      <input id="houses" type="number" inputmode="numeric" min="1" max="100" step="1" value="" placeholder="例: 2">
+    </div>
+  </div>
+
+  <div class="grid">
+    <div>
+      <label for="sewaHours">配置している世話人の勤務延べ時間（週・任意）</label>
+      <input id="sewaHours" type="number" inputmode="decimal" min="0" step="0.25" value="" placeholder="例: 80">
+    </div>
+    <div id="boxShienHours">
+      <label for="shienHours">配置している生活支援員の勤務延べ時間（週・任意）</label>
+      <input id="shienHours" type="number" inputmode="decimal" min="0" step="0.25" value="" placeholder="例: 112">
+    </div>
+  </div>
+
+  <div class="actions">
+    <button type="button" data-preset="notice">通知の例（12人・区分6が2・5が4・4が6）</button>
+    <button type="button" data-preset="nicchu">日中型 20人・2住居の例</button>
+    <button type="button" data-preset="gaibu">外部型 7人の例</button>
+    <button type="button" data-preset="gap">サビ管 30.4人の例</button>
+  </div>
+</div>
+
+<div class="result" aria-live="polite">
+  <div class="bigs">
+    <div>
+      <div>世話人（常勤換算）</div>
+      <p class="big" id="bigSewa">— <small>人以上</small></p>
+    </div>
+    <div id="boxBigShien">
+      <div>生活支援員（常勤換算）</div>
+      <p class="big" id="bigShien">— <small>人以上</small></p>
+    </div>
+  </div>
+  <p class="sub2" id="summary">利用者の数を入力してください。</p>
+
+  <p class="cap">職種ごとの必要数</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>職種</th><th>常勤換算</th><th>週の延べ時間</th><th>条文</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <ul class="checks" id="checks"></ul>
+</div>
+
+<div class="note">
+  <strong>この結果は概算です。</strong>
+  国の厚生労働省令の条文と、厚生労働省の解釈通知の端数処理による人数です。
+  実際の基準は、省令に従って<strong>都道府県の条例</strong>で定められています（従業者とその員数は、省令で定める基準に「従い定める」事項です。障害者総合支援法 第43条第3項）。
+  常勤換算の数え方（勤務延べ時間・休暇・兼務の扱い）、夜間支援等の加算、障害福祉サービス等報酬の基本報酬の区分は、このツールでは判定しません。
+  <strong>実際の配置が基準を満たすかは、指定権者（都道府県・市の障害福祉担当課）や社会保険労務士・行政書士などの専門家にご確認ください。</strong>
+</div>
+
+<h2>この計算の根拠</h2>
+
+<h3>介護サービス包括型（平成18年厚生労働省令第171号 第208条）</h3>
+<div class="law">
+  <p>一 世話人 指定共同生活援助事業所ごとに、常勤換算方法で、利用者の数を六で除した数以上</p>
+  <p>二 生活支援員 指定共同生活援助事業所ごとに、常勤換算方法で、次のイからニまでに掲げる数の合計数以上　イ 区分命令第一条第四号に規定する区分三に該当する利用者の数を九で除した数　ロ 区分命令第一条第五号に規定する区分四に該当する利用者の数を六で除した数　ハ 区分命令第一条第六号に規定する区分五に該当する利用者の数を四で除した数　ニ 区分命令第一条第七号に規定する区分六に該当する利用者の数を二・五で除した数</p>
+  <p>三 サービス管理責任者 指定共同生活援助事業所ごとに、イ又はロに掲げる利用者の数の区分に応じ、それぞれイ又はロに掲げる数　イ 利用者の数が三十以下 一以上　ロ 利用者の数が三十一以上 一に、利用者の数が三十を超えて三十又はその端数を増すごとに一を加えて得た数以上</p>
+  <p>（障害者の日常生活及び社会生活を総合的に支援するための法律に基づく指定障害福祉サービスの事業等の人員、設備及び運営に関する基準 第208条第1項。「区分命令」は障害支援区分に係る市町村審査会による審査及び判定の基準等に関する命令）</p>
+</div>
+<div class="formula">生活支援員 ＝ 区分3の人数÷9 ＋ 区分4の人数÷6 ＋ 区分5の人数÷4 ＋ 区分6の人数÷2.5</div>
+<p>
+  区分ごとの値は<strong>丸めずに足し</strong>、その合計以上を配置します。区分2以下・非該当の人は生活支援員の計算に入りません。
+  このツールは合計を小数第3位で<strong>切り上げて</strong>表示し、足りるかの判定は時間（分）で厳密に比べます。
+  区分ごとに切り上げてから足すと、区分6・5・4・3が1人ずつのとき 0.40＋0.25＋0.17＋0.12＝0.94 になりますが、条文どおりに足すと 0.4＋0.25＋0.1666…＋0.111…＝0.9277… です。
+</p>
+
+<h3>厚生労働省の通知の計算例</h3>
+<div class="law">
+  <p>（例）利用者を 12 人とし、当該指定共同生活援助事業所における常勤の勤務時間を１週間 40 時間とした場合、当該事業所における指定共同生活援助の提供に従事する勤務時間の延べ数を、１週間の間に、40時間×（12÷６）人＝延べ80時間以上確保する必要がある。</p>
+  <p>（例）利用者を12人（区分６が２人、区分５が４人、区分４が６人）とし、常勤の勤務時間を１週間 40 時間とした場合、…１週間の間に、・区分６：40時間×（２÷2.5）人＝32時間 ・区分５：40時間×（４÷４）人＝40時間 ・区分４：40時間×（６÷６）人＝40時間 延べ合計112時間以上確保する必要がある。</p>
+  <p>（障発第1206001号 第十五の1(1)(2)）</p>
+</div>
+<p>上の「通知の例」のボタンで、この2つの例がそのまま再現されます（世話人 2.00人・80時間、生活支援員 2.80人・112時間）。</p>
+
+<h3>日中サービス支援型（同 第213条の4）</h3>
+<div class="law">
+  <p>一 世話人 夜間及び深夜の時間帯以外の時間帯における日中サービス支援型指定共同生活援助の提供に当たる世話人の総数は、日中サービス支援型指定共同生活援助事業所ごとに、常勤換算方法で、利用者の数を五で除した数以上</p>
+  <p>２ 前項に規定する日中サービス支援型指定共同生活援助の従業者のほか、共同生活住居ごとに、夜間及び深夜の時間帯を通じて一以上の夜間支援従事者（夜間及び深夜の時間帯に勤務（宿直勤務を除く。）を行う世話人又は生活支援員をいう。）を置くものとする。</p>
+  <p>５ 第一項及び第二項に規定する日中サービス支援型指定共同生活援助事業所の従業者のうち、一人以上は、常勤でなければならない。</p>
+</div>
+<p>
+  生活支援員とサービス管理責任者は包括型と同じ式です。世話人と生活支援員の数は、<strong>夜間・深夜の時間帯以外</strong>の時間帯の数です。
+  夜間支援従事者は共同生活住居ごとに1人以上で、通知は「既存の建物を共同生活住居とする場合であって、当該共同生活住居の入居定員を11人以上とする場合は、原則ユニットごとに夜間支援従事者を１人以上配置する必要がある」としています。
+</p>
+
+<h3>外部サービス利用型（同 第213条の14・平成25年厚生労働省令第124号 附則第4条）</h3>
+<div class="law">
+  <p>一 世話人 外部サービス利用型指定共同生活援助事業所ごとに、常勤換算方法で、利用者の数を六で除した数以上　二 サービス管理責任者（包括型と同じ式）</p>
+  <p>施行日において現に存する旧指定共同生活援助事業所について、新指定障害福祉サービス基準第二百十三条の十四の規定を適用する場合においては、当分の間、同条第一項第一号中「六」とあるのは「十」とする。（附則第4条。施行日は平成26年4月1日）</p>
+</div>
+<p>
+  外部サービス利用型には生活支援員の員数の定めがありません（介護は外部の居宅介護事業所に委託します）。
+  「10で割る」のは、平成26年4月1日に既にあった旧指定共同生活援助事業所だけの経過措置です。
+</p>
+
+<h3>利用者の数は「前年度の平均値」（小数点第2位以下は切り上げ）</h3>
+<div class="law">
+  <p>前項の利用者の数は、前年度の平均値とする。ただし、新規に指定を受ける場合は、推定数による。（第208条第2項。第213条の4第3項・第213条の14第2項も同じ）</p>
+  <p>「前年度の平均値」は、当該年度の前年度（毎年４月１日に始まり翌年３月３１日をもって終わる年度とする。以下同じ。）の利用者延べ数を開所日数で除して得た数とする。この算定に当たっては、小数点第２位以下を切り上げるものとする。（障発第1206001号 第二の2(5)①）</p>
+</div>
+<p>
+  たとえば前年度の利用者延べ4,385人・開所日数365日なら、4,385÷365＝12.013… → <strong>12.1人</strong>（第2位以下を切り上げ）です。
+  区分ごとの人数も同じように前年度の平均で入れてください。
+</p>
+
+<h3>サービス管理責任者の「30人」の境目について</h3>
+<p>
+  条文は「三十以下」なら1人、「三十一以上」なら30を超える部分の「30又はその端数」ごとに1人を足すと書いています。
+  利用者の数は前年度の平均値なので 30.4人 のような値になりえますが、<strong>30.1〜30.9人は「三十以下」にも「三十一以上」にも当たりません</strong>。
+  このツールは、条文から一つに決まらないこの範囲では<strong>多いほう（ロの式で2人）</strong>を出し、そのことを結果に表示します。指定権者に確認してください。
+</p>
+
+<h2>よくある質問</h2>
+
+<h3>世話人は「10対1」ではないのですか</h3>
+<p>
+  いまの省令は、介護サービス包括型と外部サービス利用型が<strong>6で割った数</strong>（第208条・第213条の14）、日中サービス支援型が<strong>5で割った数</strong>（第213条の4）です。
+  10で割るのは、平成26年4月1日に既にあった旧指定共同生活援助事業所の外部サービス利用型の経過措置（附則第4条「当分の間」）だけです。古い資料や解説記事には10と書かれていることがあります。
+</p>
+
+<h3>常勤換算とは何ですか</h3>
+<div class="law">
+  <p>指定障害福祉サービス事業所等の従業者の勤務延べ時間数を当該指定障害福祉サービス事業所等において常勤の従業者が勤務すべき時間数（１週間に勤務すべき時間数が32時間を下回る場合は32時間を基本とする。）で除することにより、当該指定障害福祉サービス事業所等の従業者の員数を常勤の従業者の員数に換算する方法をいうものである。</p>
+  <p>（障発第1206001号 第二の2(1)）</p>
+</div>
+<p>
+  このツールは「常勤の人が1週間に勤務すべき時間」に32時間未満を入れた場合、32時間として計算します。
+  条文は世話人と生活支援員をそれぞれ「…以上」と定めているので、<strong>2つの合計ではなく、それぞれ</strong>を満たす必要があります。同じ人が両方の勤務をする場合の時間の分け方は、指定権者の手引きで確かめてください。
+</p>
+
+<h3>新しく指定を受ける場合の利用者の数は</h3>
+<div class="law">
+  <p>新設又は増床の時点から６月未満の間は、便宜上、利用定員の 90％を利用者の数等とし、新設又は増床の時点から６月以上１年未満の間は、直近の６月における全利用者の延べ数を当該６月間の開所日数で除して得た数とする。また、新設又は増床の時点から１年以上経過している場合は、直近１年間における全利用者等の延べ数を当該１年間の開所日数で除して得た数とする。</p>
+  <p>（障発第1206001号 第二の2(5)②より抜粋）</p>
+</div>
+<p>
+  区分ごとの推定のしかたは通知に書かれていないので、このツールでは自動で計算しません。見込みの人数を区分ごとに入れてください。
+</p>
+
+<h3>高齢者の認知症グループホームにも使えますか</h3>
+<p>
+  使えません。認知症対応型共同生活介護（介護保険のグループホーム）は別の省令の基準です。このツールは障害者総合支援法の共同生活援助だけを扱います。
+</p>
+
+<h2>出典</h2>
+<ul class="src">
+  <li>障害者の日常生活及び社会生活を総合的に支援するための法律に基づく指定障害福祉サービスの事業等の人員、設備及び運営に関する基準（平成18年厚生労働省令第171号）第208条・第213条の4・第213条の14、平成25年厚生労働省令第124号 附則第4条
+    <a href="https://laws.e-gov.go.jp/law/418M60000100171" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>障害者の日常生活及び社会生活を総合的に支援するための法律 第43条
+    <a href="https://laws.e-gov.go.jp/law/417AC0000000123" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>厚生労働省「障害者の日常生活及び社会生活を総合的に支援するための法律に基づく指定障害福祉サービスの事業等の人員、設備及び運営に関する基準について」（平成18年12月6日 障発第1206001号）。令和7年3月31日一部改正の新旧対照表（改正後の欄）
+    <a href="https://www.mhlw.go.jp/content/001494357.pdf" rel="nofollow noopener" target="_blank">厚生労働省（PDF）</a></li>
+  <li>省令は e-Gov 法令API で取得した現行版（2025年10月1日施行の版。未施行の版はありません）を逐語で確認しています。
+    導出は<a href="./calc.js">計算コード</a>のコメントに、境界値の検証は<a href="./calc.test.mjs">テスト</a>に残してあります</li>
+</ul>
+<p class="src">最終確認日: 2026年11月18日</p>
+
+</main>
+
+<footer class="wrap">
+  <a href="../../">トップ</a>
+  <a href="../../privacy.html">プライバシーポリシー</a>
+  <a href="../../contact.html">お問い合わせ</a>
+  <p>&copy; 2026 くらしの計算室</p>
+</footer>
+
+<script type="module">
+import { calculate, fmtPeople, fmtMinutes, isExactAt2, requiredMinutes } from "./calc.js";
+
+const PRESETS = {
+  notice: { type: "hokatsu", k6: "2", k5: "4", k4: "6", k3: "", kLow: "", fulltime: "40", houses: "" },
+  nicchu: { type: "nicchu", k6: "4", k5: "6", k4: "6", k3: "4", kLow: "", fulltime: "40", houses: "2" },
+  gaibu: { type: "gaibu", k6: "", k5: "", k4: "1", k3: "2", kLow: "4", fulltime: "40", houses: "" },
+  gap: { type: "hokatsu", k6: "4.2", k5: "6.1", k4: "8", k3: "7.1", kLow: "5", fulltime: "40", houses: "" },
+};
+const KEYS = ["k6", "k5", "k4", "k3", "kLow"];
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const t1 = (tenths) => (tenths / 10).toFixed(1);
+const h2 = (hundredths) => (hundredths / 100).toFixed(2).replace(/\.?0+$/, "");
+const ART = { hokatsu: "第208条", nicchu: "第213条の4", gaibu: "第213条の14" };
+
+function syncBoxes() {
+  const t = $("type").value;
+  $("boxLegacy").hidden = t !== "gaibu";
+  $("boxHouses").hidden = t !== "nicchu";
+  $("boxShienHours").hidden = t === "gaibu";
+  $("boxBigShien").hidden = t === "gaibu";
+}
+
+function render() {
+  syncBoxes();
+  const t = $("type").value;
+  const res = calculate({
+    type: t,
+    k6: $("k6").value, k5: $("k5").value, k4: $("k4").value, k3: $("k3").value, kLow: $("kLow").value,
+    legacyGaibu: $("legacyGaibu").checked,
+    houses: $("houses").value,
+    fulltime: $("fulltime").value,
+    sewaHours: $("sewaHours").value,
+    shienHours: t === "gaibu" ? "" : $("shienHours").value,
+  });
+
+  if (!res.ok) {
+    $("bigSewa").innerHTML = '— <small>人以上</small>';
+    $("bigShien").innerHTML = '— <small>人以上</small>';
+    $("summary").textContent = res.errors[0];
+    $("rows").innerHTML = "";
+    $("checks").innerHTML = "";
+    return;
+  }
+
+  const p = res.people;
+  const art = ART[res.type];
+  const ft = res.fulltime.hundredths;
+  $("bigSewa").innerHTML = `${fmtPeople(res.sewa.units)} <small>人以上</small>`;
+  if (res.shien) $("bigShien").innerHTML = `${fmtPeople(res.shien.units)} <small>人以上</small>`;
+  $("summary").textContent =
+    `${res.typeLabel}。利用者 ${t1(p.total10)}人（区分6 ${t1(p.k6)}・区分5 ${t1(p.k5)}・区分4 ${t1(p.k4)}・区分3 ${t1(p.k3)}・区分2以下 ${t1(p.kLow)}）。` +
+    `世話人は ${t1(p.total10)}÷${res.sewa.divisor}` +
+    (res.shien ? "、生活支援員は区分ごとに割った数の合計です。" : "です。") +
+    `常勤の週${h2(ft)}時間で週の延べ時間に直しています。` +
+    (p.roundedUp ? " 利用者の数の小数第2位以下は切り上げました。" : "");
+
+  const rows = [];
+  rows.push(["世話人", `${fmtPeople(res.sewa.units)}人以上`, `${fmtMinutes(res.sewa.minutes)}以上`,
+    `${art}第1項第1号` + (res.sewa.legacy ? "・平成25年省令第124号 附則第4条" : ""), false]);
+  if (res.shien) {
+    rows.push(["生活支援員（合計）", `${fmtPeople(res.shien.units)}人以上`, `${fmtMinutes(res.shien.minutes)}以上`, `${art}第1項第2号`, false]);
+    for (const part of res.shien.parts) {
+      if (part.tenths === 0) continue;
+      rows.push([`${part.label} ${t1(part.tenths)}人÷${part.divisor}`, fmtPeople(part.units), fmtMinutes(requiredMinutes(part.units, ft)), "", true]);
+    }
+  }
+  rows.push(["サービス管理責任者", `${res.sabikan.required}人以上`, "—", `${art}第1項第${res.type === "gaibu" ? "2" : "3"}号`, false]);
+  if (res.night) rows.push(["夜間支援従事者（夜間・深夜）", `共同生活住居ごとに1人以上＝${res.night.required}人`, "—", "第213条の4第2項", false]);
+  $("rows").innerHTML = rows.map(([a, b, c, d, sub]) =>
+    `<tr><td${sub ? ' class="in"' : ""}>${esc(a)}</td><td class="n">${esc(b)}</td><td class="n">${esc(c)}</td><td class="n">${esc(d)}</td></tr>`).join("");
+
+  const checks = [];
+  const judge = (name, st, need) => {
+    if (!st) return;
+    checks.push(st.enough
+      ? { status: "ok", title: `${name} 週${h2(st.hundredths)}時間（常勤換算 ${(st.fte / 100).toFixed(2)}人）は必要な ${fmtMinutes(need.minutes)}以上です`,
+          detail: "国の省令の条文による判定です。勤務延べ時間の数え方が正しいかは、このツールでは確かめていません。" }
+      : { status: "ng", title: `${name} 週${h2(st.hundredths)}時間では ${fmtMinutes(st.shortMinutes)}足りません`,
+          detail: `必要なのは週${fmtMinutes(need.minutes)}以上（常勤換算 ${fmtPeople(need.units)}人以上）です。` });
+  };
+  judge("世話人", res.staff.sewa, res.sewa);
+  if (res.shien) judge("生活支援員", res.staff.shien, res.shien);
+  if (res.sabikan.gap) {
+    checks.push({ status: "info", title: `利用者 ${t1(p.total10)}人は、サビ管の条文の「三十以下」にも「三十一以上」にも当たりません`,
+      detail: "条文から一つに決まらないので、多いほう（三十を超えて三十又はその端数ごとに一を加える式＝2人）を出しています。指定権者に確認してください。" });
+  }
+  if (res.shien && !isExactAt2(res.shien.units)) {
+    checks.push({ status: "info", title: "生活支援員の合計は割り切れないので、小数第3位以下を切り上げて表示しています",
+      detail: "区分ごとの値は丸めずに足しています。週の時間は分に切り上げています。" });
+  }
+  if (res.fulltime.floored) {
+    checks.push({ status: "info", title: "常勤の週の時間は32時間として計算しました",
+      detail: "通知は「１週間に勤務すべき時間数が32時間を下回る場合は32時間を基本とする」としています。" });
+  }
+  if (res.sewa.legacy) {
+    checks.push({ status: "info", title: "世話人は経過措置（利用者の数÷10）で計算しています",
+      detail: "平成26年4月1日に既にあった旧指定共同生活援助事業所に限られます（平成25年厚生労働省令第124号 附則第4条・当分の間）。" });
+  }
+  if (res.type === "gaibu") {
+    checks.push({ status: "info", title: "外部サービス利用型には生活支援員の員数の定めがありません",
+      detail: "介護は外部の居宅介護事業所に委託します。" });
+  }
+  if (res.type === "nicchu") {
+    checks.push({ status: "info", title: "日中サービス支援型は、従業者のうち1人以上が常勤である必要があります",
+      detail: "世話人・生活支援員の数は夜間・深夜以外の時間帯の数です（第213条の4第1項・第5項）。夜間支援従事者は共同生活住居ごとに1人以上（宿直は含まない）で、住居数を入れると表示します。" });
+  }
+  $("checks").innerHTML = checks.map((x) =>
+    `<li><p class="hd"><span class="tag ${x.status}">${{ ok: "足りる", ng: "不足", info: "参考" }[x.status]}</span>${esc(x.title)}</p>` +
+    `<p class="dt">${esc(x.detail)}</p></li>`).join("");
+}
+
+function applyPreset(pr) {
+  $("type").value = pr.type;
+  for (const k of [...KEYS, "fulltime", "houses"]) $(k).value = pr[k] ?? "";
+  $("legacyGaibu").checked = false;
+  $("sewaHours").value = "";
+  $("shienHours").value = "";
+  render();
+}
+
+for (const el of document.querySelectorAll(".card input, .card select")) {
+  el.addEventListener("input", render);
+  el.addEventListener("change", render);
+}
+for (const btn of document.querySelectorAll("[data-preset]")) {
+  btn.addEventListener("click", () => applyPreset(PRESETS[btn.dataset.preset]));
+}
+applyPreset(PRESETS.notice);
+</script>
+
+</body>
+</html>

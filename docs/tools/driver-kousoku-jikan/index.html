@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>トラック・タクシー運転者の拘束時間と休息期間のチェック — 改善基準告示（2024年4月〜）</title>
+<meta name="description" content="始業・終業・運転時間を日ごとに入れると、改善基準告示の1日の拘束時間（始業から24時間。翌日の始業が早まった分も数えます）・休息期間・14時間超の回数・2日平均と2週の運転時間を判定します。トラックとタクシー（日勤）に対応。厚労省パンフレットの計算例を再現しています。">
+<link rel="canonical" href="https://keisanshitsu.github.io/tools/driver-kousoku-jikan/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="くらしの計算室">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="トラック・タクシー運転者の拘束時間と休息期間のチェック — 改善基準告示（2024年4月〜）">
+<meta property="og:description" content="始業・終業を日ごとに入れると、1日の拘束時間（翌日の始業が早まった分も数える）・休息期間・2日平均と2週の運転時間が改善基準告示を満たすかを判定します。">
+<meta property="og:url" content="https://keisanshitsu.github.io/tools/driver-kousoku-jikan/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "トラック・タクシー運転者の拘束時間と休息期間のチェック",
+  "description": "始業・終業・運転時間を日ごとに入れると、自動車運転者の労働時間等の改善のための基準（改善基準告示）の1日の拘束時間・休息期間・14時間超の回数・2日平均と2週の運転時間を判定します。",
+  "url": "https://keisanshitsu.github.io/tools/driver-kousoku-jikan/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (web browser)",
+  "inLanguage": "ja",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "くらしの計算室",
+    "url": "https://keisanshitsu.github.io/"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1b19; --muted:#6b6862;
+    --line:#e5e2dc; --card:#fff; --accent:#0f6cbd; --accent-soft:#eef5fc;
+    --ok:#1f7a45; --ok-soft:#eaf6ef; --ng:#b3261e; --ng-soft:#fdeeed;
+    --warn:#8a5a00; --warn-soft:#fdf4e2;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#17181a; --fg:#e9e8e5; --muted:#a3a09a;
+           --line:#2e3033; --card:#1f2123; --accent:#6cb6f5; --accent-soft:#1b2733;
+           --ok:#5fd08a; --ok-soft:#16261d; --ng:#ff8a80; --ng-soft:#2a1a19;
+           --warn:#f0c060; --warn-soft:#2b2414; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  header{border-bottom:1px solid var(--line);padding:16px 0}
+  .site{font-size:.85rem;color:var(--muted);text-decoration:none}
+  h1{font-size:1.35rem;margin:28px 0 6px;line-height:1.5}
+  .sub{color:var(--muted);font-size:.92rem;margin:0 0 28px}
+  h2{font-size:1.05rem;margin:36px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
+  h3{font-size:.95rem;margin:22px 0 6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .card h3{margin:18px 0 8px}
+  .card h3:first-child{margin-top:0}
+  label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+  input,select{width:100%;min-width:0;padding:9px 10px;font-size:1rem;color:var(--fg);
+    background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--fg);padding:9px 14px}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+  .hint{font-size:.78rem;color:var(--muted);margin:4px 0 0}
+  .days{display:grid;grid-template-columns:4.4em repeat(3,minmax(0,1fr));gap:6px 6px;align-items:center;margin-top:10px}
+  .days.nodrive{grid-template-columns:4.4em repeat(2,minmax(0,1fr))}
+  .days.nodrive .dcol{display:none}
+  .days .hd{font-size:.74rem;color:var(--muted);text-align:center}
+  .days input[type=text]{padding:7px 6px;text-align:center}
+  .dl{font-size:.76rem;line-height:1.3}
+  .dl .wd{color:var(--muted)}
+  .dl .wd.sun{color:var(--ng)}
+  .offl{display:flex;align-items:center;gap:3px;margin:2px 0 0;font-size:.74rem;color:var(--muted);cursor:pointer}
+  .offl input{width:auto;margin:0;padding:0}
+  .wk{grid-column:1/-1;font-size:.74rem;color:var(--muted);border-top:1px dashed var(--line);padding-top:6px;margin-top:4px}
+  .result{margin-top:20px;border:1px solid var(--accent);background:var(--accent-soft);
+    border-radius:12px;padding:18px}
+  .big{font-size:1.9rem;font-weight:700;color:var(--accent);line-height:1.25;margin:2px 0 0}
+  .big.bad{color:var(--ng)}
+  .sub2{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+  .checks{list-style:none;padding:0;margin:14px 0 0}
+  .checks li{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin-bottom:8px}
+  .checks .hd2{font-size:.9rem;font-weight:600;margin:0}
+  .checks .dt{font-size:.82rem;color:var(--muted);margin:3px 0 0}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;border-radius:5px;
+    padding:1px 7px;margin-right:7px;vertical-align:2px}
+  .tag.ok{background:var(--ok-soft);color:var(--ok)}
+  .tag.ng{background:var(--ng-soft);color:var(--ng)}
+  .tag.warn{background:var(--warn-soft);color:var(--warn)}
+  .tag.info{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+  .tablewrap{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:.84rem;white-space:nowrap}
+  th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}
+  th{color:var(--muted);font-weight:600}
+  td.ng{color:var(--ng);font-weight:700}
+  td.warn{color:var(--warn)}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:14px 16px;border-radius:0 8px 8px 0;font-size:.88rem;margin:24px 0}
+  .law{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;margin:14px 0;font-size:.86rem}
+  .law p{margin:0 0 6px;font-size:.86rem}
+  .law p:last-child{margin-bottom:0}
+  p,li{font-size:.94rem}
+  ul{padding-left:1.2em}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src li{font-size:.85rem;overflow-wrap:anywhere}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:20px 0 40px;
+    color:var(--muted);font-size:.85rem}
+  footer a{color:var(--muted);margin-right:14px}
+  a{color:var(--accent)}
+  @media (max-width:400px){
+    .big{font-size:1.55rem}
+  }
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><a class="site" href="../../">← くらしの計算室</a></div></header>
+
+<main class="wrap">
+
+<h1>トラック・タクシー運転者の拘束時間と休息期間のチェック</h1>
+<p class="sub">
+  始業・終業（トラックは運転時間も）を日ごとに入れると、改善基準告示（2024年4月から適用）の
+  <strong>1日の拘束時間（13時間・最大15時間）</strong>、<strong>休息期間（継続11時間が基本・9時間が下限）</strong>、
+  14時間を超えた回数、<strong>2日平均と2週の運転時間</strong>を判定します。
+  1日は「始業から24時間」なので、<strong>翌日の始業が早まった分は前日の1日にも入ります</strong>。この重なりも数えます。
+</p>
+
+<div class="card">
+  <div class="grid">
+    <div>
+      <label for="mode">運転者の種類</label>
+      <select id="mode">
+        <option value="truck" selected>トラック（貨物）</option>
+        <option value="taxi">タクシー（日勤）</option>
+      </select>
+    </div>
+    <div>
+      <label for="startDate">1日目の日付（2週の起算日）</label>
+      <input id="startDate" type="date" min="2024-04-01" max="2100-12-31" value="2026-11-16">
+    </div>
+  </div>
+  <p class="hint">時刻は 8:00・21:30 のように入れます（800 や 8 でも読みます）。終業が始業より前の時刻なら翌日の終業として数えます。
+    休みの日は「休」に印を。<strong>何も入れていない日は「休み」ではなく「分からない日」</strong>として扱い、その日が要る判定は出しません。</p>
+
+  <div class="days" id="days"></div>
+
+  <div class="actions">
+    <button type="button" data-preset="week">厚労省パンフレットの1週間の例</button>
+    <button type="button" data-preset="overlap">翌日の始業が早まる例</button>
+    <button type="button" data-preset="taxi">タクシー日勤の例</button>
+    <button type="button" data-preset="clear">すべて消す</button>
+  </div>
+</div>
+
+<div class="result" aria-live="polite">
+  <div id="headLabel">基準を超えたところ</div>
+  <p class="big" id="headline">—</p>
+  <p class="sub2" id="summary">始業と終業を入力してください。</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>日付</th><th>勤務</th><th>1日の拘束時間</th><th>休息期間</th><th class="dcol2">運転</th><th class="dcol2">2日平均</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <ul class="checks" id="checks"></ul>
+</div>
+
+<div class="note">
+  <strong>この結果は概算です。</strong>
+  改善基準告示（自動車運転者の労働時間等の改善のための基準）の原則の基準と、厚生労働省の施行通達・パンフレットの数え方を当てはめたものです。
+  <strong>特例</strong>（宿泊を伴う長距離貨物運送、分割休息、2人乗務、隔日勤務、フェリー、タクシーの車庫待ち等）や
+  予期し得ない事象への対応時間に当たる場合は、上限や数え方が変わります。
+  拘束時間は休憩・仮眠・荷待ちを含む始業から終業までの時間です。勤務の記録（運転日報・デジタコ）の時刻で確かめ、
+  判断に迷うときは、勤め先の運行管理者、最寄りの労働基準監督署、社会保険労務士などの専門家にご確認ください。
+</div>
+
+<h2>この計算の根拠</h2>
+
+<h3>1日の拘束時間：13時間まで、延長しても最大15時間</h3>
+<div class="law">
+  <p>一日（始業時刻から起算して二十四時間をいう。以下同じ。）についての拘束時間は、十三時間を超えないものとし、当該拘束時間を延長する場合であっても、一日についての拘束時間の限度（以下「最大拘束時間」という。）は、十五時間とすること。</p>
+  <p>（改善基準告示 第2条第1項第2号・タクシー日勤。トラックは第4条第1項第3号が同じ基準で、宿泊を伴う長距離貨物運送の週は2回まで16時間）</p>
+</div>
+<p>
+  拘束時間は「労働時間、休憩時間その他の使用者に拘束されている時間」（第2条第1項）で、休憩や仮眠、荷待ちも入ります。
+  1日は<strong>暦の日ではなく始業から24時間</strong>です。厚労省のパンフレットは、月曜 8:00〜21:00・火曜 6:00 始業のとき、
+  月曜から始まる1日は「月曜日の13時間だけではなく、火曜日の２時間もカウントした合計15時間」と説明しています。
+  火曜から始まる1日でも、その6:00〜8:00は「再度カウントする」ので、重なった時間は両方の日に入ります。
+</p>
+
+<h3>14時間を超える回数：トラックは週2回、タクシー日勤は週3回まで（目安）</h3>
+<div class="law">
+  <p>当該回数については、１週間について２回以内を目安とすること。この場合において、１日の拘束時間が「14 時間」を超える日が連続することは望ましくないこと。</p>
+  <p>（施行通達 基発1223第3号 第2の4(2)・トラック。タクシー日勤は第2の2(1)イで「１週間に３回以内を目安とすること」）</p>
+</div>
+<p>告示は「十四時間を超える回数をできるだけ少なくするよう努める」と書いています。週の数え方の区切りは定めが無いので、このツールは1日目から7日ごとに数えています。</p>
+
+<h3>休息期間：継続11時間が基本、9時間を下回らない</h3>
+<div class="law">
+  <p>勤務終了後、継続十一時間以上の休息期間を与えるよう努めることを基本とし、休息期間が継続九時間を下回らないものとすること。</p>
+  <p>（改善基準告示 第2条第1項第4号・第4条第1項第5号）</p>
+</div>
+<p>終業から次の始業までの時間です。<strong>9時間を下回ると基準違反</strong>、9時間以上11時間未満は違反ではありませんが、11時間以上を与えるよう努めるのが基本です。</p>
+
+<h3>運転時間（トラック）：2日平均9時間・2週平均44時間</h3>
+<div class="law">
+  <p>運転時間は、二日（始業時刻から起算して四十八時間をいう。次条において同じ。）を平均し一日当たり九時間、二週間を平均し一週間当たり四十四時間を超えないものとすること。（告示 第4条第1項第6号）</p>
+  <p>次の①②のいずれもが「９時間」を超えた場合に、初めて違反と判断される。①特定日の運転時間（Ａ時間）と特定日の前日の運転時間（Ｂ時間）との平均、② 特定日の運転時間（Ａ時間）と特定日の翌日の運転時間（Ｃ時間）との平均（施行通達 第2の4(4)）</p>
+</div>
+<p>
+  たとえば10時間・9時間・9時間と運転した2日目は、前日との平均が9.5時間でも翌日との平均が9時間ちょうどなので違反になりません（パンフレットの例）。
+  2週は「特定の日を起算日として２週間ごとに区切り」、合計が88時間を超えると違反です。このツールは1日目を起算日にします。
+  運転時間は勤務ごとに入れた値をその日の運転時間として数え、1日の拘束時間のように前日の24時間へ重ねて数え直すことはしていません。
+</p>
+
+<h3>1か月の拘束時間：トラック284時間・タクシー日勤288時間</h3>
+<p>
+  1か月（原則として暦月）の拘束時間は、各勤務の始業から終業までを「そのまま合計」して比べます（パンフレット）。重なりは二重に数えません。
+  トラックは労使協定があれば年6か月まで310時間（年3,400時間以内）、タクシー日勤の車庫待ち等は300時間まで延長できます。
+  このツールは2週分の入力なので、1か月の判定はせず、入力した勤務の合計だけを示します。
+</p>
+
+<h2>よくある質問</h2>
+
+<h3>休憩や荷待ちの時間は拘束時間から引けますか</h3>
+<p>引けません。拘束時間は始業から終業までの全ての時間で、休憩・仮眠・荷待ち（手待ち時間）を含みます。引けるのは、事故・故障・災害・異常気象などの「予期し得ない事象への対応時間」を客観的な記録で確認できる場合の、1日の拘束時間・2日平均の運転時間・連続運転時間だけです（告示 第4条第3項）。</p>
+
+<h3>15時間を超えた日があります。すぐに違反ですか</h3>
+<p>原則の最大拘束時間は15時間です。トラックで、その週の運行がすべて450km以上の長距離貨物運送で、休息期間を住所地以外でとる場合は、週2回まで16時間にできます（第4条第1項第3号ただし書）。2人乗務・隔日勤務・フェリーなどの特例もあります。特例に当たらなければ、15時間を超えた日は基準を超えています。</p>
+
+<h3>連続運転時間（4時間）は判定できますか</h3>
+<p>できません。連続運転時間は、運転を始めてから中断（1回おおむね連続10分以上・合計30分以上）までの時間で、運転と中断の時刻が分単位で要ります。デジタコの記録で確かめてください。</p>
+
+<h3>個人事業主のドライバーにも当てはまりますか</h3>
+<p>告示の直接の対象は労働者です。ただし貨物自動車運送事業者は、国土交通大臣の告示で運転者の勤務時間・乗務時間を定めるよう求められ、その基準として改善基準告示が引用されているので、個人事業主の運転者にも実質的に守ることが求められています（施行通達 第2の1(5)）。</p>
+
+<h2>出典</h2>
+<ul class="src">
+  <li>自動車運転者の労働時間等の改善のための基準（平成元年労働省告示第7号・令和4年厚生労働省告示第367号による改正後全文）第2条・第4条
+    <a href="https://www.mhlw.go.jp/content/001035032.pdf" rel="nofollow noopener" target="_blank">厚生労働省（PDF）</a></li>
+  <li>令和4年12月23日付け基発1223第3号「自動車運転者の労働時間等の改善のための基準の一部改正等について」第2の2・第2の4
+    <a href="https://www.mhlw.go.jp/content/001179482.pdf" rel="nofollow noopener" target="_blank">厚生労働省（PDF）</a></li>
+  <li>厚生労働省「トラック運転者の労働時間等の改善基準のポイント」（2024年12月版）P4〜P9 の計算例
+    <a href="https://www.mhlw.go.jp/content/2023_Pamphlet_T.pdf" rel="nofollow noopener" target="_blank">厚生労働省（PDF）</a></li>
+  <li>厚生労働省「自動車運転者の労働時間等の改善のための基準」のページ
+    <a href="https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/koyou_roudou/roudoukijun/gyosyu/roudoujouken05/index.html" rel="nofollow noopener" target="_blank">厚生労働省</a></li>
+  <li>告示・通達・パンフレットは上の PDF の原文で逐語確認しています（告示は e-Gov 法令検索に収録されていません）。
+    パンフレットの計算例（13＋2＝15時間、10・9・9時間の2日平均、46＋44時間の2週）は<a href="./calc.test.mjs">テスト</a>で再現し、数え方は<a href="./calc.js">計算コード</a>のコメントに残してあります</li>
+</ul>
+<p class="src">最終確認日: 2026年11月19日</p>
+
+</main>
+
+<footer class="wrap">
+  <a href="../../">トップ</a>
+  <a href="../../privacy.html">プライバシーポリシー</a>
+  <a href="../../contact.html">お問い合わせ</a>
+  <p>&copy; 2026 くらしの計算室</p>
+</footer>
+
+<script type="module">
+import { calculate, fmtDur, fmtClock, addDays, parseDate, DAYS, DAY } from "./calc.js";
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const WD = ["日", "月", "火", "水", "木", "金", "土"];
+
+// 日ごとの入力欄を作る
+const grid = $("days");
+grid.insertAdjacentHTML("beforeend",
+  `<div class="hd">日付</div><div class="hd">始業</div><div class="hd">終業</div><div class="hd dcol">運転時間</div>`);
+for (let i = 0; i < DAYS; i++) {
+  if (i === 7) grid.insertAdjacentHTML("beforeend", `<div class="wk">2週目</div>`);
+  grid.insertAdjacentHTML("beforeend",
+    `<div class="dl"><span id="dl${i}"></span><label class="offl"><input type="checkbox" id="off${i}">休</label></div>` +
+    `<input type="text" inputmode="numeric" id="s${i}" placeholder="8:00">` +
+    `<input type="text" inputmode="numeric" id="e${i}" placeholder="21:00">` +
+    `<input type="text" inputmode="decimal" id="d${i}" class="dcol" placeholder="9:00">`);
+}
+
+function relabel() {
+  const st = parseDate($("startDate").value);
+  for (let i = 0; i < DAYS; i++) {
+    const dt = st ? addDays(st, i) : null;
+    $(`dl${i}`).innerHTML = dt ? `${dt.m}/${dt.d}<span class="wd${dt.wd === 0 ? " sun" : ""}">(${WD[dt.wd]})</span>` : `${i + 1}日目`;
+    const lab = dt ? `${dt.m}月${dt.d}日` : `${i + 1}日目`;
+    $(`s${i}`).setAttribute("aria-label", `${lab} 始業`);
+    $(`e${i}`).setAttribute("aria-label", `${lab} 終業`);
+    $(`d${i}`).setAttribute("aria-label", `${lab} 運転時間`);
+  }
+}
+
+const readDays = () => Array.from({ length: DAYS }, (_, i) => ({
+  off: $(`off${i}`).checked, start: $(`s${i}`).value, end: $(`e${i}`).value, drive: $(`d${i}`).value,
+}));
+
+const dlabel = (r) => `${r.date.m}/${r.date.d}(${WD[r.date.wd]})`;
+
+function render() {
+  const mode = $("mode").value;
+  const driving = mode === "truck";
+  grid.classList.toggle("nodrive", !driving);
+  for (const th of document.querySelectorAll(".dcol2")) th.style.display = driving ? "" : "none";
+  relabel();
+
+  const res = calculate({ mode, startDate: $("startDate").value, days: readDays() });
+  if (!res.ok) {
+    $("headline").textContent = "—";
+    $("headline").classList.remove("bad");
+    $("summary").textContent = res.errors[0];
+    $("rows").innerHTML = "";
+    $("checks").innerHTML = "";
+    return;
+  }
+  const rule = res.rule;
+  const c = res.counts;
+  const ng = c.over + c.restNg + c.drive2Ng + c.twoWeekNg;
+  $("headLabel").textContent = "基準を超えたところ";
+  $("headline").textContent = ng ? `${ng}件` : "ありません";
+  $("headline").classList.toggle("bad", ng > 0);
+  const parts = [];
+  if (c.over) parts.push(`1日の拘束時間が最大15時間を超えた日 ${c.over}日`);
+  if (c.restNg) parts.push(`休息期間が継続9時間を下回った日 ${c.restNg}日`);
+  if (c.drive2Ng) parts.push(`2日平均の運転時間が9時間を超えた日 ${c.drive2Ng}日`);
+  if (c.twoWeekNg) parts.push("2週の運転時間が88時間を超えた");
+  const unknownDays = res.rows.filter((r) => r.status === "unknown").length;
+  $("summary").textContent = (ng ? parts.join("・") + "。" : `${rule.label}の原則の基準（${rule.article}）を、入力した範囲では満たしています。`)
+    + (unknownDays ? ` 未入力の日が${unknownDays}日あり、その日が要る判定はしていません。` : "");
+
+  // 日ごとの表
+  const kcell = (r) => {
+    if (r.status !== "work") return "<td></td>";
+    const cls = r.kousokuStatus === "over" ? "ng" : r.kousokuStatus === "ext" ? "warn" : "";
+    const add = r.overlap ? `（翌日分 ${fmtDur(r.overlap)}）` : "";
+    const part = !r.kousokuKnown && r.kousokuStatus !== "over" ? "以上" : "";
+    return `<td class="${cls}">${fmtDur(r.kousoku)}${part}${add}</td>`;
+  };
+  const rcell = (r) => {
+    if (r.status !== "work") return "<td></td>";
+    if (r.rest == null) return "<td>—</td>";
+    const cls = r.restStatus === "ng" ? "ng" : r.restStatus === "short" ? "warn" : "";
+    return `<td class="${cls}">${fmtDur(r.rest)}</td>`;
+  };
+  const d2cell = (r) => {
+    if (!driving || r.status !== "work") return driving ? "<td></td><td></td>" : "";
+    const d = r.drive == null ? "—" : fmtDur(r.drive);
+    const s = r.drive2;
+    const lab = s.status === "ng" ? "超える" : s.status === "ok" ? "9時間以内" : "判定できない";
+    return `<td>${d}</td><td class="${s.status === "ng" ? "ng" : ""}">${lab}</td>`;
+  };
+  $("rows").innerHTML = res.rows.map((r) => {
+    const base = r.i * DAY;
+    const work = r.status === "work" ? `${fmtClock(r.S - base)}〜${fmtClock(r.E - base)}` : r.status === "off" ? "休み" : "未入力";
+    if (r.status !== "work") return `<tr><td>${dlabel(r)}</td><td>${work}</td><td></td><td></td>${driving ? "<td></td><td></td>" : ""}</tr>`;
+    return `<tr><td>${dlabel(r)}</td><td>${work}</td>${kcell(r)}${rcell(r)}${d2cell(r)}</tr>`;
+  }).join("");
+
+  // 指摘
+  const checks = [];
+  const work = res.rows.filter((r) => r.status === "work");
+  for (const r of work.filter((x) => x.kousokuStatus === "over")) {
+    checks.push({ s: "ng", t: `${dlabel(r)} の1日の拘束時間 ${fmtDur(r.kousoku)} — 最大拘束時間15時間を超えています`,
+      d: (r.overlap ? `この日の勤務 ${fmtDur(r.span)} に、翌日の始業が早まった分 ${fmtDur(r.overlap)} が入っています（始業から24時間で数えます）。` : "")
+        + (driving ? "宿泊を伴う長距離貨物運送の特例（週2回まで16時間）や2人乗務の特例に当たらなければ、基準を超えています。" : "車庫待ち等の特例に当たらなければ、基準を超えています。") });
+  }
+  for (const r of work.filter((x) => x.restStatus === "ng")) {
+    checks.push({ s: "ng", t: `${dlabel(r)} の終業から次の始業まで ${fmtDur(r.rest)} — 休息期間が継続9時間を下回っています`,
+      d: driving ? "宿泊を伴う長距離貨物運送の特例（週2回まで継続8時間）や分割休息の特例に当たらなければ、基準を超えています。" : "休息期間は継続9時間を下回らないものとされています（第2条第1項第4号）。" });
+  }
+  for (const r of work.filter((x) => x.drive2 && x.drive2.status === "ng")) {
+    checks.push({ s: "ng", t: `${dlabel(r)} を特定日とした2日平均の運転時間が9時間を超えています`,
+      d: `前日との合計 ${fmtDur(r.drive2.sumPrev)}、翌日との合計 ${fmtDur(r.drive2.sumNext)}。どちらも18時間（平均9時間）を超えると違反です（施行通達 第2の4(4)）。` });
+  }
+  if (res.twoWeek) {
+    const tw = res.twoWeek;
+    checks.push(tw.status === "ng"
+      ? { s: "ng", t: `2週の運転時間 ${fmtDur(tw.sum)} — 88時間（2週平均44時間）を超えています`, d: "1日目を起算日とした2週間の合計です（施行通達 第2の4(4)「特定の日を起算日として２週間ごとに区切り」）。" }
+      : tw.status === "ok"
+        ? { s: "ok", t: `2週の運転時間 ${fmtDur(tw.sum)} — 88時間（2週平均44時間）以内です`, d: "1日目を起算日とした2週間の合計です。" }
+        : { s: "info", t: `2週の運転時間は、未入力の日があるので判定していません（入力した分の合計 ${fmtDur(tw.sum)}）`, d: `14日分（休みは「休」に印）を入れると判定します。88時間まで残り ${fmtDur(Math.max(0, tw.rest))}。` });
+  }
+  for (const wk of res.weeks) {
+    if (!wk.count) continue;
+    const range = `${wk.w + 1}週目`;
+    checks.push(wk.exceeded
+      ? { s: "warn", t: `${range}に1日の拘束時間が14時間を超えた日が${wk.count}回 — 目安（週${wk.limit}回）を超えています`, d: "14時間を超える回数をできるだけ少なくするよう努めるもので、目安を超えても直ちに違反ではありません（告示・施行通達）。" }
+      : { s: "ok", t: `${range}に1日の拘束時間が14時間を超えた日は${wk.count}回 — 目安（週${wk.limit}回）以内です`, d: "週の区切りは1日目から7日ごとに数えています。" });
+  }
+  if (res.consecutive14.length) {
+    checks.push({ s: "warn", t: `14時間を超える日が続いています（${res.consecutive14.map(([a, b]) => `${dlabel(res.rows[a])}・${dlabel(res.rows[b])}`).join("、")}）`,
+      d: "施行通達は「14 時間」を超える日が連続することは望ましくないとしています。" });
+  }
+  const shortRest = work.filter((x) => x.restStatus === "short");
+  if (shortRest.length) {
+    checks.push({ s: "warn", t: `休息期間が11時間に届かない日が${shortRest.length}日あります（${shortRest.map(dlabel).join("、")}）`,
+      d: "9時間以上なので違反ではありませんが、継続11時間以上を与えるよう努めることが基本です。" });
+  }
+  const partial = work.filter((x) => !x.kousokuKnown && x.kousokuStatus !== "over");
+  if (partial.length) {
+    checks.push({ s: "info", t: `翌日が未入力の日（${partial.map(dlabel).join("、")}）の1日の拘束時間は、翌日の始業が早まれば増えます`,
+      d: "翌日の勤務か「休」を入れると確定します。" });
+  }
+  checks.push({ s: "info", t: `入力した勤務の拘束時間の合計 ${fmtDur(res.totalSpan)}（1か月は${driving ? "284" : "288"}時間まで）`,
+    d: "1か月（原則として暦月）の拘束時間は、各勤務の始業から終業までをそのまま合計して比べます（重なりは二重に数えません）。" + (driving ? "労使協定があれば年6か月まで310時間・年3,400時間以内。" : "") });
+  $("checks").innerHTML = checks.map((x) =>
+    `<li><p class="hd2"><span class="tag ${x.s}">${{ ok: "基準内", ng: "超過", warn: "目安", info: "参考" }[x.s]}</span>${esc(x.t)}</p>` +
+    `<p class="dt">${esc(x.d)}</p></li>`).join("");
+}
+
+// 例（2026-11-16 は月曜日）
+const W = (s, e, d = "") => ({ s, e, d });
+const O = { off: true };
+const PRESETS = {
+  // パンフレット P5 の1週間（拘束時間 15・13・14・14・12）。運転時間は説明用（P8 の 10・9・9 を含む）
+  week: { mode: "truck", start: "2026-11-16", days: [
+    W("8:00", "23:00", "10"), W("8:00", "21:00", "9"), W("8:00", "22:00", "9"), W("9:00", "23:00", "8"), W("9:00", "21:00", "8"), O, O,
+    W("8:00", "21:00", "9"), W("8:00", "21:00", "9"), W("8:00", "21:00", "9"), W("8:00", "21:00", "9"), W("8:00", "21:00", "8"), O, O] },
+  // パンフレット P6（月 8:00〜21:00・火 6:00 始業 → 月曜から始まる1日は15時間）
+  overlap: { mode: "truck", start: "2026-11-16", days: [W("8:00", "21:00", "9"), W("6:00", "19:00", "9"), W("6:00", "17:00", "8")] },
+  taxi: { mode: "taxi", start: "2026-11-16", days: [
+    W("7:00", "21:30"), W("7:00", "21:30"), O, W("7:00", "22:30"), W("8:00", "20:00"), O, O] },
+  clear: { mode: null, start: null, days: [] },
+};
+
+function applyPreset(p) {
+  if (p.mode) $("mode").value = p.mode;
+  if (p.start) $("startDate").value = p.start;
+  for (let i = 0; i < DAYS; i++) {
+    const d = p.days[i] || {};
+    $(`off${i}`).checked = !!d.off;
+    $(`s${i}`).value = d.s || "";
+    $(`e${i}`).value = d.e || "";
+    $(`d${i}`).value = d.d || "";
+  }
+  render();
+}
+
+for (const el of document.querySelectorAll(".card input, .card select")) {
+  el.addEventListener("input", render);
+  el.addEventListener("change", render);
+}
+for (const btn of document.querySelectorAll("[data-preset]")) {
+  btn.addEventListener("click", () => applyPreset(PRESETS[btn.dataset.preset]));
+}
+applyPreset(PRESETS.week);
+</script>
+
+</body>
+</html>

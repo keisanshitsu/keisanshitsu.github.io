@@ -10,7 +10,7 @@
 import {
   extractResultUrls, normalizeHost, hostsOf, containsHost, verdict, isQueryUsable, PROVES,
   summarizeHistory, parseHistory, shouldRetry, ourHostUrls, negControlTested,
-  pickRotatingTool, extractTitle, normalizeUrl, toolPageVerdict, usableHostRows,
+  pickRotatingTool, extractTitle, normalizeUrl, toolPageVerdict, usableHostRows, blockMarkers, isChallengePage,
 } from "./probe_index.mjs";
 
 const results = [];
@@ -111,6 +111,18 @@ eq("H5 壊れた行・空行・CRLF を飛ばして読む",
 eq("R1 202（流量制限）は引き直す", shouldRetry(202), true);
 eq("R2 200 は引き直さない", shouldRetry(200), false);
 eq("R3 通信失敗（null）は引き直さない", shouldRetry(null), false);
+
+// 200 以外の本文に出る「弾かれた」印（2026-11-19）。印の有無は記録用で、判定（isQueryUsable）には使わない
+eq("B1 DDG の確認ページの印を拾う",
+  blockMarkers(`<div class="anomaly-modal__title">Unfortunately, bots use DuckDuckGo too.</div><form id="challenge-form">`),
+  ["anomaly", "challenge", "bots_text"]);
+eq("B2 大文字小文字を問わない", blockMarkers("CAPTCHA required"), ["captcha"]);
+eq("B3 通常の結果ページには印が無い", blockMarkers(htmlDirect), []);
+eq("B4 空・null でも落ちない", [blockMarkers(""), blockMarkers(null)], [[], []]);
+eq("B5 流量制限の文言", blockMarkers("429 Too Many Requests"), ["rate_limit_text"]);
+eq("B6 確認ページなら打ち切る（11/19 の本文の印）", isChallengePage(["anomaly", "challenge", "bots_text"]), true);
+eq("B7 流量制限の文言だけでは打ち切らない（引き直しの余地を残す）", isChallengePage(["rate_limit_text"]), false);
+eq("B8 印なし・null は打ち切らない", [isChallengePage([]), isChallengePage(null)], [false, false]);
 eq("R4 引き直しても判定基準は緩めない（202 のままなら不成立）",
   isQueryUsable({ http: 202, result_count: 10 }), false);
 

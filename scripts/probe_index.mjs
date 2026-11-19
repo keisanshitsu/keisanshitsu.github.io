@@ -25,7 +25,7 @@
 // → DuckDuckGo に出れば「Bing か DuckDuckBot のどちらかが当ホストに到達した」ことになる。
 //   Bing は IndexNow 参加エンジンである。ただし **IndexNow が原因だとは証明できない**。
 
-import { readFileSync, appendFileSync, existsSync } from "node:fs";
+import { readFileSync, appendFileSync, existsSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -186,8 +186,36 @@ export function parseHistory(text) {
 // HTTP 202 は DuckDuckGo の流量制限（9/23・9/30・10/03 に当サイトのクエリだけで観測）。
 // 答えではなく「後で来い」なので、1回だけ間を空けて引き直す。
 // ⚠ 判定基準（isQueryUsable: 200 かつ結果>0）は緩めていない。引き直しても 202 なら測れなかった日のまま。
+// ⚠ 2026-11-19 に本文を初めて保存したら、202 は流量制限ではなく人間確認ページ（画像 CAPTCHA）だった。
+// それより前の 202（9/23〜11/18）が同じページだったかは本文を捨てていたので分からない。
+// 確認ページのときは引き直さない（isChallengePage）。
 export function shouldRetry(status) {
   return status === 202;
+}
+
+// 200 以外の応答本文に、どの「弾かれた」印が出ているか（2026-11-19）。
+// なぜ: 11/17・11/18 は1本目から4本とも 202 で、10/10〜11/08 の「1・2本目は 200」と形が違う。
+// 202 が流量制限なのか、当方（IP・UA）をボットとして弾く確認ページなのかは本文を見ないと分からないが、
+// これまで本文を捨てていた。同日の再実行は流量制限を招くので、1回の実行の中で本文を残す。
+// 印は大文字小文字を無視した部分一致。印が無いことは「弾かれていない」の証明ではない（未知の文言はありうる）。
+export const BLOCK_MARKERS = [
+  ["anomaly", /anomaly/i],
+  ["captcha", /captcha/i],
+  ["challenge", /challenge/i],
+  ["bots_text", /bots use duckduckgo/i],
+  ["rate_limit_text", /too many requests|rate limit/i],
+];
+export function blockMarkers(html) {
+  const s = String(html ?? "");
+  return BLOCK_MARKERS.filter(([, re]) => re.test(s)).map(([name]) => name);
+}
+
+// 人間確認ページ（2026-11-19 に本文で確認: "Unfortunately, bots use DuckDuckGo too. Please complete the
+// following challenge..." と画像 CAPTCHA）が返ったら、その回の残りの問い合わせはすべて打ち切る。
+// 引き直しても同じページが返るだけで、問い合わせを重ねればボット判定を自分で長引かせる。
+// ⚠ 確認ページを別の入口・別の UA で迂回することはしない（ボット対策の回避になる）。
+export function isChallengePage(markers) {
+  return (markers || []).some((m) => m === "challenge" || m === "anomaly" || m === "captcha");
 }
 
 // ── ツールのページの照会（--rotate-tool） ──────────────────────────────
@@ -267,7 +295,11 @@ export function usableHostRows(rows, toolQuery) {
 
 // ── 副作用のある部分 ───────────────────────────────────────────────
 
+const nonOkBodies = [];
+let challenged = false;
+
 async function search(query) {
+  if (challenged) return { query, status: null, urls: [], bytes: 0, skipped: "challenge" };
   const body = new URLSearchParams({ q: query }).toString();
   try {
     const r = await fetch(ENDPOINT, {
@@ -279,6 +311,10 @@ async function search(query) {
       body,
     });
     const html = await r.text();
+    if (r.status !== 200) {
+      nonOkBodies.push({ query, status: r.status, html });
+      if (isChallengePage(blockMarkers(html))) challenged = true;
+    }
     return { query, status: r.status, urls: extractResultUrls(html), bytes: html.length };
   } catch (e) {
     return { query, status: null, urls: [], bytes: 0, error: String(e?.message ?? e) };
@@ -343,22 +379,22 @@ async function main() {
     for (const q of queries) {
       let r = await search(q);
       let retried = false;
-      if (shouldRetry(r.status)) {
+      if (shouldRetry(r.status) && !challenged) {
         await sleep(20000);
         r = await search(q);
         retried = true;
       }
       ours.push({ ...r, retried, our_host_found: containsHost(r.urls, host), our_urls: ourHostUrls(r.urls, host) });
-      await sleep(4000);
+      if (!challenged) await sleep(4000);
     }
   };
 
   await runOurs(firstQueries);
   const pos = await search(POS_CONTROL_QUERY);
-  await sleep(4000);
+  if (!challenged) await sleep(4000);
   await runOurs(laterQueries);
   const neg = await search(NEG_CONTROL_QUERY);
-  await sleep(4000);
+  if (!challenged) await sleep(4000);
   await runOurs(lastQueries);
 
   const posFound = containsHost(pos.urls, POS_CONTROL_HOST);
@@ -383,6 +419,18 @@ async function main() {
     };
   }
 
+  // 200 以外の本文: 印は結果と履歴に、本文そのものは logs/（.gitignore 済み）に最初の1件だけ置く
+  const nonOk = nonOkBodies.map((b) => ({
+    query: b.query, http: b.status, bytes: b.html.length, markers: blockMarkers(b.html),
+  }));
+  let nonOkBodyFile = null;
+  if (nonOkBodies.length && !process.argv.includes("--no-record")) {
+    const logDir = join(ROOT, "logs");
+    mkdirSync(logDir, { recursive: true });
+    nonOkBodyFile = join(logDir, `probe_non200_${new Date().toISOString().slice(0, 10)}.html`);
+    writeFileSync(nonOkBodyFile, nonOkBodies[0].html, "utf8");
+  }
+
   const result = {
     ran_at: new Date().toISOString(),
     engine: "DuckDuckGo(html) — web結果は largely Bing 由来",
@@ -397,6 +445,9 @@ async function main() {
     queries: queryRows.map((r) => ({ ...r, usable: isQueryUsable(r) })),
     usable_query_count: usable.length,
     usable_host_query_count: usableHost.length,
+    non_200: nonOk,
+    non_200_body_file: nonOkBodyFile,
+    stopped_by_challenge: challenged,
     verdict: verdict({
       posControlFound: posFound, negControlFound: negFound, ourFound,
       usableQueries: usableHost.length,
@@ -417,6 +468,8 @@ async function main() {
       retried: queryRows.some((r) => r.retried),
       usable_query_count: usable.length,
       usable_host_query_count: usableHost.length,
+      ...(nonOk.length ? { non_200_markers: [...new Set(nonOk.flatMap((n) => n.markers))], non_200_bytes: nonOk.map((n) => n.bytes) } : {}),
+      ...(challenged ? { stopped_by_challenge: true } : {}),
       ...(toolProbe ? { tool_probe: { id: toolProbe.id, http: toolProbe.http, pos_control_found: posFound, found_tool_page: toolProbe.found_tool_page } } : {}),
     }) + "\n", "utf8");
   }

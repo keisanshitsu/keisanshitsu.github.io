@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>タクシー隔日勤務の拘束時間と休息期間のチェック — 改善基準告示（2024年4月〜）22時間・平均21時間・休息22時間</title>
+<meta name="description" content="隔日勤務の始業と終業を勤務ごとに入れると、改善基準告示（2024年4月〜）の2暦日の拘束時間（22時間）、前後の勤務との平均（21時間）、休息期間（継続22時間が下限・24時間が基本）、1か月の拘束時間（262時間）を判定します。厚労省Q&Aの計算例を再現しています。">
+<link rel="canonical" href="https://keisanshitsu.github.io/tools/taxi-kakujitsu-kousoku/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="くらしの計算室">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="タクシー隔日勤務の拘束時間と休息期間のチェック — 改善基準告示（2024年4月〜）">
+<meta property="og:description" content="隔日勤務の始業・終業を入れると、2暦日の拘束時間22時間・2回の平均21時間・休息期間22時間・1か月262時間を満たすかを判定します。">
+<meta property="og:url" content="https://keisanshitsu.github.io/tools/taxi-kakujitsu-kousoku/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "タクシー隔日勤務の拘束時間と休息期間のチェック",
+  "description": "隔日勤務の始業と終業を勤務ごとに入れると、自動車運転者の労働時間等の改善のための基準（改善基準告示）第2条第2項の2暦日の拘束時間・2回の隔日勤務の平均・休息期間・1か月の拘束時間を判定します。",
+  "url": "https://keisanshitsu.github.io/tools/taxi-kakujitsu-kousoku/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (web browser)",
+  "inLanguage": "ja",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "くらしの計算室",
+    "url": "https://keisanshitsu.github.io/"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1b19; --muted:#6b6862;
+    --line:#e5e2dc; --card:#fff; --accent:#0f6cbd; --accent-soft:#eef5fc;
+    --ok:#1f7a45; --ok-soft:#eaf6ef; --ng:#b3261e; --ng-soft:#fdeeed;
+    --warn:#8a5a00; --warn-soft:#fdf4e2;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#17181a; --fg:#e9e8e5; --muted:#a3a09a;
+           --line:#2e3033; --card:#1f2123; --accent:#6cb6f5; --accent-soft:#1b2733;
+           --ok:#5fd08a; --ok-soft:#16261d; --ng:#ff8a80; --ng-soft:#2a1a19;
+           --warn:#f0c060; --warn-soft:#2b2414; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  header{border-bottom:1px solid var(--line);padding:16px 0}
+  .site{font-size:.85rem;color:var(--muted);text-decoration:none}
+  h1{font-size:1.35rem;margin:28px 0 6px;line-height:1.5}
+  .sub{color:var(--muted);font-size:.92rem;margin:0 0 28px}
+  h2{font-size:1.05rem;margin:36px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
+  h3{font-size:.95rem;margin:22px 0 6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+  input,select{width:100%;min-width:0;padding:9px 10px;font-size:1rem;color:var(--fg);
+    background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--fg);padding:9px 14px}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .hint{font-size:.78rem;color:var(--muted);margin:4px 0 0}
+  .shifts{display:grid;grid-template-columns:1.7em minmax(0,1.7fr) minmax(0,1fr) minmax(0,1fr);gap:6px 6px;align-items:center;margin-top:12px}
+  .shifts .hd{font-size:.74rem;color:var(--muted);text-align:center}
+  .shifts .no{font-size:.74rem;color:var(--muted);text-align:right}
+  .shifts input{padding:7px 5px;font-size:.95rem}
+  .shifts input[type=text]{text-align:center}
+  .chk{display:flex;align-items:flex-start;gap:6px;margin:14px 0 0;font-size:.82rem;color:var(--fg);cursor:pointer}
+  .chk input{width:auto;margin:5px 0 0;padding:0;flex:none}
+  .result{margin-top:20px;border:1px solid var(--accent);background:var(--accent-soft);
+    border-radius:12px;padding:18px}
+  .big{font-size:1.9rem;font-weight:700;color:var(--accent);line-height:1.25;margin:2px 0 0}
+  .big.bad{color:var(--ng)}
+  .sub2{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+  .checks{list-style:none;padding:0;margin:14px 0 0}
+  .checks li{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin-bottom:8px}
+  .checks .hd2{font-size:.9rem;font-weight:600;margin:0}
+  .checks .dt{font-size:.82rem;color:var(--muted);margin:3px 0 0}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;border-radius:5px;
+    padding:1px 7px;margin-right:7px;vertical-align:2px}
+  .tag.ok{background:var(--ok-soft);color:var(--ok)}
+  .tag.ng{background:var(--ng-soft);color:var(--ng)}
+  .tag.warn{background:var(--warn-soft);color:var(--warn)}
+  .tag.info{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+  .tablewrap{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:.84rem;white-space:nowrap}
+  th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}
+  th{color:var(--muted);font-weight:600}
+  td.ng{color:var(--ng);font-weight:700}
+  td.warn{color:var(--warn)}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:14px 16px;border-radius:0 8px 8px 0;font-size:.88rem;margin:24px 0}
+  .law{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;margin:14px 0;font-size:.86rem}
+  .law p{margin:0 0 6px;font-size:.86rem}
+  .law p:last-child{margin-bottom:0}
+  p,li{font-size:.94rem}
+  ul{padding-left:1.2em}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src li{font-size:.85rem;overflow-wrap:anywhere}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:20px 0 40px;
+    color:var(--muted);font-size:.85rem}
+  footer a{color:var(--muted);margin-right:14px}
+  a{color:var(--accent)}
+  @media (max-width:400px){
+    .big{font-size:1.55rem}
+  }
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><a class="site" href="../../">← くらしの計算室</a></div></header>
+
+<main class="wrap">
+
+<h1>タクシー隔日勤務の拘束時間と休息期間のチェック</h1>
+<p class="sub">
+  隔日勤務の始業と終業を勤務ごとに入れると、改善基準告示（2024年4月から適用）の
+  <strong>2暦日の拘束時間（22時間まで）</strong>、<strong>前後の勤務との平均（21時間まで）</strong>、
+  <strong>休息期間（継続22時間が下限・24時間が基本）</strong>、<strong>1か月の拘束時間（262時間まで）</strong>を判定します。
+  平均は「前の勤務との平均」と「次の勤務との平均」が<strong>どちらも</strong>21時間を超えたときに違反になります。
+</p>
+
+<div class="card">
+  <p class="hint" style="margin-top:0">勤務の<strong>始業した日</strong>と、始業・終業の時刻を入れます（7:00・3:30 のように。700 や 7 でも読みます）。
+    終業が始業より前の時刻なら翌日の終業として数えます。休日は入れなくてかまいません（休日の前後の勤務どうしで平均します）。
+    <strong>勤務は抜けなく入れてください</strong>。抜けがあると、平均と休息期間を正しく判定できません。</p>
+
+  <div class="shifts" id="shifts"></div>
+
+  <label class="chk"><input type="checkbox" id="ext270">地域的事情などにより、労使協定で1か月の拘束時間を270時間まで延長している月（1年に6か月まで）</label>
+
+  <div class="actions">
+    <button type="button" data-preset="qa">厚労省Q&amp;Aの例（22・22・休日・22時間）</button>
+    <button type="button" data-preset="month">1か月13回の例</button>
+    <button type="button" data-preset="clear">すべて消す</button>
+  </div>
+</div>
+
+<div class="result" aria-live="polite">
+  <div>基準を超えたところ</div>
+  <p class="big" id="headline">—</p>
+  <p class="sub2" id="summary">勤務の日付・始業・終業を入力してください。</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>勤務</th><th>拘束時間</th><th>前後との平均</th><th>休息期間</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <ul class="checks" id="checks"></ul>
+</div>
+
+<div class="note">
+  <strong>この結果は概算です。</strong>
+  改善基準告示（自動車運転者の労働時間等の改善のための基準）第2条第2項の原則の基準と、厚生労働省の施行通達・Q&amp;Aの数え方を当てはめたものです。
+  <strong>車庫待ち等</strong>（2暦日24時間までの延長）や<strong>予期し得ない事象への対応時間</strong>に当たる場合は、上限や数え方が変わります。
+  拘束時間は休憩・仮眠を含む始業から終業までの時間です。乗務記録の時刻で確かめ、
+  判断に迷うときは、勤め先の運行管理者、最寄りの労働基準監督署、社会保険労務士などの専門家にご確認ください。
+</div>
+
+<h2>この計算の根拠</h2>
+
+<h3>隔日勤務とは</h3>
+<div class="law">
+  <p>隔日勤務（始業及び終業の時刻が同一の日に属さない業務をいう。以下同じ。）</p>
+  <p>（改善基準告示 第2条第1項）</p>
+</div>
+<p>
+  2労働日の勤務を1勤務にまとめて行うものです。厚労省のQ&amp;A（2-3）は、7時に出勤して28時（翌4時）に退勤する勤務は隔日勤務に当たる一方、
+  22時に出勤して28時に退勤する勤務は「単なる夜間勤務として日勤の拘束時間の上限が適用される」としています。
+  反対に、午前1時に出勤して午後10時に退勤するように始業と終業が同じ日になる勤務でも、実態が2労働日をまとめた勤務なら隔日勤務の規定を適用してよいとされています（Q&amp;A 追補 2-3-2）。
+  日勤の基準は<a href="../driver-kousoku-jikan/">トラック・タクシー運転者の拘束時間と休息期間のチェック</a>で判定できます。
+</p>
+
+<h3>2暦日の拘束時間：22時間まで、2回の平均は21時間まで</h3>
+<div class="law">
+  <p>二暦日についての拘束時間は、二十二時間を超えないものとし、かつ、二回の隔日勤務を平均し隔日勤務一回当たり二十一時間を超えないものとすること。</p>
+  <p>（改善基準告示 第2条第2項第2号）</p>
+</div>
+<div class="law">
+  <p>次の①②のいずれもが「21 時間」を超えた場合に、初めて違反と判断される。①特定の隔日勤務の拘束時間（Ａ時間）と、特定の隔日勤務の前の隔日勤務の拘束時間（Ｂ時間）との平均、②特定の隔日勤務の拘束時間（Ａ時間）と特定の隔日勤務の次の隔日勤務の拘束時間（Ｃ時間）との平均</p>
+  <p>（施行通達 基発1223第3号 第2の2(2)イ）</p>
+</div>
+<p>
+  拘束時間は「労働時間、休憩時間その他の使用者に拘束されている時間」（第2条第1項）で、休憩や仮眠も入ります。
+  1回の勤務が22時間を超えると、それだけで基準を超えます。平均は、その勤務と<strong>前の勤務</strong>、その勤務と<strong>次の勤務</strong>の2通りで計算し、
+  <strong>どちらも</strong>21時間を超えたときだけ違反です。どちらか一方が21時間以下なら違反ではありません。
+  間に休日があっても、休日の前後の2回で平均します。厚労省のQ&amp;A（2-4）は、22時間・22時間・休日・22時間の勤務で、
+  2回目は前との平均も次との平均も22時間なので違反になると説明しています（このページの最初の例です）。
+  このツールは、前の勤務か次の勤務が入っていない勤務の平均を「判定できない」と表示し、合格にはしません。
+</p>
+
+<h3>休息期間：継続24時間が基本、22時間を下回らない</h3>
+<div class="law">
+  <p>勤務終了後、継続二十四時間以上の休息期間を与えるよう努めることを基本とし、休息期間が継続二十二時間を下回らないものとすること。</p>
+  <p>（改善基準告示 第2条第2項第4号）</p>
+</div>
+<p>終業から次の勤務の始業までの時間です。<strong>22時間を下回ると基準違反</strong>、22時間以上24時間未満は違反ではありませんが、24時間以上を与えるよう努めるのが基本です。施行通達は、下限の22時間を守るだけでなく24時間以上が確保されるよう自主的な改善を「特に要請」しています。</p>
+
+<h3>1か月の拘束時間：262時間（労使協定で270時間）</h3>
+<div class="law">
+  <p>拘束時間は、一箇月について二百六十二時間を超えないものとすること。ただし、地域的事情その他の特別の事情がある場合において、労使協定により、一年について六箇月までは、一箇月の拘束時間を二百七十時間まで延長することができるものとする。</p>
+  <p>（改善基準告示 第2条第2項第1号）</p>
+</div>
+<p>
+  入力した勤務の拘束時間（始業から終業まで）をそのまま合計して比べます。1か月の区切りは、勤め先の就業規則や労使協定で定めた期間の初日が起算日です（Q&amp;A 1-3）。
+  <strong>月をまたぐ勤務をどちらの月に数えるかは、告示・通達・Q&amp;Aに定めが見当たりません</strong>。勤め先の数え方で、1か月分の勤務をすべて入れてください。
+  合計が262時間以下でも、抜けた勤務があれば増えるので、このツールは「基準内」とは表示せず残りの時間を示します。
+  最初と最後の勤務の始業日が31日以上離れているときは、1か月を超える範囲とみなして判定しません。
+</p>
+
+<h3>2024年3月までとの違い</h3>
+<p>
+  改正前は、2暦日の拘束時間が21時間まで、休息期間が継続20時間以上でした。2024年4月からは、2暦日22時間まで（かつ2回の平均21時間まで）、休息期間は継続22時間が下限・24時間が基本です。
+  1か月の262時間（労使協定で270時間）は変わっていません。このツールは2024年4月1日以降の勤務だけを判定します。
+</p>
+
+<h2>よくある質問</h2>
+
+<h3>休憩や仮眠の時間は拘束時間から引けますか</h3>
+<p>引けません。拘束時間は始業から終業までの全ての時間で、休憩・仮眠を含みます。引けるのは、事故・故障・災害・異常気象などの「予期し得ない事象への対応時間」を客観的な記録で確認できる場合の、2暦日の拘束時間だけです（告示 第2条第3項）。その場合でも、対応時間を含めて22時間を超えたときは、勤務終了後に継続24時間以上の休息期間が要ります。1か月の拘束時間からは引けません。</p>
+
+<h3>22時間を超えた勤務があります。すぐに違反ですか</h3>
+<p>原則は22時間までです。車庫待ち等（人口30万人以上の都市に所在しない事業場で、流し営業がほとんどでなく、夜間4時間以上の仮眠が確保される実態など）の運転者は、夜間4時間以上の仮眠を与え、労使協定で1か月7回以内の回数を定めた場合に、2暦日の拘束時間を24時間まで延長できます（第2条第2項第3号）。これに当たらなければ、22時間を超えた勤務は基準を超えています。</p>
+
+<h3>日勤と隔日勤務が混ざっています</h3>
+<p>頻繁に勤務態様を変えることは認められていません。当分の間、1か月の拘束時間が262時間以内、日勤の勤務の拘束時間が15時間以内、日勤の後に11時間以上の休息期間、休日労働は合わせて2週間に1回まで、を満たせば違反にはならないとされています（Q&amp;A 2-2）。このツールは隔日勤務だけを判定します。</p>
+
+<h3>休日に出勤した日があります</h3>
+<p>休日労働は2週間について1回までで、休日労働によって拘束時間の上限を超えることもできません（第2条第4項）。このツールは休日労働の回数は判定していません。</p>
+
+<h2>出典</h2>
+<ul class="src">
+  <li>自動車運転者の労働時間等の改善のための基準（平成元年労働省告示第7号・令和4年厚生労働省告示第367号による改正後全文）第2条第1項・第2項・第3項・第4項
+    <a href="https://www.mhlw.go.jp/content/001035032.pdf" rel="nofollow noopener" target="_blank">厚生労働省（PDF）</a></li>
+  <li>令和4年12月23日付け基発1223第3号「自動車運転者の労働時間等の改善のための基準の一部改正等について」第2の2(2)
+    <a href="https://www.mhlw.go.jp/content/001179482.pdf" rel="nofollow noopener" target="_blank">厚生労働省（PDF）</a></li>
+  <li>令和5年3月31日付け基発0331第49号「改善基準告示（令和６年４月１日適用）に関するＱ＆Ａ」1-3・2-2・2-3・2-4
+    <a href="https://www.mhlw.go.jp/content/001082040.pdf" rel="nofollow noopener" target="_blank">厚生労働省（PDF）</a></li>
+  <li>令和7年3月11日付け基発0311第79号「改善基準告示（令和６年４月１日適用）に関するＱ＆Ａ」の追補 2-3-2
+    <a href="https://www.mhlw.go.jp/content/001441923.pdf" rel="nofollow noopener" target="_blank">厚生労働省（PDF）</a></li>
+  <li>厚生労働省「自動車運転者の労働時間等の改善のための基準」のページ
+    <a href="https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/koyou_roudou/roudoukijun/gyosyu/roudoujouken05/index.html" rel="nofollow noopener" target="_blank">厚生労働省</a></li>
+  <li>告示・通達・Q&amp;Aは上の PDF の原文で逐語確認しています（告示は e-Gov 法令検索に収録されていません）。
+    Q&amp;A 2-4 の計算例（22・22・休日・22時間）は<a href="./calc.test.mjs">テスト</a>で再現し、数え方は<a href="./calc.js">計算コード</a>のコメントに残してあります</li>
+</ul>
+<p class="src">最終確認日: 2026年11月20日</p>
+
+</main>
+
+<footer class="wrap">
+  <a href="../../">トップ</a>
+  <a href="../../privacy.html">プライバシーポリシー</a>
+  <a href="../../contact.html">お問い合わせ</a>
+  <p>&copy; 2026 くらしの計算室</p>
+</footer>
+
+<script type="module">
+import { calculate, fmtDur, fmtClock, MAX_SHIFTS, DAY, MONTH_CAP, MONTH_CAP_EXT } from "./calc.js";
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const WD = ["日", "月", "火", "水", "木", "金", "土"];
+
+// 勤務ごとの入力欄を作る
+const grid = $("shifts");
+grid.insertAdjacentHTML("beforeend",
+  `<div class="hd"></div><div class="hd">始業した日</div><div class="hd">始業</div><div class="hd">終業</div>`);
+for (let i = 0; i < MAX_SHIFTS; i++) {
+  grid.insertAdjacentHTML("beforeend",
+    `<div class="no">${i + 1}</div>` +
+    `<input type="date" id="dt${i}" min="2024-04-01" max="2100-12-31" aria-label="${i + 1}回目の勤務 始業した日">` +
+    `<input type="text" inputmode="numeric" id="s${i}" placeholder="7:00" aria-label="${i + 1}回目の勤務 始業">` +
+    `<input type="text" inputmode="numeric" id="e${i}" placeholder="3:00" aria-label="${i + 1}回目の勤務 終業">`);
+}
+
+const readShifts = () => Array.from({ length: MAX_SHIFTS }, (_, i) => ({
+  date: $(`dt${i}`).value, start: $(`s${i}`).value, end: $(`e${i}`).value,
+}));
+
+const dlabel = (r) => `${r.date.m}/${r.date.d}(${WD[r.date.wd]})`;
+// 2回の合計の半分（平均）。合計が奇数分なら30秒が付く
+const half = (sum) => sum % 2 ? `${fmtDur((sum - 1) / 2)}30秒` : fmtDur(sum / 2);
+
+function render() {
+  const res = calculate({ shifts: readShifts(), ext270: $("ext270").checked });
+  if (!res.ok) {
+    $("headline").textContent = "—";
+    $("headline").classList.remove("bad");
+    $("summary").textContent = res.errors[0];
+    $("rows").innerHTML = "";
+    $("checks").innerHTML = "";
+    return;
+  }
+  const c = res.counts;
+  const ng = c.spanOver + c.pairNg + c.restNg + c.monthNg;
+  $("headline").textContent = ng ? `${ng}件` : "ありません";
+  $("headline").classList.toggle("bad", ng > 0);
+  const parts = [];
+  if (c.spanOver) parts.push(`拘束時間が22時間を超えた勤務 ${c.spanOver}回`);
+  if (c.pairNg) parts.push(`前後との平均がどちらも21時間を超えた勤務 ${c.pairNg}回`);
+  if (c.restNg) parts.push(`休息期間が継続22時間を下回った勤務 ${c.restNg}回`);
+  if (c.monthNg) parts.push(`1か月の拘束時間が${res.month.cap / 60}時間を超えた`);
+  const unknown = res.rows.filter((r) => r.pair.status === "unknown").length;
+  $("summary").textContent = (ng ? parts.join("・") + "。" : "入力した勤務では、隔日勤務の原則の基準（告示 第2条第2項）を超えたところはありません。")
+    + (unknown ? ` 前か次の勤務が入っていない${unknown}回は、平均を判定していません。` : "");
+
+  // 勤務ごとの表
+  $("rows").innerHTML = res.rows.map((r) => {
+    const base = r.date.n * DAY;
+    const work = `${dlabel(r)} ${fmtClock(r.S - base)}〜${fmtClock(r.E - base)}`;
+    const k = `<td class="${r.spanStatus === "over" ? "ng" : ""}">${fmtDur(r.span)}</td>`;
+    const p = r.pair;
+    const plab = p.status === "ng" ? "違反" : p.status === "ok" ? "違反でない" : "判定できない";
+    const pd = [p.sumPrev != null ? `前 ${half(p.sumPrev)}` : "", p.sumNext != null ? `次 ${half(p.sumNext)}` : ""].filter(Boolean).join("・");
+    const pc = `<td class="${p.status === "ng" ? "ng" : ""}">${plab}${pd ? `（${pd}）` : ""}</td>`;
+    const rc = r.rest == null ? "<td>—</td>"
+      : `<td class="${r.restStatus === "ng" ? "ng" : r.restStatus === "short" ? "warn" : ""}">${fmtDur(r.rest)}</td>`;
+    return `<tr><td>${work}</td>${k}${pc}${rc}</tr>`;
+  }).join("");
+
+  // 指摘
+  const checks = [];
+  for (const r of res.rows.filter((x) => x.spanStatus === "over")) {
+    checks.push({ s: "ng", t: `${dlabel(r)} の勤務 ${fmtDur(r.span)} — 2暦日の拘束時間22時間を超えています`,
+      d: "車庫待ち等の運転者で、夜間4時間以上の仮眠を与え、労使協定で回数（1か月7回以内）を定めている場合は24時間まで延長できます。それに当たらなければ基準を超えています。" });
+  }
+  for (const r of res.rows.filter((x) => x.pair.status === "ng")) {
+    checks.push({ s: "ng", t: `${dlabel(r)} の勤務を特定の勤務とした2回の平均が、前とも次とも21時間を超えています`,
+      d: `前の勤務との平均 ${half(r.pair.sumPrev)}、次の勤務との平均 ${half(r.pair.sumNext)}。いずれもが21時間を超えると違反です（施行通達 第2の2(2)イ）。` });
+  }
+  for (const r of res.rows.filter((x) => x.restStatus === "ng")) {
+    checks.push({ s: "ng", t: `${dlabel(r)} の勤務の終業から次の始業まで ${fmtDur(r.rest)} — 休息期間が継続22時間を下回っています`,
+      d: "休息期間は継続22時間を下回らないものとされています（告示 第2条第2項第4号）。" });
+  }
+  const m = res.month;
+  if (m.status === "ng") {
+    checks.push({ s: "ng", t: `入力した勤務の拘束時間の合計 ${fmtDur(m.total)} — 1か月の${m.cap / 60}時間を超えています`,
+      d: m.cap === MONTH_CAP ? "地域的事情などにより労使協定で延長している月（1年に6か月まで）なら270時間までです。" : "労使協定で延長しても270時間までです。" });
+  } else if (m.status === "under") {
+    checks.push({ s: "info", t: `入力した勤務の拘束時間の合計 ${fmtDur(m.total)}（1か月${m.cap / 60}時間まで・残り ${fmtDur(m.rest)}）`,
+      d: "1か月分の勤務をすべて入れたときの判定です。抜けた勤務があれば増えます。月をまたぐ勤務は、勤め先の数え方で入れてください。" });
+  } else {
+    checks.push({ s: "info", t: `最初と最後の勤務の始業日が${m.rangeDays}日離れているので、1か月の拘束時間は判定していません（合計 ${fmtDur(m.total)}）`,
+      d: `1か月分（${m.cap === MONTH_CAP_EXT ? 270 : 262}時間まで）の勤務だけを入れると判定します。` });
+  }
+  const short = res.rows.filter((x) => x.restStatus === "short");
+  if (short.length) {
+    checks.push({ s: "warn", t: `休息期間が24時間に届かない勤務が${short.length}回あります（${short.map(dlabel).join("、")}）`,
+      d: "22時間以上なので違反ではありませんが、継続24時間以上を与えるよう努めることが基本です。" });
+  }
+  const unknownRows = res.rows.filter((x) => x.pair.status === "unknown");
+  if (unknownRows.length) {
+    checks.push({ s: "info", t: `${unknownRows.map(dlabel).join("、")} の勤務は、前か次の勤務が入っていないので、2回の平均を判定していません`,
+      d: "前の月の最後の勤務や、次の月の最初の勤務を入れると判定します（1か月の合計には入ります）。" });
+  }
+  const last = res.rows[res.rows.length - 1];
+  checks.push({ s: "info", t: `最後の勤務（${dlabel(last)}）の休息期間は、次の勤務を入れると判定します`, d: "休息期間は終業から次の勤務の始業までの時間です。" });
+  const day = res.rows.filter((x) => x.span <= 15 * 60);
+  if (day.length) {
+    checks.push({ s: "info", t: `拘束時間が15時間以下の勤務があります（${day.map(dlabel).join("、")}）`,
+      d: "2労働日をまとめた勤務でなく、単なる日勤や夜間勤務なら、日勤の基準（1日の拘束時間 最大15時間・休息期間 継続9時間）が当たります（Q&A 2-3）。" });
+  }
+  $("checks").innerHTML = checks.map((x) =>
+    `<li><p class="hd2"><span class="tag ${x.s}">${{ ok: "基準内", ng: "超過", warn: "目安", info: "参考" }[x.s]}</span>${esc(x.t)}</p>` +
+    `<p class="dt">${esc(x.d)}</p></li>`).join("");
+}
+
+// 例
+const S = (date, s, e) => ({ date, s, e });
+const PRESETS = {
+  // 厚労省 Q&A 2-4（22時間・22時間・休日・22時間 → 2回目が違反）
+  qa: { ext: false, shifts: [S("2026-11-02", "8:00", "6:00"), S("2026-11-04", "8:00", "6:00"), S("2026-11-07", "8:00", "6:00")] },
+  // 2026年11月に13回、7:00〜翌3:00（20時間）→ 260時間
+  month: { ext: false, shifts: [1, 3, 5, 8, 10, 12, 15, 17, 19, 22, 24, 26, 29].map((d) => S(`2026-11-${String(d).padStart(2, "0")}`, "7:00", "3:00")) },
+  clear: { ext: false, shifts: [] },
+};
+
+function applyPreset(p) {
+  $("ext270").checked = p.ext;
+  for (let i = 0; i < MAX_SHIFTS; i++) {
+    const x = p.shifts[i] || {};
+    $(`dt${i}`).value = x.date || "";
+    $(`s${i}`).value = x.s || "";
+    $(`e${i}`).value = x.e || "";
+  }
+  render();
+}
+
+for (const el of document.querySelectorAll(".card input")) {
+  el.addEventListener("input", render);
+  el.addEventListener("change", render);
+}
+for (const btn of document.querySelectorAll("[data-preset]")) {
+  btn.addEventListener("click", () => applyPreset(PRESETS[btn.dataset.preset]));
+}
+applyPreset(PRESETS.qa);
+</script>
+
+</body>
+</html>

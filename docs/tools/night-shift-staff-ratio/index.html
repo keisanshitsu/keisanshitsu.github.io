@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>夜勤職員配置基準 計算 — 特養・老健の夜勤は何人必要か（1日平均夜勤職員数・減算の判定）</title>
+<meta name="description" content="入所者の数・ユニット数を入れると、特別養護老人ホームと介護老人保健施設の夜勤職員の必要数を、厚生労働省告示（夜勤職員基準）の条文どおりに出します。短期入所の併設の合算、見守り機器の0.8・1.6、ユニット型、1日平均夜勤職員数（延夜勤時間÷日数×16）、減算（2日連続・4日以上）の判定にも対応。">
+<link rel="canonical" href="https://keisanshitsu.github.io/tools/night-shift-staff-ratio/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="くらしの計算室">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="夜勤職員配置基準 計算 — 特養・老健の夜勤は何人必要か（1日平均夜勤職員数・減算の判定）">
+<meta property="og:description" content="入所者の数・ユニット数から、特養・老健の夜勤職員の必要数を厚生労働省告示の条文どおりに計算。1日平均夜勤職員数と、減算に当たるかも判定します。">
+<meta property="og:url" content="https://keisanshitsu.github.io/tools/night-shift-staff-ratio/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "介護施設の夜勤職員の配置基準の計算",
+  "description": "入所者の数・ユニット数から、特別養護老人ホーム・介護老人保健施設の夜勤職員の必要数を、厚生労働大臣が定める夜勤を行う職員の勤務条件に関する基準（平成12年厚生省告示第29号）と厚生労働省の通知（老企第40号）どおりに計算します。",
+  "url": "https://keisanshitsu.github.io/tools/night-shift-staff-ratio/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (web browser)",
+  "inLanguage": "ja",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "くらしの計算室",
+    "url": "https://keisanshitsu.github.io/"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1b19; --muted:#6b6862;
+    --line:#e5e2dc; --card:#fff; --accent:#0f6cbd; --accent-soft:#eef5fc;
+    --ok:#1f7a45; --ok-soft:#eaf6ef; --ng:#b3261e; --ng-soft:#fdeeed;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#17181a; --fg:#e9e8e5; --muted:#a3a09a;
+           --line:#2e3033; --card:#1f2123; --accent:#6cb6f5; --accent-soft:#1b2733;
+           --ok:#5fd08a; --ok-soft:#16261d; --ng:#ff8a80; --ng-soft:#2a1a19; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  header{border-bottom:1px solid var(--line);padding:16px 0}
+  .site{font-size:.85rem;color:var(--muted);text-decoration:none}
+  h1{font-size:1.35rem;margin:28px 0 6px;line-height:1.5}
+  .sub{color:var(--muted);font-size:.92rem;margin:0 0 28px}
+  h2{font-size:1.05rem;margin:36px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
+  h3{font-size:.95rem;margin:22px 0 6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+  input,select{width:100%;padding:9px 10px;font-size:1rem;color:var(--fg);
+    background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  input[type=checkbox]{width:auto;margin:0 6px 0 0;vertical-align:-2px}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--fg);padding:9px 14px}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:12px}
+  .check{display:block;font-size:.88rem;color:var(--fg);margin-top:12px}
+  .hint{font-size:.78rem;color:var(--muted);margin:4px 0 0}
+  .part{font-size:.85rem;font-weight:600;margin:20px 0 0;padding-top:12px;border-top:1px dashed var(--line)}
+  [hidden]{display:none !important}
+  .result{margin-top:20px;border:1px solid var(--accent);background:var(--accent-soft);
+    border-radius:12px;padding:18px}
+  .big{font-size:2rem;font-weight:700;color:var(--accent);line-height:1.2;margin:2px 0 0}
+  .big small{font-size:1rem;font-weight:600;margin-left:2px}
+  .sub2{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+  .checks{list-style:none;padding:0;margin:14px 0 0}
+  .checks li{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin-bottom:8px}
+  .checks .hd{font-size:.9rem;font-weight:600;margin:0}
+  .checks .dt{font-size:.82rem;color:var(--muted);margin:3px 0 0}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;border-radius:5px;
+    padding:1px 7px;margin-right:7px;vertical-align:2px}
+  .tag.ok{background:var(--ok-soft);color:var(--ok)}
+  .tag.ng{background:var(--ng-soft);color:var(--ng)}
+  .tag.info{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+  .tablewrap{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:.86rem}
+  th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+  th{color:var(--muted);font-weight:600;white-space:nowrap}
+  td.n{white-space:nowrap}
+  .cap{font-size:.85rem;font-weight:600;margin:18px 0 0}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:14px 16px;border-radius:0 8px 8px 0;font-size:.88rem;margin:24px 0}
+  .law{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;margin:14px 0;font-size:.86rem}
+  .law p{margin:0 0 6px;font-size:.86rem}
+  .law p:last-child{margin-bottom:0}
+  .formula{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:10px 14px;margin:12px 0;font-size:.9rem;overflow-x:auto}
+  p,li{font-size:.94rem}
+  ul{padding-left:1.2em}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src li{font-size:.85rem;overflow-wrap:anywhere}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:20px 0 40px;
+    color:var(--muted);font-size:.85rem}
+  footer a{color:var(--muted);margin-right:14px}
+  a{color:var(--accent)}
+  @media (max-width:400px){
+    .big{font-size:1.7rem}
+  }
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><a class="site" href="../../">← くらしの計算室</a></div></header>
+
+<main class="wrap">
+
+<h1>介護施設の夜勤職員の配置基準の計算（特養・老健の夜勤は何人必要か）</h1>
+<p class="sub">
+  入所者の数（ユニット型ならユニット数）を入れると、<strong>夜勤を行う介護職員・看護職員の必要数</strong>を、厚生労働大臣が定める夜勤を行う職員の勤務条件に関する基準（平成12年厚生省告示第29号。いわゆる<strong>夜勤職員基準</strong>）の条文どおりに出します。
+  短期入所の併設の合算、見守り機器による0.8・1.6、ユニット型に対応。
+  月の延夜勤時間数から<strong>1日平均夜勤職員数</strong>を、基準に満たなかった日から<strong>減算に当たるか</strong>も判定します。
+</p>
+
+<div class="card">
+  <label for="facility">施設の種類</label>
+  <select id="facility">
+    <option value="tokuyou" selected>特別養護老人ホーム（従来型）</option>
+    <option value="tokuyouUnit">ユニット型特別養護老人ホーム</option>
+    <option value="rouken">介護老人保健施設（従来型）</option>
+    <option value="roukenUnit">ユニット型介護老人保健施設</option>
+  </select>
+
+  <div id="boxShortStay">
+    <label for="shortStay" style="margin-top:12px">短期入所生活介護（ショートステイ）の併設</label>
+    <select id="shortStay">
+      <option value="none" selected>併設なし</option>
+      <option value="normal">従来型の短期入所を併設</option>
+      <option value="unit">ユニット型の短期入所を併設</option>
+    </select>
+  </div>
+
+  <div class="grid">
+    <div>
+      <label for="residents">入所者の数（前年度の平均・人）</label>
+      <input id="residents" type="number" inputmode="decimal" min="0" max="1000" step="0.01" value="">
+    </div>
+    <div id="boxShortUsers">
+      <label for="shortUsers" id="shortUsersLabel">短期入所の利用者の数（前年度の平均・人）</label>
+      <input id="shortUsers" type="number" inputmode="decimal" min="0" max="1000" step="0.01" value="">
+    </div>
+    <div id="boxUnits">
+      <label for="units">ユニット数</label>
+      <input id="units" type="number" inputmode="numeric" min="1" max="100" step="1" value="" placeholder="例: 10">
+    </div>
+    <div id="boxShortUnits">
+      <label for="shortUnits">短期入所のユニット数</label>
+      <input id="shortUnits" type="number" inputmode="numeric" min="1" max="100" step="1" value="" placeholder="例: 1">
+    </div>
+  </div>
+  <p class="hint">人数に小数を入れた場合は、厚生労働省の通知どおり<strong>小数点以下を切り上げて</strong>段階に当てます（併設は合計してから切り上げ）。</p>
+
+  <label class="check" id="boxMimamori"><input id="mimamori" type="checkbox"><span id="mimamoriLabel">見守り機器・情報通信機器・委員会の要件をすべて満たす（0.8の緩和）</span></label>
+  <label class="check" id="boxRouken40"><input id="rouken40" type="checkbox">利用者等の数が40人以下で、常時、緊急時の連絡体制を整備している（1人の例外）</label>
+
+  <p class="part">1日平均夜勤職員数（任意）</p>
+  <div class="grid">
+    <div>
+      <label for="days">月の日数</label>
+      <select id="days">
+        <option value="28">28日</option>
+        <option value="29">29日</option>
+        <option value="30" selected>30日</option>
+        <option value="31">31日</option>
+      </select>
+    </div>
+    <div>
+      <label for="nightHours">夜勤時間帯の延夜勤時間数（時間）</label>
+      <input id="nightHours" type="number" inputmode="numeric" min="0" step="1" value="" placeholder="例: 1440">
+    </div>
+    <div>
+      <label for="nightMinutes">（分）</label>
+      <input id="nightMinutes" type="number" inputmode="numeric" min="0" max="59" step="1" value="" placeholder="例: 30">
+    </div>
+  </div>
+  <p class="hint">夜勤時間帯＝午後10時から翌日の午前5時までを含む連続する16時間（施設ごとに設定）。その時間帯に夜勤職員が勤務した時間の合計を入れます。</p>
+
+  <p class="part">減算の判定（任意）</p>
+  <label for="shortfallDays">夜勤職員が基準の員数に満たなかった日（日付をカンマ区切り）</label>
+  <input id="shortfallDays" type="text" inputmode="numeric" value="" placeholder="例: 3, 4, 18">
+
+  <div class="actions">
+    <button type="button" data-preset="tokuyou">特養 入所者70人＋短期20人の例</button>
+    <button type="button" data-preset="unit">ユニット型特養 10ユニットの例</button>
+    <button type="button" data-preset="mimamori">特養 61人・見守り機器の例</button>
+    <button type="button" data-preset="rouken">老健 100人の例</button>
+  </div>
+</div>
+
+<div class="result" aria-live="polite">
+  <div>夜勤を行う介護職員・看護職員の必要数</div>
+  <p class="big" id="headline">— <small>人以上</small></p>
+  <p class="sub2" id="summary">入所者の数を入力してください。</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>項目</th><th>値</th><th>条文</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <ul class="checks" id="checks"></ul>
+</div>
+
+<div class="note">
+  <strong>この結果は概算です。</strong>
+  国の厚生労働省告示（夜勤職員基準）と、厚生労働省の通知（老企第40号）による人数です。夜勤職員基準は介護報酬の<strong>減算・加算の基準</strong>で、満たさないと報酬が減らされます。
+  1日の夜勤時間帯の中で何人とみなすか（短時間の夜勤の数え方）、見守り機器などの要件を満たすか、加算の見守り機器の0.9・0.6の要件は、このツールでは判定しません。
+  地域密着型特養（定員29人以下）・短期入所の単独型・病院や診療所から転換した老健・グループホームは別の号で、このツールは扱いません。
+  <strong>実際の配置が基準を満たすかは、指定権者（都道府県・市町村の介護保険担当課）や社会保険労務士などの専門家にご確認ください。</strong>
+</div>
+
+<p>昼間を含めた看護・介護職員の総数（いわゆる3対1）は、<a href="../care-staff-ratio/">介護施設の人員配置基準の計算</a>で出せます。</p>
+
+<h2>この計算の根拠</h2>
+
+<h3>特別養護老人ホーム（従来型）の段階</h3>
+<div class="law">
+  <p>a 指定短期入所生活介護の利用者の数及び当該特別養護老人ホームの入所者の数の合計数が二十五以下の特別養護老人ホームにあっては、一以上</p>
+  <p>b …二十六以上六十以下…二以上　c …六十一以上八十以下…三以上　d …八十一以上百以下…四以上</p>
+  <p>e …百一以上の特別養護老人ホームにあっては、四に、…合計数が百を超えて二十五又はその端数を増すごとに一を加えて得た数以上</p>
+  <p>（夜勤職員基準 第一号ロ(1)(一)。特養には第五号イ(1)(一)(三)で準用）</p>
+</div>
+
+<div class="tablewrap">
+  <table>
+    <thead><tr><th>入所者（＋併設する従来型の短期入所の利用者）の合計</th><th>夜勤職員</th></tr></thead>
+    <tbody>
+      <tr><td>25人以下</td><td>1人以上</td></tr>
+      <tr><td>26〜60人</td><td>2人以上</td></tr>
+      <tr><td>61〜80人</td><td>3人以上</td></tr>
+      <tr><td>81〜100人</td><td>4人以上</td></tr>
+      <tr><td>101人以上</td><td>4人＋100人を超える25人又はその端数ごとに1人（101〜125人は5人、126〜150人は6人）</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h3>人数の数え方（前年度の平均・小数点以下は切り上げ）</h3>
+<p>
+  人数は前年度の平均（延べ人数÷前年度の日数）です。人員基準では「小数点第二位以下を切り上げ」ですが、夜勤の員数では通知が<strong>「小数点以下」と読み替える</strong>としています（老企第40号 第二の1(6)③）。
+  したがって前年度の平均が25.01人なら26人として数え、2人以上になります。
+  短期入所を併設している場合は、<strong>本体施設と一体的に</strong>数えます（同 第二の2(3)②）。通知には「前年度の平均入所者数七〇人の指定介護老人福祉施設に前年度の平均利用者数二〇人の短期入所生活介護事業所が併設されている場合は、…必要な夜勤を行う職員の数は四人」という例があります（合計90人→4人）。
+</p>
+
+<h3>見守り機器による緩和（従来型特養の0.8・老健の1.6）</h3>
+<div class="law">
+  <p>f bからeまでの規定にかかわらず、次に掲げる要件のいずれにも適合する場合は、…合計数に応じてbからeまでの規定に基づき算出される数に十分の八を乗じて得た数以上</p>
+  <p>i 夜勤時間帯を通じて、利用者の動向を検知できる見守り機器…を当該短期入所生活介護事業所の利用者の数以上設置していること。ii 夜勤時間帯を通じて、夜勤を行う全ての介護職員又は看護職員が情報通信機器を使用し、職員同士の連携促進が図られていること。iii（安全体制・ケアの質・職員の負担軽減の5項目を委員会で検討し、実施を定期的に確認していること）</p>
+  <p>iv …合計数が、六十以下の場合は一以上、六十一以上の場合は二以上の介護職員又は看護職員が、夜勤時間帯を通じて常時配置されていること。</p>
+  <p>（夜勤職員基準 第一号ロ(1)(一)f）</p>
+</div>
+<p>
+  0.8は「bからe」（26人以上）にだけ掛かります。25人以下は1人のままです。たとえば61人なら3人×0.8＝2.4人以上で、そのうえで夜勤時間帯を通じて常時2人以上が必要です。
+  老健（従来型）は「二以上（次に掲げる要件のいずれにも適合する場合は、一・六以上）」です（第二号イ(1)(一)を第六号イで準用）。ユニット型には見守り機器の緩和はありません。
+</p>
+
+<h3>ユニット型と併設の組み合わせ</h3>
+<div class="tablewrap">
+  <table>
+    <thead><tr><th>本体</th><th>併設する短期入所</th><th>夜勤職員</th><th>条文</th></tr></thead>
+    <tbody>
+      <tr><td>従来型特養</td><td>なし・従来型</td><td>上の段階（合計で数える）</td><td class="n">第五号イ(1)(一)(三)→第一号ロ(1)(一)</td></tr>
+      <tr><td>従来型特養</td><td>ユニット型</td><td>合計数が20又はその端数を増すごとに1以上</td><td class="n">第五号イ(1)(二)→第一号ロ(2)(一)</td></tr>
+      <tr><td>ユニット型特養</td><td>なし</td><td>2のユニットごとに1以上</td><td class="n">第五号イ(2)(二)→第一号ロ(2)(二)</td></tr>
+      <tr><td>ユニット型特養</td><td>従来型</td><td>合計数が20又はその端数を増すごとに1以上</td><td class="n">第五号イ(2)(一)→第一号ロ(1)(二)b</td></tr>
+      <tr><td>ユニット型特養</td><td>ユニット型</td><td>下の注意を参照</td><td class="n">第五号イ(2)・第一号ロ(2)(二)</td></tr>
+      <tr><td>老健（従来型）</td><td>（短期入所療養介護の利用者も合計）</td><td>2以上（見守り機器で1.6以上・40人以下で緊急時の連絡体制があれば1以上）</td><td class="n">第六号イ→第二号イ(1)(一)</td></tr>
+      <tr><td>ユニット型老健</td><td>—</td><td>2のユニットごとに1以上</td><td class="n">第六号ロ→第二号イ(2)(一)</td></tr>
+    </tbody>
+  </table>
+</div>
+<p>
+  <strong>ユニット型特養にユニット型の短期入所を併設している場合</strong>は、条文の読み方が一つに決まりません。
+  第五号イ(2)(一)は「指定短期入所生活介護事業所を併設する場合」に合計数を20ごとに1と数えるとし、同じ号の(1)(一)が「（ユニット型指定短期入所生活介護事業所を除く。）」と書き分けていることから、ユニット型の短期入所も含むと読めます。
+  一方、第一号ロ(2)(二)ただし書は、本体がユニット型特養のとき「併設ユニット型事業所のユニットの数及び当該ユニット型特別養護老人ホームのユニットの数の合計数を基礎として」2ユニットごとに1と数えるとしています。
+  このツールは両方を出し、<strong>多いほうを見出しにします</strong>（少なく見積もらない側）。どちらで届け出るかは指定権者に確認してください。
+</p>
+
+<h3>1日平均夜勤職員数</h3>
+<div class="formula">1日平均夜勤職員数 ＝ 夜勤時間帯の延夜勤時間数 ÷（その月の日数 × 16）　※小数点第3位以下は切り捨て</div>
+<p>
+  通知の原文は「一日平均夜勤職員数は、暦月ごとに夜勤時間帯（午後十時から翌日の午前五時までの時間を含めた連続する一六時間をいう。）における延夜勤時間数を、当該月の日数に一六を乗じて得た数で除することによって算定し、小数点第三位以下は切り捨てるものとする」です（老企第40号 第二の5(8)①・第二の2(8)①）。
+  この1日平均は<strong>夜勤職員配置加算</strong>の判定に使うものとして通知に書かれています。特養の加算は、基準の員数に1を加えた数以上（見守り機器の要件によっては0.9・0.6・0.8を加えた数）が要件です（夜勤職員基準 第五号ロ）。
+  このツールは見守り機器を使わない「＋1」とだけ比べます。老健の加算は「利用者等の数が二十又はその端数を増すごとに一以上であり、かつ、二を超えていること」（40人以下は「一を超えていること」）です（第二号イ(3)）。ちょうど2.00人は「二を超えて」いないので満たしません。
+</p>
+
+<h3>減算（2日以上連続・4日以上）</h3>
+<div class="law">
+  <p>②　夜勤を行う職員の員数が基準に満たない場合の減算については、ある月（暦月）において以下のいずれかの事態が発生した場合に、その翌月において利用者等の全員について、所定単位数が減算されることとする。</p>
+  <p>イ　夜勤時間帯…において夜勤を行う職員数が夜勤職員基準に定める員数に満たない事態が二日以上連続して発生した場合</p>
+  <p>ロ　夜勤時間帯において夜勤を行う職員数が夜勤職員基準に定める員数に満たない事態が四日以上発生した場合</p>
+  <p>（老企第40号 第二の1(6)②）</p>
+</div>
+<p>
+  たとえば3日・10日・20日の3日だけ満たなかった月は減算に当たりませんが、10日と11日のように2日続いた月、またはばらばらでも4日あった月は、<strong>翌月</strong>の利用者等の全員が減算になります。
+  このツールは同じ月の中の日付だけで判定します。減算の率は介護報酬の告示で決まっており、このツールでは出しません。
+</p>
+
+<h2>よくある質問</h2>
+
+<h3>入所者50人の特養は夜勤何人ですか</h3>
+<p>従来型で短期入所の併設が無ければ、26〜60人の段階なので<strong>2人以上</strong>です。短期入所（従来型）を10人併設していれば合計60人で2人以上、11人なら合計61人で3人以上になります。</p>
+
+<h3>ユニット型は何人ですか</h3>
+<p>2ユニットごとに1人以上です。10ユニットなら5人、9ユニットでも切り上げて5人です（特養・老健とも）。</p>
+
+<h3>夜勤のワンオペ（1人夜勤）は基準違反ですか</h3>
+<p>
+  従来型特養で入所者（併設の短期入所を含む）が25人以下なら、基準は1人以上なので1人夜勤でも基準は満たします。26人以上で1人なら基準を下回ります。
+  老健は原則2人以上で、利用者等の数が40人以下で常時、緊急時の連絡体制を整備している場合だけ1人以上です。
+  ユニット型は2ユニットごとに1人なので、2ユニットを1人で受け持つ配置は基準どおりです。
+</p>
+
+<h3>人員基準（3対1）とは何が違うのですか</h3>
+<p>
+  3対1は省令の<strong>人員基準</strong>（看護・介護職員の総数・常勤換算）で、昼夜を通した職員の数です。夜勤職員基準は告示による<strong>報酬の基準</strong>で、夜勤時間帯に何人が勤務しているかを見ます。
+  両方を満たす必要があります。3対1の計算は<a href="../care-staff-ratio/">介護施設の人員配置基準の計算</a>へ。
+</p>
+
+<h2>出典</h2>
+<ul class="src">
+  <li>厚生労働大臣が定める夜勤を行う職員の勤務条件に関する基準（平成12年厚生省告示第29号）第一号・第二号・第五号・第六号（最終改正 令和6年3月15日厚生労働省告示第86号・2024年4月1日施行）
+    <a href="https://www.mhlw.go.jp/web/t_doc?dataId=82aa0263&amp;dataType=0&amp;pageNo=1" rel="nofollow noopener" target="_blank">厚生労働省 法令等データベース</a></li>
+  <li>厚生労働省「指定居宅サービスに要する費用の額の算定に関する基準（短期入所サービス及び特定施設入居者生活介護に係る部分）及び指定施設サービス等に要する費用の額の算定に関する基準の制定に伴う実施上の留意事項について」（平成12年3月8日 老企第40号）第二の1(5)(6)・2(3)(8)・5(8)
+    <a href="https://www.mhlw.go.jp/web/t_doc?dataId=00ta4383&amp;dataType=1&amp;pageNo=1" rel="nofollow noopener" target="_blank">厚生労働省 法令等データベース</a></li>
+  <li>告示・通知は厚生労働省 法令等データベースの原文を逐語で確認しています。
+    導出は<a href="./calc.js">計算コード</a>のコメントに、境界値の検証は<a href="./calc.test.mjs">テスト</a>に残してあります</li>
+</ul>
+<p class="src">最終確認日: 2026年11月21日</p>
+
+</main>
+
+<footer class="wrap">
+  <a href="../../">トップ</a>
+  <a href="../../privacy.html">プライバシーポリシー</a>
+  <a href="../../contact.html">お問い合わせ</a>
+  <p>&copy; 2026 くらしの計算室</p>
+</footer>
+
+<script type="module">
+import { calculate } from "./calc.js";
+
+const PRESETS = {
+  tokuyou: { facility: "tokuyou", shortStay: "normal", residents: "70", shortUsers: "20" },
+  unit: { facility: "tokuyouUnit", shortStay: "none", residents: "100", units: "10" },
+  mimamori: { facility: "tokuyou", shortStay: "none", residents: "61", mimamori: true },
+  rouken: { facility: "rouken", residents: "100", shortUsers: "" },
+};
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const n10 = (t) => (t % 10 === 0 ? String(t / 10) : (t / 10).toFixed(1));
+const p100 = (h) => (h / 100).toFixed(2);
+const fmtPeople = (h) => String(h / 100);
+
+function syncBoxes() {
+  const f = $("facility").value;
+  const tk = f === "tokuyou" || f === "tokuyouUnit";
+  const ro = f === "rouken" || f === "roukenUnit";
+  $("boxShortStay").hidden = !tk;
+  const s = tk ? $("shortStay").value : "none";
+  $("boxShortUsers").hidden = tk && s === "none";
+  $("shortUsersLabel").textContent = ro ? "短期入所療養介護の利用者の数（前年度の平均・任意）" : "併設する短期入所の利用者の数（前年度の平均・人）";
+  $("boxUnits").hidden = !(f === "tokuyouUnit" || f === "roukenUnit");
+  $("boxShortUnits").hidden = !(f === "tokuyouUnit" && s === "unit");
+  $("boxMimamori").hidden = !(f === "tokuyou" || f === "rouken");
+  $("mimamoriLabel").textContent = f === "rouken"
+    ? "見守り機器・情報通信機器・委員会の要件をすべて満たす（1.6の緩和）"
+    : "見守り機器・情報通信機器・委員会の要件をすべて満たす（0.8の緩和）";
+  $("boxRouken40").hidden = f !== "rouken";
+}
+
+function render() {
+  syncBoxes();
+  const f = $("facility").value;
+  const res = calculate({
+    facility: f,
+    shortStay: $("shortStay").value,
+    residents: $("residents").value,
+    shortUsers: $("boxShortUsers").hidden ? "" : $("shortUsers").value,
+    units: $("units").value,
+    shortUnits: $("shortUnits").value,
+    mimamori: !$("boxMimamori").hidden && $("mimamori").checked,
+    rouken40: !$("boxRouken40").hidden && $("rouken40").checked,
+    days: $("days").value,
+    nightHours: $("nightHours").value,
+    nightMinutes: $("nightMinutes").value,
+    shortfallDays: $("shortfallDays").value,
+  });
+
+  if (!res.ok) {
+    $("headline").innerHTML = '— <small>人以上</small>';
+    $("summary").textContent = res.errors[0];
+    $("rows").innerHTML = "";
+    $("checks").innerHTML = "";
+    return;
+  }
+
+  const p = res.people;
+  $("headline").innerHTML = `${n10(res.requiredTenths)} <small>人以上</small>`;
+  const who = p.short100 > 0
+    ? `入所者 ${fmtPeople(p.residents100)}人＋${f.startsWith("rouken") ? "短期入所療養介護" : "短期入所"} ${fmtPeople(p.short100)}人＝${fmtPeople(p.total100)}人`
+    : `入所者 ${fmtPeople(p.residents100)}人`;
+  $("summary").textContent = `${res.facilityLabel}。${who}` +
+    (p.roundedUp ? `（小数点以下を切り上げて ${p.count}人）` : "") + `。${res.rule.text}。`;
+
+  const rows = [];
+  rows.push(["夜勤職員の必要数", `${n10(res.requiredTenths)}人以上`, res.rule.basis]);
+  if (res.readings) {
+    for (const r of res.readings) rows.push(["読み方", r.text, r.basis]);
+  }
+  if (res.constant) rows.push(["夜勤時間帯を通じて常時", `${res.constant.count}人以上`, res.constant.basis]);
+  if (res.average) {
+    const a = res.average;
+    const h = Math.floor(a.totalMinutes / 60), m = a.totalMinutes % 60;
+    rows.push(["1日平均夜勤職員数", `${p100(a.hundredths)}人（${h}時間${m ? m + "分" : ""} ÷ ${a.days}日×16＝${a.denominatorHours}時間）`, "老企第40号 第二の5(8)①"]);
+  }
+  $("rows").innerHTML = rows.map(([a, b, c]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td><td class="n">${esc(c)}</td></tr>`).join("");
+
+  const checks = [];
+  if (res.readings) {
+    checks.push({ status: "info", title: "この組み合わせは条文の読み方が一つに決まりません",
+      detail: "人数（20ごと）とユニット数（2ユニットごと）の両方で数え、多いほうを見出しにしています。どちらで届け出るかは指定権者に確認してください。" });
+  }
+  if (res.constant) {
+    checks.push({ status: "info", title: `0.8の緩和で ${n10(res.requiredTenths)}人以上。ただし常時 ${res.constant.count}人以上`,
+      detail: "見守り機器を利用者の数以上設置・全員が情報通信機器を使用・委員会での検討と定期的な確認、のすべてを満たす場合に限ります。" });
+  }
+  for (const x of res.notes) checks.push(x);
+  if (res.average) {
+    const b = res.average.bonus;
+    if (b) {
+      checks.push(b.meets
+        ? { status: "ok", title: `1日平均 ${p100(res.average.hundredths)}人は夜勤職員配置加算の人数（${b.text}）を満たします`,
+            detail: `${b.basis}。加算には入所定員などほかの要件もあり、このツールは人数だけを比べています。` }
+        : { status: "ng", title: `1日平均 ${p100(res.average.hundredths)}人は夜勤職員配置加算の人数（${b.text}）に届きません`,
+            detail: `${b.basis}。見守り機器の要件を満たす場合の0.9・0.6の加算は判定していません。` });
+    } else {
+      checks.push({ status: "info", title: `1日平均 ${p100(res.average.hundredths)}人`,
+        detail: "この組み合わせ（見守り機器の緩和・ユニット型どうし以外の併設）では、加算の人数との比較はしていません。" });
+    }
+    checks.push({ status: "info", title: "1日平均は加算の判定に使う数です",
+      detail: "減算は日ごとに「夜勤時間帯の夜勤職員が基準の員数に満たない日」があったかで決まります（下の減算の判定）。1日平均が基準以上でも、満たない日があれば減算になりえます。" });
+  }
+  if (res.shortfall) {
+    const s = res.shortfall;
+    if (s.reduced) {
+      const why = s.consecutive ? `${s.consecutive[0]}日と${s.consecutive[1]}日が連続` : `満たない日が${s.days.length}日`;
+      checks.push({ status: "ng", title: `減算に当たります（${why}）`,
+        detail: "翌月、利用者等の全員について所定単位数が減算されます（老企第40号 第二の1(6)②）。" });
+    } else {
+      checks.push({ status: "ok", title: `満たない日は${s.days.length}日で、連続していないので減算に当たりません`,
+        detail: "2日以上連続、または4日以上で減算です。同じ月の中の日付だけで判定しています。" });
+    }
+  }
+  $("checks").innerHTML = checks.map((x) =>
+    `<li><p class="hd"><span class="tag ${x.status}">${{ ok: "満たす", ng: "注意", info: "参考" }[x.status]}</span>${esc(x.title)}</p>` +
+    `<p class="dt">${esc(x.detail)}</p></li>`).join("");
+}
+
+function applyPreset(pr) {
+  $("facility").value = pr.facility;
+  $("shortStay").value = pr.shortStay || "none";
+  for (const k of ["residents", "shortUsers", "units", "shortUnits", "nightHours", "nightMinutes", "shortfallDays"]) $(k).value = pr[k] ?? "";
+  $("mimamori").checked = pr.mimamori === true;
+  $("rouken40").checked = false;
+  render();
+}
+
+for (const el of document.querySelectorAll(".card input, .card select")) {
+  el.addEventListener("input", render);
+  el.addEventListener("change", render);
+}
+for (const btn of document.querySelectorAll("[data-preset]")) {
+  btn.addEventListener("click", () => applyPreset(PRESETS[btn.dataset.preset]));
+}
+applyPreset(PRESETS.tokuyou);
+</script>
+</body>
+</html>

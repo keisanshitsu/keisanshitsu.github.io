@@ -641,6 +641,36 @@ let ledgerStatus = "未実行";
   ledgerStatus = missingCount ? `台帳に無い法令 ${missingCount}件` : `法令ID ${checked}件すべて台帳にあり`;
 }
 
+// ── 3.14. 再検証の期限切れ（facts_to_recheck の recheck_by） ──────────────
+// 2026-11-22 週次で追加。台帳の期限は週次の手順（項目4）でしか見ておらず、期限を過ぎても
+// どの検査も止めなかった。週次は日曜に3回落ちている（10/18・10/25・11/15）うえ、11/22 時点で
+// 停止中を除く45件のうち37件が 2027-02〜04 に、32件が 2027-04 に集まっている。
+// 期限を過ぎたら止める。解き方は「再検証して期限を進める」か「できない理由を書いて延ばす」で、
+// どちらも台帳に書くことになる（T018 の YKK AP のように、相手のサイトが止まっていれば延ばしてよい）。
+// 停止中（recheck_suspended_on あり＝支えるツールが0本）の項目は見ない。
+// VERIFY_TODAY は欠陥注入の確認用（期限を過ぎた日を作るため）。日次・週次のランナーは設定しない。
+// 誤りの向き: 止める側（期限の日付の書き間違いでも止まる）。
+let recheckStatus = "未実行";
+{
+  const today = process.env.VERIFY_TODAY || new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+  let active = 0, overdue = 0;
+  for (const f of pipeline.facts_to_recheck ?? []) {
+    if (f.recheck_suspended_on) continue;
+    active++;
+    const by = String(f.recheck_by ?? "");
+    const tool = (String(f.backs_shipped_tool ?? "").match(/T\d{3}/) ?? ["ツール不明"])[0];
+    const label = `${String(f.topic ?? "").slice(0, 40)}（${tool}）`;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(by)) {
+      overdue++;
+      err("state/pipeline.json", `facts_to_recheck の ${label} に再検証期限（recheck_by: YYYY-MM-DD）が無い`);
+    } else if (by < today) {
+      overdue++;
+      err("state/pipeline.json", `${label} の再検証期限 ${by} を過ぎている（本日 ${today}）。再検証して期限を進めるか、できない理由を書いて延ばす（CLAUDE.md 絶対原則）`);
+    }
+  }
+  recheckStatus = overdue ? `期限切れ・期限なし ${overdue}件` : `${active}件すべて期限内（本日 ${today}）`;
+}
+
 // ── 4. 実レンダリング検証（インストール済み Chrome / Edge を直接操作） ──
 // 2026-10-01 置き換え。旧実装は puppeteer 前提で、node_modules を作らない方針のため
 // 一度も実行されなかった（6本すべて静的検査のみで公開）。render_check.mjs は依存ゼロ。
@@ -695,6 +725,7 @@ console.log(`インフラ検査: submit_indexnow.mjs — ${indexnowStatus}`);
 console.log(`インフラ検査: probe_index.mjs — ${probeStatus}`);
 console.log(`人間キューの整合: SETUP_HUMAN.md — ${queueStatus}`);
 console.log(`再検証の台帳の網羅: facts_to_recheck — ${ledgerStatus}`);
+console.log(`再検証の期限: facts_to_recheck — ${recheckStatus}`);
 console.log(`状態ファイルの整合: state/pipeline.json — ${stateStatus}`);
 console.log(`「公開済み」の実体: origin/main と突き合わせ — ${publishStatus}`);
 console.log(`サイト内の到達性: トップ＋sitemap と突き合わせ — ${orphanStatus}`);

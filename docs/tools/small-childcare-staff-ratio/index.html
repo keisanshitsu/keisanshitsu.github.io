@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>小規模保育の配置基準 計算 — A型・B型・C型・家庭的保育の必要な保育士数</title>
+<meta name="description" content="小規模保育事業A型・B型・C型、家庭的保育、事業所内保育について、年齢別の子どもの数から必要な保育士・保育従事者の数を出します。省令の比率に国の算式（区分ごとに小数点第1位まで切り捨て→合計を四捨五入）を当て、＋1人とB型の保育士の半数、C型の補助者の組み合わせまで計算します。">
+<link rel="canonical" href="https://keisanshitsu.github.io/tools/small-childcare-staff-ratio/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="くらしの計算室">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="小規模保育の配置基準 計算 — A型・B型・C型・家庭的保育の必要な保育士数">
+<meta property="og:description" content="年齢別の子どもの数から、小規模保育A型・B型・C型、家庭的保育、事業所内保育の必要な保育士・保育従事者の数を、省令の比率と国の算式で計算します。">
+<meta property="og:url" content="https://keisanshitsu.github.io/tools/small-childcare-staff-ratio/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "小規模保育の配置基準の計算",
+  "description": "年齢別の子どもの数から、家庭的保育事業等の設備及び運営に関する基準の比率と、こども家庭庁の公定価格FAQが示す端数処理で、小規模保育事業A型・B型・C型、家庭的保育事業、事業所内保育事業に必要な保育士・保育従事者・家庭的保育者の数を計算します。",
+  "url": "https://keisanshitsu.github.io/tools/small-childcare-staff-ratio/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (web browser)",
+  "inLanguage": "ja",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "くらしの計算室",
+    "url": "https://keisanshitsu.github.io/"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1b19; --muted:#6b6862;
+    --line:#e5e2dc; --card:#fff; --accent:#0f6cbd; --accent-soft:#eef5fc;
+    --ok:#1f7a45; --ok-soft:#eaf6ef; --ng:#b3261e; --ng-soft:#fdeeed;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#17181a; --fg:#e9e8e5; --muted:#a3a09a;
+           --line:#2e3033; --card:#1f2123; --accent:#6cb6f5; --accent-soft:#1b2733;
+           --ok:#5fd08a; --ok-soft:#16261d; --ng:#ff8a80; --ng-soft:#2a1a19; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  header{border-bottom:1px solid var(--line);padding:16px 0}
+  .site{font-size:.85rem;color:var(--muted);text-decoration:none}
+  h1{font-size:1.35rem;margin:28px 0 6px;line-height:1.5}
+  .sub{color:var(--muted);font-size:.92rem;margin:0 0 28px}
+  h2{font-size:1.05rem;margin:36px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
+  h3{font-size:.95rem;margin:22px 0 6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+  input,select{width:100%;padding:9px 10px;font-size:1rem;color:var(--fg);
+    background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--fg);padding:9px 14px}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .ages{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+  @media (max-width:420px){ .ages{grid-template-columns:repeat(2,1fr)} }
+  .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:16px}
+  .opts [hidden]{display:none}
+  .grp{font-size:.82rem;font-weight:600;margin:18px 0 0}
+  .result{margin-top:20px;border:1px solid var(--accent);background:var(--accent-soft);
+    border-radius:12px;padding:18px}
+  .big{font-size:2rem;font-weight:700;color:var(--accent);line-height:1.2;margin:2px 0 0}
+  .big small{font-size:1rem;font-weight:600;margin-left:2px}
+  .sub2{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+  .checks{list-style:none;padding:0;margin:14px 0 0}
+  .checks li{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin-bottom:8px}
+  .checks .hd{font-size:.9rem;font-weight:600;margin:0}
+  .checks .dt{font-size:.82rem;color:var(--muted);margin:3px 0 0}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;border-radius:5px;
+    padding:1px 7px;margin-right:7px;vertical-align:2px}
+  .tag.ok{background:var(--ok-soft);color:var(--ok)}
+  .tag.ng{background:var(--ng-soft);color:var(--ng)}
+  .tag.info{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+  .tablewrap{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;white-space:nowrap}
+  th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:600}
+  .cap{font-size:.85rem;font-weight:600;margin:18px 0 0}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:14px 16px;border-radius:0 8px 8px 0;font-size:.88rem;margin:24px 0}
+  .law{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;margin:14px 0;font-size:.86rem}
+  .law p{margin:0 0 6px;font-size:.86rem}
+  .law p:last-child{margin-bottom:0}
+  .formula{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:10px 14px;margin:12px 0;font-size:.9rem;overflow-x:auto;white-space:nowrap}
+  p,li{font-size:.94rem}
+  ul{padding-left:1.2em}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src li{font-size:.85rem;overflow-wrap:anywhere}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:20px 0 40px;
+    color:var(--muted);font-size:.85rem}
+  footer a{color:var(--muted);margin-right:14px}
+  a{color:var(--accent)}
+  @media (max-width:400px){
+    .big{font-size:1.7rem}
+  }
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><a class="site" href="../../">← くらしの計算室</a></div></header>
+
+<main class="wrap">
+
+<h1>小規模保育の配置基準の計算（A型・B型・C型・家庭的保育・事業所内保育）</h1>
+<p class="sub">
+  事業の種類と0〜5歳児の人数を入れると、<strong>家庭的保育事業等の設備及び運営に関する基準</strong>（国の最低基準）で必要な保育士・保育従事者・家庭的保育者の数を出します。
+  A型・B型・事業所内保育は、年齢別の比率に<strong>こども家庭庁が示す国の算式</strong>（年齢別に小数点第1位まで切り捨て→合計を四捨五入）を当ててから<strong>＋1人</strong>します。
+  B型の「半数以上は保育士」、C型・家庭的保育の「家庭的保育者1人で3人（補助者と5人）」にも対応します。
+</p>
+
+<div class="card">
+  <label for="type">事業の種類</label>
+  <select id="type">
+    <option value="A" selected>小規模保育事業 A型（全員が保育士）</option>
+    <option value="B">小規模保育事業 B型（半数以上が保育士）</option>
+    <option value="C">小規模保育事業 C型（家庭的保育者）</option>
+    <option value="katei">家庭的保育事業（保育ママ・定員5人以下）</option>
+    <option value="jigyoSmall">事業所内保育事業（利用定員19人以下）</option>
+    <option value="jigyoNursery">事業所内保育事業（利用定員20人以上）</option>
+  </select>
+  <div class="ages">
+    <div><label for="age0">0歳児（人）</label><input id="age0" type="number" inputmode="numeric" min="0" max="1000" step="1" value=""></div>
+    <div><label for="age1">1歳児（人）</label><input id="age1" type="number" inputmode="numeric" min="0" max="1000" step="1" value=""></div>
+    <div><label for="age2">2歳児（人）</label><input id="age2" type="number" inputmode="numeric" min="0" max="1000" step="1" value=""></div>
+    <div><label for="age3">3歳児（人）</label><input id="age3" type="number" inputmode="numeric" min="0" max="1000" step="1" value=""></div>
+    <div><label for="age4">4歳児（人）</label><input id="age4" type="number" inputmode="numeric" min="0" max="1000" step="1" value=""></div>
+    <div><label for="age5">5歳児（人）</label><input id="age5" type="number" inputmode="numeric" min="0" max="1000" step="1" value=""></div>
+  </div>
+  <div class="opts" id="ruleOpts">
+    <div>
+      <label for="age3Rule">3歳児の基準</label>
+      <select id="age3Rule">
+        <option value="new" selected>15人に1人（2024年4月から）</option>
+        <option value="old">20人に1人（経過措置・2028年3月31日まで）</option>
+      </select>
+    </div>
+    <div>
+      <label for="age4Rule">4歳以上児の基準</label>
+      <select id="age4Rule">
+        <option value="new" selected>25人に1人（2024年4月から）</option>
+        <option value="old">30人に1人（経過措置・当分の間）</option>
+      </select>
+    </div>
+  </div>
+  <p class="grp">配置している職員（任意・入れると足りるかを判定します）</p>
+  <div class="opts">
+    <div data-show="ratio"><label for="hoikushi">保育士（人）</label><input id="hoikushi" type="number" inputmode="numeric" min="0" max="1000" step="1" value="" placeholder="例: 4"></div>
+    <div data-show="half"><label for="other">保育士以外の保育従事者（研修修了者・人）</label><input id="other" type="number" inputmode="numeric" min="0" max="1000" step="1" value=""></div>
+    <div data-show="ratio"><label for="nurse">看護師・保健師・准看護師（人）</label><input id="nurse" type="number" inputmode="numeric" min="0" max="1000" step="1" value=""></div>
+    <div data-show="ratio"><label for="pt">特定理学療法士等（人）</label><input id="pt" type="number" inputmode="numeric" min="0" max="1000" step="1" value=""></div>
+    <div data-show="teacher"><label for="teacher">幼稚園・小学校・養護教諭の免許状を持つ人（人）</label><input id="teacher" type="number" inputmode="numeric" min="0" max="1000" step="1" value=""></div>
+    <div data-show="katei"><label for="keepers">家庭的保育者（人）</label><input id="keepers" type="number" inputmode="numeric" min="0" max="1000" step="1" value="" placeholder="例: 2"></div>
+    <div data-show="katei"><label for="assistants">家庭的保育補助者（人）</label><input id="assistants" type="number" inputmode="numeric" min="0" max="1000" step="1" value=""></div>
+  </div>
+  <div class="actions">
+    <button type="button" data-preset="kyotoA">A型 0歳3人・1〜2歳10人の例</button>
+    <button type="button" data-preset="b19">B型 定員19人の例</button>
+    <button type="button" data-preset="c10">C型 10人の例</button>
+    <button type="button" data-preset="clear">すべて消す</button>
+  </div>
+</div>
+
+<div class="result" aria-live="polite">
+  <div id="headLabel">必要な保育士の数（最低基準）</div>
+  <p class="big" id="headline">— <small>人</small></p>
+  <p class="sub2" id="summary">年齢ごとの子どもの数を入力してください。</p>
+
+  <div id="ratioBlock">
+    <p class="cap">年齢区分ごとの計算（国の算式）</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>区分</th><th>子どもの数</th><th>比率</th><th>人数÷比率</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <p class="cap">基準ごとの比較</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>使う基準</th><th>合計</th><th id="cmpHead">必要な人数</th></tr></thead>
+        <tbody id="compare"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="kateiBlock" hidden>
+    <p class="cap">家庭的保育者と補助者の組み合わせ</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>家庭的保育者</th><th>補助者（最少）</th><th>保育できる子ども</th></tr></thead>
+        <tbody id="combos"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <ul class="checks" id="checks"></ul>
+</div>
+
+<div class="note">
+  <strong>この結果は概算です。</strong>
+  国が定める家庭的保育事業等の最低基準の比率に、こども家庭庁の公定価格FAQが示す端数処理を当てはめた人数です。
+  <strong>職員の員数は、国の基準に従って市町村が条例で定めます。市町村によっては、国より手厚い基準（B型の保育士の割合を高くするなど）や独自の計算方法があります。</strong>
+  公定価格の加配（保育標準時間認定の子どもがいるときの非常勤1人など）や加算の要件も、この最低基準とは別です。
+  認定こども園・企業主導型保育・居宅訪問型保育（子ども1人に家庭的保育者1人）は、このツールでは計算しません。
+  <strong>実際の配置が基準を満たすかは、所在地の市区町村の保育担当課や、指導監査の担当などの専門家にご確認ください。</strong>
+  認可保育所の場合は<a href="../childcare-staff-ratio/">保育士の配置基準の計算</a>を使ってください。
+</div>
+
+<h2>この計算の根拠</h2>
+
+<h3>A型（第29条）: 年齢別の比率の合計に＋1人、全員が保育士</h3>
+<div class="law">
+  <p>保育士の数は、次の各号に掲げる区分に応じ、当該各号に定める数の合計数に一を加えた数以上とする。一 乳児おおむね三人につき一人 二 満一歳以上満三歳に満たない幼児おおむね六人につき一人 三 満三歳以上満四歳に満たない児童おおむね十五人につき一人（法第六条の三第十項第二号又は第三号の規定に基づき受け入れる場合に限る。次号において同じ。） 四 満四歳以上の児童おおむね二十五人につき一人</p>
+  <p>（家庭的保育事業等の設備及び運営に関する基準 第29条第2項）</p>
+</div>
+<p>
+  比率は認可保育所と同じですが、<strong>合計に1人を加える</strong>点と、<strong>「2人を下らない」という最低人数の定めが無い</strong>点が違います。
+</p>
+
+<h3>B型（第31条）: 保育従事者を同じ式で数え、半数以上を保育士に</h3>
+<div class="law">
+  <p>保育従事者の数は、次の各号に掲げる乳幼児の区分に応じ、当該各号に定める数の合計数に一を加えた数以上とし、そのうち半数以上は保育士とする。</p>
+  <p>（同 第31条第2項。各号の比率は A型と同じ。保育従事者は、保育士と、市町村長が行う研修を修了した者）</p>
+</div>
+<p>
+  保育士の人数は、国の公定価格FAQ No.5 の「必要保育従事者数（整数化後）×1/2＝必要保育士数（小数点第1位を四捨五入）」で出しています。
+  必要な保育従事者が5人なら、2.5 を四捨五入して<strong>保育士3人</strong>です。
+</p>
+
+<h3>C型・家庭的保育（第34条・第23条）: 家庭的保育者1人で3人、補助者と組めば5人</h3>
+<div class="law">
+  <p>家庭的保育者一人が保育することができる乳幼児の数は、三人以下とする。ただし、家庭的保育者が、家庭的保育補助者とともに保育する場合には、五人以下とする。</p>
+  <p>（同 第34条第2項（C型）・第23条第3項（家庭的保育）は同じ文言）</p>
+</div>
+<p>
+  C型の利用定員は6人以上10人以下（第35条）、家庭的保育は5人以下（児童福祉法 第6条の3第9項）です。
+  補助者は家庭的保育者1人につき1人まで効くものとして（公定価格FAQ No.6「それぞれの家庭的保育者に補助者を配置する場合は５人」）、必要な組み合わせを出します。
+  10人なら<strong>家庭的保育者2人＋補助者2人</strong>（または家庭的保育者3人＋補助者1人、家庭的保育者4人）です。国の算式（小数点の処理）はC型・家庭的保育には使いません（FAQ No.8）。
+</p>
+
+<h3>事業所内保育（第47条・第44条）</h3>
+<div class="law">
+  <p>保育従事者の数は、次の各号に掲げる区分に応じ、当該各号に定める数の合計数に一を加えた数以上とし、そのうち半数以上は保育士とする。（第47条第2項・利用定員19人以下）</p>
+  <p>保育士の数は、次の各号に掲げる区分に応じ、当該各号に定める数の合計数以上とする。ただし、保育所型事業所内保育事業所一につき二人を下回ることはできない。（第44条第2項・利用定員20人以上）</p>
+</div>
+<p>
+  利用定員19人以下はB型と同じ式、20人以上（保育所型）は認可保育所と同じく＋1人なし・最低2人です。
+</p>
+
+<h3>端数の処理（国の算式）</h3>
+<div class="formula">｛4歳以上児数 ÷ 25｝＋｛3歳児数 ÷ 15｝＋｛1・2歳児数 ÷ 6｝＋｛乳児数 ÷ 3｝　各｛ ｝は小数点第1位まで（第2位以下切り捨て）→ 合計の小数点以下を四捨五入 → A型・B型・19人以下の事業所内は＋1</div>
+<div class="law">
+  <p>配置すべき教育・保育に従事する者の数の具体的な算定方法は、年齢別に、子どもの数を配置基準で除して小数点第1位まで求め（小数点第２位以下切捨て）、各々を合計した後に小数点以下を四捨五入した数になります。※家庭的保育事業、小規模保育事業Ｃ型、居宅訪問型保育事業を除く</p>
+  <p>（こども家庭庁「公定価格に関するFAQ（よくある質問）」第29版 No.8。FAQの算式は公定価格の比率 1/30・1/20 で書かれています）</p>
+</div>
+<p>
+  省令は「おおむね」と書くだけで、端数の処理を定めていません。このツールは国が公定価格で示しているこの算式を、省令の比率（15・25）と経過措置の比率（20・30）に当てはめています。
+  京都市の資料の例（0歳3人・1〜2歳10人）では 1.0＋1.6＋1＝3.6 で<strong>4人</strong>です。
+  <strong>1歳児と2歳児、4歳児と5歳児は、それぞれ人数を合わせてから割ります。</strong>
+</p>
+
+<h3>3歳以上児の比率と経過措置（令和6年内閣府令第18号 附則）</h3>
+<div class="law">
+  <p>保育士及び保育従事者の配置の状況に鑑み、保育の提供に支障を及ぼすおそれがあるときは、令和十年三月三十一日までの間、…家庭的保育事業等基準第二十九条第二項、第三十一条第二項、第四十四条第二項及び第四十七条第二項の規定（満三歳以上満四歳に満たない児童に対し保育を提供する保育士及び保育従事者の数に関する部分に限る。）は、適用しない。この場合において、この府令による改正前の…規定…は、この府令の施行の日以後においても、なおその効力を有する。（附則第2項）</p>
+  <p>4歳以上児についても同じ形の規定があり、期間は「当分の間」です（附則第3項）。</p>
+</div>
+<p>
+  小規模保育で3歳以上の子どもを数えるのは、地域の事情で認められた場合（児童福祉法 第6条の3第10項第2号）と、満3歳以上に限った小規模保育（同第3号・A型だけ）です。
+  3歳児は<strong>2028年3月31日まで</strong>、4歳以上児は<strong>当分の間</strong>、旧基準（20人に1人・30人に1人）によることができます。このツールは両方の人数を並べて出します。
+</p>
+
+<h3>保育士とみなせる職員と、附則の特例</h3>
+<ul>
+  <li><strong>看護師・保健師・准看護師</strong>を1人に限り保育士とみなせます（第29条・第31条・第44条・第47条の第3項）。</li>
+  <li><strong>特定理学療法士等</strong>（理学療法士・作業療法士・言語聴覚士・心理担当職員など、子育ての知識と経験がある人）を1人に限り保育士とみなせます（同 第4項・2026年4月から）。看護師等と両方を使うときは、保育士による支援の体制が要ります（同 第5項）。</li>
+  <li>A型と利用定員20人以上の事業所内保育では、当分の間、<strong>幼稚園・小学校・養護教諭の普通免許状を持つ人</strong>を保育士とみなせます（附則第7条）。このときは、みなしの職員（看護師等・特定理学療法士等を含む）を除いた保育士を、必要な保育士の数の<strong>3分の2以上</strong>置く必要があります（附則第9条）。</li>
+  <li>8時間を超えて開所するA型・利用定員20人以上の事業所内保育では、開所時間を通じて必要な保育士の総数のうち、利用定員に応じた数を超える分を、保育士と同等と市町村長が認める者で数えられます（附則第8条）。このツールは判定しません。</li>
+  <li>A型と利用定員20人以上の事業所内保育で、年齢別の比率の合計数が1となる時は、当分の間、保育士1人＋保育士と同等と市町村長が認める者でもよいとされています（附則第6条）。</li>
+</ul>
+
+<h3>国の基準と市町村の条例（児童福祉法 第34条の16）</h3>
+<div class="law">
+  <p>市町村が前項の条例を定めるに当たつては、次に掲げる事項については内閣府令で定める基準に従い定めるものとし、…一 家庭的保育事業等又は乳児等通園支援事業に従事する者及びその員数</p>
+  <p>（児童福祉法 第34条の16第2項）</p>
+</div>
+<p>
+  職員の員数は国の基準に「従い」市町村が条例で定めるので、国の基準を下回ることはできませんが、上回る基準を定める市町村はあります。
+</p>
+
+<h2>よくある質問</h2>
+
+<h3>A型とB型は何が違いますか</h3>
+<p>
+  人数の式は同じ（比率の合計＋1人）で、<strong>保育士の割合</strong>が違います。A型は全員が保育士（看護師等などのみなしを含む）、B型は半数以上が保育士で、残りは市町村長が行う研修を修了した保育従事者でかまいません。
+  公定価格（運営費）も型ごとに違います。
+</p>
+
+<h3>認可保育所の基準とは何が違いますか</h3>
+<p>
+  年齢別の比率は同じですが、A型・B型は<strong>合計に1人を加えます</strong>。認可保育所は＋1人がない代わりに「保育所一につき二人を下ることはできない」という最低人数があります。
+  0歳3人・1〜2歳16人（19人）の例で数えると、1.0＋2.6＝3.6 で、認可保育所の式（利用定員20人以上の事業所内保育も同じ）は4人、A型・B型の式は＋1人で5人です。
+</p>
+
+<h3>子どもの年齢はいつの時点で数えますか</h3>
+<p>
+  国の公定価格の算式では「年度の初日の前日における満年齢」で数えます（こども家庭庁 公定価格FAQ No.8）。
+  年度の途中で誕生日を迎えた子の扱いは、所在地の市町村の運用を確認してください。
+</p>
+
+<h3>保育標準時間の子どもがいると1人増えると聞きました</h3>
+<p>
+  それは公定価格（運営費）の基本分に含まれる職員構成の話で、「保育標準時間認定を受ける子どもを受け入れる施設については非常勤保育従事者１人を加配」とされています（FAQ No.5・No.6）。
+  省令の最低基準とは別なので、このツールの人数には入れていません。
+</p>
+
+<h2>出典</h2>
+<ul class="src">
+  <li>家庭的保育事業等の設備及び運営に関する基準（平成26年厚生労働省令第61号）第23条・第27条・第29条・第31条・第34条・第35条・第39条・第43条・第44条・第47条・附則第6条〜第9条、令和6年内閣府令第18号 附則第2項・第3項
+    <a href="https://laws.e-gov.go.jp/law/426M60000100061" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>児童福祉法 第6条の3第9項・第10項・第12項、第34条の16
+    <a href="https://laws.e-gov.go.jp/law/322AC0000000164" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>こども家庭庁「公定価格に関するFAQ（よくある質問）」第29版（令和8年3月31日時点）No.5〜No.8
+    <a href="https://www.cao.go.jp/bunken-suishin/teianbosyu/doc/r07/tb_r7fu_98cfa_109.pdf" rel="nofollow noopener" target="_blank">PDF（内閣府 地方分権改革のページに掲載された写し）</a></li>
+  <li>京都市「【参考①】小規模保育事業の主な認可基準の概要」（A型・B型とC型の計算例）
+    <a href="https://www.city.kyoto.lg.jp/templates/shingikai_kekka/cmsfiles/contents/0000232/232638/kijunn.pdf" rel="nofollow noopener" target="_blank">PDF</a></li>
+  <li>条文は e-Gov 法令API で取得した現行版（2026年4月1日施行の版）を逐語で確認し、2026年12月25日に施行される版でも同じ文言であることを確かめています。
+    導出は<a href="./calc.js">計算コード</a>のコメントに、境界値の検証は<a href="./calc.test.mjs">テスト</a>に残してあります</li>
+</ul>
+<p class="src">最終確認日: 2026年11月23日</p>
+
+</main>
+
+<footer class="wrap">
+  <a href="../../">トップ</a>
+  <a href="../../privacy.html">プライバシーポリシー</a>
+  <a href="../../contact.html">お問い合わせ</a>
+  <p>&copy; 2026 くらしの計算室</p>
+</footer>
+
+<script type="module">
+import { calculate, TYPES, kateiCapacity } from "./calc.js";
+
+const AGES = ["age0", "age1", "age2", "age3", "age4", "age5"];
+const STAFF = ["hoikushi", "other", "nurse", "pt", "teacher", "keepers", "assistants"];
+const PRESETS = {
+  kyotoA: { type: "A", ages: [3, 5, 5, 0, 0, 0] },
+  b19: { type: "B", ages: [3, 8, 8, 0, 0, 0] },
+  c10: { type: "C", ages: [3, 4, 3, 0, 0, 0] },
+  clear: { type: null, ages: ["", "", "", "", "", ""] },
+};
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const t1 = (tenths) => (tenths / 10).toFixed(1);
+const RULE = { new: "新基準", old: "経過措置" };
+
+function showFields(t) {
+  const on = {
+    ratio: t.mode === "ratio",
+    half: t.mode === "ratio" && t.half,
+    teacher: t.mode === "ratio" && t.teacher,
+    katei: t.mode === "katei",
+  };
+  for (const el of document.querySelectorAll("[data-show]")) el.hidden = !on[el.dataset.show];
+  $("ruleOpts").hidden = t.mode !== "ratio";
+  $("ratioBlock").hidden = t.mode !== "ratio";
+  $("kateiBlock").hidden = t.mode !== "katei";
+}
+
+function render() {
+  const t = TYPES[$("type").value];
+  showFields(t);
+  const input = { type: $("type").value, age3Rule: $("age3Rule").value, age4Rule: $("age4Rule").value };
+  for (const a of AGES) input[a] = $(a).value;
+  for (const s of STAFF) { const el = $(s); if (!el.parentElement.hidden) input[s] = el.value; }
+  const res = calculate(input);
+
+  $("headLabel").textContent = t.mode === "katei"
+    ? "必要な家庭的保育者の数（補助者と組む場合の最少）"
+    : t.half ? "必要な保育従事者の数（最低基準）" : "必要な保育士の数（最低基準）";
+
+  if (!res.ok) {
+    $("headline").innerHTML = '— <small>人</small>';
+    $("summary").textContent = res.errors[0];
+    for (const id of ["rows", "compare", "combos", "checks"]) $(id).innerHTML = "";
+    return;
+  }
+
+  const checks = [];
+  if (t.mode === "katei") {
+    const k = res.katei;
+    $("headline").innerHTML = `${k.keepers} <small>人</small>` + (k.assistants ? ` <small>＋ 補助者 ${k.assistants}人</small>` : "");
+    $("summary").textContent =
+      `子ども${res.totalChildren}人。家庭的保育者1人で3人、補助者と組めば5人まで。` +
+      (k.assistants ? `家庭的保育者${k.keepers}人と補助者${k.assistants}人で保育できます。` : `家庭的保育者${k.keepers}人で保育できます。`) +
+      ` 家庭的保育者だけなら${k.solo}人です。`;
+    $("combos").innerHTML = res.kateiOptions.map((o) =>
+      `<tr><td>${o.keepers}人</td><td>${o.assistants}人</td><td>${kateiCapacity(o.keepers, o.assistants)}人まで</td></tr>`).join("");
+    if (res.staff) {
+      checks.push(res.staff.enough
+        ? { status: "ok", title: `家庭的保育者${res.staff.keepers}人・補助者${res.staff.assistants}人で${res.staff.capacity}人まで保育でき、${res.totalChildren}人に足ります`,
+            detail: "家庭的保育者1人につき3人、補助者とともに保育する家庭的保育者は5人まで（第23条第3項・第34条第2項）として数えています。" }
+        : { status: "ng", title: `家庭的保育者${res.staff.keepers}人・補助者${res.staff.assistants}人では${res.staff.capacity}人までしか保育できません`,
+            detail: `子どもは${res.totalChildren}人です。上の組み合わせのどれかにしてください。` });
+      if (res.staff.idleAssistants > 0)
+        checks.push({ status: "info", title: `補助者のうち${res.staff.idleAssistants}人は人数の計算に効いていません`,
+          detail: "補助者は家庭的保育者とともに保育する人で、家庭的保育者1人あたり3人を5人にするものとして数えています（公定価格FAQ No.6）。" });
+    }
+  } else {
+    const s = res.selected;
+    $("headline").innerHTML = `${s.required} <small>人</small>` + (t.half ? ` <small>うち保育士 ${s.hoikushiRequired}人以上</small>` : "");
+    $("summary").textContent =
+      `子ども${res.totalChildren}人。年齢区分ごとの合計 ${t1(s.totalTenths)} を四捨五入して ${s.rounded}人` +
+      (t.plusOne ? `、＋1人で ${s.required}人。` : s.raisedToMin ? `、最低2人により ${s.required}人。` : "。") +
+      (t.half ? ` 保育士は ${s.required}×1/2 を四捨五入して ${s.hoikushiRequired}人以上。` : "");
+    $("rows").innerHTML = s.rows.map((r) =>
+      `<tr><td>${esc(r.label)}</td><td>${r.children}人</td><td>${r.ratio}人に1人</td><td>${t1(r.tenths)}</td></tr>`).join("") +
+      `<tr><td><strong>合計</strong></td><td>${res.totalChildren}人</td><td></td><td><strong>${t1(s.totalTenths)}</strong></td></tr>`;
+    $("cmpHead").textContent = t.half ? "保育従事者（うち保育士）" : "必要な保育士";
+    const variants = [["新基準（3歳15:1・4歳以上25:1）", res.newRule], ["経過措置（3歳20:1・4歳以上30:1）", res.oldRule]];
+    if (res.rule.age3 !== res.rule.age4) variants.push([`選択中（3歳${RULE[res.rule.age3]}・4歳以上${RULE[res.rule.age4]}）`, s]);
+    $("compare").innerHTML = variants.map(([name, v]) =>
+      `<tr><td>${esc(name)}</td><td>${t1(v.totalTenths)}</td><td>${v.required}人${t.half ? `（${v.hoikushiRequired}人）` : ""}</td></tr>`).join("");
+
+    const st = res.staff;
+    if (st && t.half) {
+      checks.push(st.enough
+        ? { status: "ok", title: `保育従事者${st.total}人（うち保育士${st.hoikushiCounted}人）は基準を満たしています`,
+            detail: `必要な保育従事者は${s.required}人、うち保育士${s.hoikushiRequired}人以上です。市町村の上乗せ基準がある場合は、そちらでも確かめてください。` }
+        : { status: "ng", title: [st.enoughTotal ? "" : `保育従事者が${st.shortTotal}人`, st.enoughHoikushi ? "" : `保育士が${st.shortHoikushi}人`].filter(Boolean).join("、") + "足りません",
+            detail: `必要な保育従事者は${s.required}人、うち保育士${s.hoikushiRequired}人以上です。いまは保育従事者${st.total}人、うち保育士（みなしを含む）${st.hoikushiCounted}人と数えています。` });
+    } else if (st) {
+      checks.push(st.enough
+        ? { status: "ok", title: `保育士（みなしを含む）${st.counted}人は必要な${s.required}人以上です`,
+            detail: "国の最低基準と国の算式による判定です。市町村の上乗せ基準がある場合は、そちらでも確かめてください。" }
+        : !st.enoughCount
+          ? { status: "ng", title: `保育士（みなしを含む）${st.counted}人では${st.short}人足りません`, detail: `必要な保育士は${s.required}人です。` }
+          : { status: "ng", title: `教諭の免許状を持つ人を数えるには、保育士が${st.twoThirdsNeed}人以上要ります`,
+              detail: `附則第9条: 附則第7条を使う時は、看護師等・特定理学療法士等・教諭のみなしを除いた保育士を、必要な保育士の数（${s.required}人）の3分の2以上置きます。いまの保育士は${st.hoikushi}人です。` });
+    }
+    if (st && (st.extraNurse || st.extraPt))
+      checks.push({ status: "info", title: "看護師等・特定理学療法士等は、それぞれ1人までしか保育士とみなしません",
+        detail: "第3項・第4項の「一人に限り」によります。2人目以降は保育士の数に入れていません。" });
+    if (st && st.bothDeemed)
+      checks.push({ status: "info", title: "看護師等と特定理学療法士等の両方を保育士とみなしています",
+        detail: "両方が保育を行う場合は、それぞれが保育士による支援を受けられる体制を確保する必要があります（第4項ただし書・第5項）。" });
+    if (res.newRule.required !== res.oldRule.required)
+      checks.push({ status: "info", title: `新基準と経過措置で ${res.newRule.required - res.oldRule.required}人変わります`,
+        detail: "経過措置は「保育の提供に支障を及ぼすおそれがあるとき」に使えるもので、国の府令では3歳児は2028年3月31日まで、4歳以上児は当分の間です。期間は市町村の条例でも確かめてください。" });
+    if (s.raisedToMin)
+      checks.push({ status: "info", title: `算式では ${s.rounded}人ですが、1か所につき2人を下回ることはできません`, detail: "第44条第2項ただし書（利用定員20人以上の事業所内保育）。" });
+    if (res.suppl6)
+      checks.push({ status: "info", title: "年齢別の比率の合計数が1なので、附則第6条の特例があります",
+        detail: "当分の間、保育士1人に加えて、保育士と同等の知識及び経験を有すると市町村長が認める者を置く形でもよいとされています。" });
+    if (res.hasAge3plus && t.plusOne)
+      checks.push({ status: "info", title: "3歳以上の子どもを含めて数えています",
+        detail: "小規模保育で3歳以上を受け入れるのは、児童福祉法 第6条の3第10項第2号（地域の事情で認められた場合）と第3号（満3歳以上に限った小規模保育・A型だけ）です。" });
+    checks.push({ status: "info", title: "1・2歳児と4・5歳児は人数を合わせてから割っています",
+      detail: "国の算式どおりです。年齢ごとに別々に切り捨てると、合計が少なく出ることがあります。" });
+  }
+
+  if (res.overCapacity)
+    checks.push({ status: "info", title: `子どもの数が、この事業の利用定員の上限（${t.capacity[1]}人）を超えています`,
+      detail: "小規模保育A型・B型と19人以下の事業所内保育は19人まで、C型は10人まで（第35条）、家庭的保育は5人まで（児童福祉法 第6条の3）です。種類の選び方を確かめてください。" });
+  if (res.underCapacity)
+    checks.push({ status: "info", title: "この式は利用定員20人以上の事業所内保育のものです",
+      detail: "利用定員が19人以下なら「事業所内保育事業（利用定員19人以下）」を選んでください（第43条・第47条）。種類は利用定員で決まり、いまいる子どもの数ではありません。" });
+
+  $("checks").innerHTML = checks.map((x) =>
+    `<li><p class="hd"><span class="tag ${x.status}">${{ ok: "足りる", ng: "不足", info: "参考" }[x.status]}</span>${esc(x.title)}</p>` +
+    `<p class="dt">${esc(x.detail)}</p></li>`).join("");
+}
+
+function applyPreset(p) {
+  if (p.type) $("type").value = p.type;
+  AGES.forEach((a, i) => { $(a).value = p.ages[i]; });
+  for (const s of STAFF) $(s).value = "";
+  render();
+}
+
+for (const el of document.querySelectorAll(".card input, .card select")) {
+  el.addEventListener("input", render);
+  el.addEventListener("change", render);
+}
+for (const btn of document.querySelectorAll("[data-preset]")) {
+  btn.addEventListener("click", () => applyPreset(PRESETS[btn.dataset.preset]));
+}
+applyPreset(PRESETS.kyotoA);
+</script>
+
+</body>
+</html>

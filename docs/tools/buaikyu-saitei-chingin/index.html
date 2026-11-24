@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>歩合給の最低賃金チェック — 固定給＋歩合給を時間額に換算（令和8年度・47都道府県）</title>
+<meta name="description" content="歩合給（出来高払）や固定給＋歩合給が最低賃金を下回っていないかを判定します。最低賃金法施行規則の式（固定給÷所定労働時間＋歩合給÷総労働時間）で時間額に換算し、都道府県と賃金計算期間から令和8年度（2026年度）の地域別最低賃金と比べます。発効日をまたぐ月にも対応。">
+<link rel="canonical" href="https://keisanshitsu.github.io/tools/buaikyu-saitei-chingin/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="くらしの計算室">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="歩合給の最低賃金チェック — 固定給＋歩合給を時間額に換算（令和8年度・47都道府県）">
+<meta property="og:description" content="固定給と歩合給を最低賃金法施行規則の式で時間額に換算し、令和8年度の地域別最低賃金を下回っていないかを判定します。タクシー運転者の計算例つき。">
+<meta property="og:url" content="https://keisanshitsu.github.io/tools/buaikyu-saitei-chingin/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "歩合給の最低賃金チェック",
+  "description": "月給・日給・時給・歩合給（出来高払）を最低賃金法施行規則 第2条の式で時間額に換算して合計し、都道府県と賃金計算期間に効く令和6〜8年度の地域別最低賃金と比べて、下回っていないかと、最低賃金に届く歩合給の額を出します。",
+  "url": "https://keisanshitsu.github.io/tools/buaikyu-saitei-chingin/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (web browser)",
+  "inLanguage": "ja",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "くらしの計算室",
+    "url": "https://keisanshitsu.github.io/"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1b19; --muted:#6b6862;
+    --line:#e5e2dc; --card:#fff; --accent:#0f6cbd; --accent-soft:#eef5fc;
+    --ok:#1f7a45; --ok-soft:#eaf6ef; --ng:#b3261e; --ng-soft:#fdeeed;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#17181a; --fg:#e9e8e5; --muted:#a3a09a;
+           --line:#2e3033; --card:#1f2123; --accent:#6cb6f5; --accent-soft:#1b2733;
+           --ok:#5fd08a; --ok-soft:#16261d; --ng:#ff8a80; --ng-soft:#2a1a19; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  header{border-bottom:1px solid var(--line);padding:16px 0}
+  .site{font-size:.85rem;color:var(--muted);text-decoration:none}
+  h1{font-size:1.35rem;margin:28px 0 6px;line-height:1.5}
+  .sub{color:var(--muted);font-size:.92rem;margin:0 0 28px}
+  h2{font-size:1.05rem;margin:36px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
+  h3{font-size:.95rem;margin:22px 0 6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+  input,select{width:100%;padding:9px 10px;font-size:1rem;color:var(--fg);
+    background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  input[type=date]{min-height:42px}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--fg);padding:9px 14px}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:12px}
+  .grp{font-size:.86rem;font-weight:600;margin:20px 0 0}
+  .hint{font-size:.78rem;color:var(--muted);margin:4px 0 0}
+  .result{margin-top:20px;border:1px solid var(--accent);background:var(--accent-soft);
+    border-radius:12px;padding:18px}
+  .big{font-size:2rem;font-weight:700;color:var(--accent);line-height:1.2;margin:2px 0 0}
+  .big small{font-size:1rem;font-weight:600;margin-left:2px}
+  .sub2{font-size:.88rem;margin:8px 0 0}
+  .checks{list-style:none;padding:0;margin:14px 0 0}
+  .checks li{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin-bottom:8px}
+  .checks .hd{font-size:.9rem;font-weight:600;margin:0}
+  .checks .dt{font-size:.82rem;color:var(--muted);margin:3px 0 0}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;border-radius:5px;
+    padding:1px 7px;margin-right:7px;vertical-align:2px}
+  .tag.ok{background:var(--ok-soft);color:var(--ok)}
+  .tag.ng{background:var(--ng-soft);color:var(--ng)}
+  .tag.info{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+  .tablewrap{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;white-space:nowrap}
+  th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:600}
+  .cap{font-size:.85rem;font-weight:600;margin:18px 0 0}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:14px 16px;border-radius:0 8px 8px 0;font-size:.88rem;margin:24px 0}
+  .law{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;margin:14px 0;font-size:.86rem}
+  .law p{margin:0 0 6px;font-size:.86rem}
+  .law p:last-child{margin-bottom:0}
+  .formula{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:10px 14px;margin:12px 0;font-size:.9rem;overflow-x:auto;white-space:nowrap}
+  p,li{font-size:.94rem}
+  ul{padding-left:1.2em}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src li{font-size:.85rem;overflow-wrap:anywhere}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:20px 0 40px;
+    color:var(--muted);font-size:.85rem}
+  footer a{color:var(--muted);margin-right:14px}
+  a{color:var(--accent)}
+  @media (max-width:400px){
+    .big{font-size:1.7rem}
+  }
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><a class="site" href="../../">← くらしの計算室</a></div></header>
+
+<main class="wrap">
+
+<h1>歩合給の最低賃金チェック（固定給＋歩合給・令和8年度の最低賃金）</h1>
+<p class="sub">
+  固定給と歩合給（出来高払）を入れると、<strong>最低賃金法施行規則 第2条の式</strong>で1時間あたりの額に換算して合計し、<strong>働く場所の都道府県の地域別最低賃金</strong>を下回っていないかを判定します。
+  固定給は所定労働時間で、<strong>歩合給は時間外・休日も含めた総労働時間で割る</strong>のがポイントです。
+  令和8年度（2026年度）の47都道府県の最低賃金と発効日を収録し、期間の途中で最低賃金が変わる月にも対応します。
+</p>
+
+<div class="card">
+  <div class="opts">
+    <div>
+      <label for="pref">働く場所の都道府県</label>
+      <select id="pref">
+      <option value="1">北海道</option>
+      <option value="2">青森県</option>
+      <option value="3">岩手県</option>
+      <option value="4">宮城県</option>
+      <option value="5">秋田県</option>
+      <option value="6">山形県</option>
+      <option value="7">福島県</option>
+      <option value="8">茨城県</option>
+      <option value="9">栃木県</option>
+      <option value="10">群馬県</option>
+      <option value="11">埼玉県</option>
+      <option value="12">千葉県</option>
+      <option value="13" selected>東京都</option>
+      <option value="14">神奈川県</option>
+      <option value="15">新潟県</option>
+      <option value="16">富山県</option>
+      <option value="17">石川県</option>
+      <option value="18">福井県</option>
+      <option value="19">山梨県</option>
+      <option value="20">長野県</option>
+      <option value="21">岐阜県</option>
+      <option value="22">静岡県</option>
+      <option value="23">愛知県</option>
+      <option value="24">三重県</option>
+      <option value="25">滋賀県</option>
+      <option value="26">京都府</option>
+      <option value="27">大阪府</option>
+      <option value="28">兵庫県</option>
+      <option value="29">奈良県</option>
+      <option value="30">和歌山県</option>
+      <option value="31">鳥取県</option>
+      <option value="32">島根県</option>
+      <option value="33">岡山県</option>
+      <option value="34">広島県</option>
+      <option value="35">山口県</option>
+      <option value="36">徳島県</option>
+      <option value="37">香川県</option>
+      <option value="38">愛媛県</option>
+      <option value="39">高知県</option>
+      <option value="40">福岡県</option>
+      <option value="41">佐賀県</option>
+      <option value="42">長崎県</option>
+      <option value="43">熊本県</option>
+      <option value="44">大分県</option>
+      <option value="45">宮崎県</option>
+      <option value="46">鹿児島県</option>
+      <option value="47">沖縄県</option>
+      </select>
+    </div>
+    <div><label for="start">賃金計算期間の初日</label><input id="start" type="date" min="2024-11-01" max="2027-09-30" value="2026-11-01"></div>
+    <div><label for="end">賃金計算期間の末日（締め日）</label><input id="end" type="date" min="2024-11-01" max="2027-09-30" value="2026-11-30"></div>
+  </div>
+
+  <p class="grp">固定給（入れるものだけ）</p>
+  <div class="opts">
+    <div><label for="monthly">月給（円）</label><input id="monthly" type="number" inputmode="numeric" min="0" step="1" value="" placeholder="例: 85000"></div>
+    <div><label for="monthlyHours">1か月平均所定労働時間（時間）</label><input id="monthlyHours" type="number" inputmode="decimal" min="0" step="0.01" value="" placeholder="例: 170"></div>
+    <div><label for="annualDays">年間所定労働日数（日・1か月平均の代わり）</label><input id="annualDays" type="number" inputmode="numeric" min="0" max="366" step="1" value=""></div>
+    <div><label for="dayHours">1日の所定労働時間（時間）</label><input id="dayHours" type="number" inputmode="decimal" min="0" max="24" step="0.01" value="" placeholder="例: 8"></div>
+    <div><label for="daily">日給（円）</label><input id="daily" type="number" inputmode="numeric" min="0" step="1" value=""></div>
+    <div><label for="hourly">時給（円）</label><input id="hourly" type="number" inputmode="numeric" min="0" step="1" value=""></div>
+  </div>
+  <p class="hint">月給には基本給と毎月決まって払われる手当（職務手当など）を入れ、<strong>精皆勤手当・通勤手当・家族手当、時間外・休日・深夜の割増賃金、賞与は除きます</strong>。時間は小数で（7時間45分なら 7.75）。</p>
+
+  <p class="grp">歩合給（出来高払）</p>
+  <div class="opts">
+    <div><label for="piece">歩合給（円・割増賃金を除く）</label><input id="piece" type="number" inputmode="numeric" min="0" step="1" value="" placeholder="例: 48000"></div>
+    <div><label for="pieceHours">その期間の総労働時間（時間外・休日を含む）</label><input id="pieceHours" type="number" inputmode="decimal" min="0" step="0.01" value="" placeholder="例: 200"></div>
+  </div>
+
+  <div class="actions">
+    <button type="button" data-preset="naraMix">固定8.5万＋歩合4.8万の例</button>
+    <button type="button" data-preset="toku1">月給18.5万・年258日の例</button>
+    <button type="button" data-preset="kyoto">京都11月（途中で改定）</button>
+    <button type="button" data-preset="clear">金額と時間を消す</button>
+  </div>
+</div>
+
+<div class="result" aria-live="polite">
+  <div>1時間あたりの賃金（最低賃金と比べる額）</div>
+  <p class="big" id="headline">— <small>円</small></p>
+  <p class="sub2" id="summary">金額と時間を入力してください。</p>
+
+  <div id="detail">
+    <p class="cap">時間額への換算（最低賃金法施行規則 第2条）</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>賃金</th><th>金額</th><th>割る時間</th><th>1時間あたり</th></tr></thead>
+        <tbody id="parts"></tbody>
+      </table>
+    </div>
+    <p class="cap">地域別最低賃金との比較</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>最低賃金</th><th>発効日</th><th>判定</th><th>1時間の不足</th><th id="needHead">届く額</th></tr></thead>
+        <tbody id="compare"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <ul class="checks" id="checks"></ul>
+</div>
+
+<div class="note">
+  <strong>この結果は概算です。</strong>
+  最低賃金法施行規則の換算式に入力した金額と時間を当てはめ、厚生労働省が公表している地域別最低賃金と比べたものです。
+  <strong>業種によっては特定（産業別）最低賃金が適用され、地域別より高いことがあります</strong>（このツールは地域別だけで判定します）。
+  不足していた場合の差額の計算（どの時間に掛けるか・割増分）は賃金の仕組みで変わるため、このツールは「1時間あたりの不足」と「最低賃金に届く額」だけを出します。
+  <strong>実際に最低賃金を下回っているか、差額をいくら請求できるかは、最寄りの労働基準監督署・都道府県労働局や社会保険労務士などの専門家にご確認ください。</strong>
+</div>
+
+<h2>この計算の根拠</h2>
+
+<h3>最低賃金額以上を払う義務（最低賃金法 第4条）</h3>
+<div class="law">
+  <p>使用者は、最低賃金の適用を受ける労働者に対し、その最低賃金額以上の賃金を支払わなければならない。（第1項）</p>
+  <p>最低賃金の適用を受ける労働者と使用者との間の労働契約で最低賃金額に達しない賃金を定めるものは、その部分については無効とする。この場合において、無効となつた部分は、最低賃金と同様の定をしたものとみなす。（第2項）</p>
+</div>
+<p>
+  「以上」なので、1時間あたりの額が最低賃金とちょうど同じなら満たします。このツールは割り算の結果を丸めずに分数のまま比べ、表示だけを小数第2位まで（切り捨て）にしています。
+  地域別最低賃金を下回る額しか払わないと、50万円以下の罰金の定めがあります（同 第40条）。
+</p>
+
+<h3>時間額への換算（最低賃金法施行規則 第2条）</h3>
+<div class="law">
+  <p>一 日によつて定められた賃金については、その金額を一日の所定労働時間数（日によつて所定労働時間数が異なる場合には、一週間における一日平均所定労働時間数）で除した金額</p>
+  <p>三 月によつて定められた賃金については、その金額を月における所定労働時間数（月によつて所定労働時間数が異なる場合には、一年間における一月平均所定労働時間数）で除した金額</p>
+  <p>五 出来高払制その他の請負制によつて定められた賃金については、当該賃金算定期間（賃金締切日がある場合には、賃金締切期間。以下この号において同じ。）において出来高払制その他の請負制によつて計算された賃金の総額を、当該賃金算定期間において出来高払制その他の請負制によつて労働した総労働時間数で除した金額</p>
+  <p>（最低賃金法施行規則 第2条第1項。第2項「休日手当その他同項各号の賃金以外の賃金（時間によつて定められた賃金を除く。）は、月によつて定められた賃金とみなす。」）</p>
+</div>
+<div class="formula">1時間あたりの賃金 ＝ 月給 ÷ 1か月平均所定労働時間 ＋ 日給 ÷ 1日の所定労働時間 ＋ 時給 ＋ 歩合給 ÷ 総労働時間</div>
+<p>
+  組み合わせのときは「それぞれ…時間額に換算し、それを合計したものと最低賃金額（時間額）と比較します」（厚生労働省 最低賃金特設サイト）。
+  1か月平均所定労働時間は、月によって所定労働時間が違えば<strong>年間所定労働日数×1日の所定労働時間÷12</strong>で出します（徳島労働局の例: 8時間×258日÷12ヶ月＝172時間）。
+</p>
+
+<h3>最低賃金に算入しない賃金（最低賃金法 第4条第3項・施行規則 第1条）</h3>
+<ul>
+  <li>臨時に支払われる賃金（結婚手当など）と、1か月を超える期間ごとに支払われる賃金（賞与など）</li>
+  <li>所定労働時間を超える時間の労働に対して支払われる賃金（時間外割増賃金など）と、所定労働日以外の日の労働に対して支払われる賃金（休日割増賃金など）</li>
+  <li>午後10時から午前5時までの労働に対して支払われる賃金のうち、通常の労働時間の賃金の計算額を超える部分（深夜割増賃金など）</li>
+  <li><strong>精皆勤手当、通勤手当及び家族手当</strong>（最低賃金で算入しないと定める賃金。厚生労働省 最低賃金特設サイト「対象となる賃金は？」）</li>
+</ul>
+
+<h3>タクシー運転者の計算例（奈良労働局）</h3>
+<p>所定労働時間170時間・時間外労働30時間（うち深夜15時間）、月間総労働時間200時間の月の例です。</p>
+<div class="law">
+  <p>（1）オール歩合給制: 歩合給 144,000（円）÷月間総労働時間 200（時間）＝720 円 が、時間当たりの賃金額となります。</p>
+  <p>（2）固定給＋歩合給制: 固定給 85,000 円（円）÷所定労働時間170（時間）＝500（円）…① 歩合給 48,000 円（円）÷月間総労働時間 200（時間）＝240（円）…② …固定給と歩合給の合算額 ①＋②＝740（円）が、時間当たりの賃金額となります。</p>
+  <p>（奈良労働局「タクシー運転者の最低賃金」。資料の最低賃金734円は当時の額）</p>
+</div>
+<p>
+  時間外と深夜の割増賃金は比べる額に入れません。同じ金額を<strong>今の東京都の最低賃金（1,280円）</strong>と比べると、(2)は1時間あたり540円足りず、最低賃金に届く歩合給は (1,280−500)×200時間＝<strong>156,000円</strong>です（上の「固定8.5万＋歩合4.8万の例」）。
+</p>
+<p>
+  歩合給の中に時間外・深夜の割増賃金を含めて払う賃金制度について、奈良労働局は「歩合給相当部分と割増賃金相当部分の区分が分からないと、割増賃金の基礎となる通常の労働時間の賃金が算出できません」として、区分を就業規則などで明らかにしたうえで計算するよう求めています。
+</p>
+
+<h3>令和8年度の地域別最低賃金（時間額）と発効日</h3>
+<p>期間の途中で発効日が来る月は、発効日の前は令和7年度の額、発効日からは令和8年度の額が適用されます。このツールは期間に効く額すべてで判定して並べます。</p>
+<div class="tablewrap">
+  <table>
+    <thead><tr><th>都道府県</th><th>令和8年度</th><th>発効日</th><th>令和7年度</th></tr></thead>
+    <tbody id="mwTable">
+        <tr><td>北海道</td><td>1,131円</td><td>2026年10月1日</td><td>1,075円</td></tr>
+        <tr><td>青森県</td><td>1,090円</td><td>2026年10月29日</td><td>1,029円</td></tr>
+        <tr><td>岩手県</td><td>1,090円</td><td>2026年12月1日</td><td>1,031円</td></tr>
+        <tr><td>宮城県</td><td>1,098円</td><td>2026年10月1日</td><td>1,038円</td></tr>
+        <tr><td>秋田県</td><td>1,090円</td><td>2026年10月14日</td><td>1,031円</td></tr>
+        <tr><td>山形県</td><td>1,092円</td><td>2026年10月30日</td><td>1,032円</td></tr>
+        <tr><td>福島県</td><td>1,094円</td><td>2026年10月16日</td><td>1,033円</td></tr>
+        <tr><td>茨城県</td><td>1,136円</td><td>2026年10月18日</td><td>1,074円</td></tr>
+        <tr><td>栃木県</td><td>1,125円</td><td>2026年10月1日</td><td>1,068円</td></tr>
+        <tr><td>群馬県</td><td>1,120円</td><td>2026年10月3日</td><td>1,063円</td></tr>
+        <tr><td>埼玉県</td><td>1,196円</td><td>2026年10月1日</td><td>1,141円</td></tr>
+        <tr><td>千葉県</td><td>1,195円</td><td>2026年10月1日</td><td>1,140円</td></tr>
+        <tr><td>東京都</td><td>1,280円</td><td>2026年10月1日</td><td>1,226円</td></tr>
+        <tr><td>神奈川県</td><td>1,279円</td><td>2026年10月1日</td><td>1,225円</td></tr>
+        <tr><td>新潟県</td><td>1,108円</td><td>2026年10月1日</td><td>1,050円</td></tr>
+        <tr><td>富山県</td><td>1,119円</td><td>2026年10月1日</td><td>1,062円</td></tr>
+        <tr><td>石川県</td><td>1,113円</td><td>2026年10月3日</td><td>1,054円</td></tr>
+        <tr><td>福井県</td><td>1,112円</td><td>2026年10月4日</td><td>1,053円</td></tr>
+        <tr><td>山梨県</td><td>1,113円</td><td>2026年11月1日</td><td>1,052円</td></tr>
+        <tr><td>長野県</td><td>1,117円</td><td>2026年10月2日</td><td>1,061円</td></tr>
+        <tr><td>岐阜県</td><td>1,121円</td><td>2026年10月1日</td><td>1,065円</td></tr>
+        <tr><td>静岡県</td><td>1,154円</td><td>2026年10月15日</td><td>1,097円</td></tr>
+        <tr><td>愛知県</td><td>1,195円</td><td>2026年10月1日</td><td>1,140円</td></tr>
+        <tr><td>三重県</td><td>1,143円</td><td>2026年10月1日</td><td>1,087円</td></tr>
+        <tr><td>滋賀県</td><td>1,136円</td><td>2026年10月3日</td><td>1,080円</td></tr>
+        <tr><td>京都府</td><td>1,180円</td><td>2026年11月16日</td><td>1,122円</td></tr>
+        <tr><td>大阪府</td><td>1,231円</td><td>2026年10月1日</td><td>1,177円</td></tr>
+        <tr><td>兵庫県</td><td>1,172円</td><td>2026年10月1日</td><td>1,116円</td></tr>
+        <tr><td>奈良県</td><td>1,107円</td><td>2026年10月4日</td><td>1,051円</td></tr>
+        <tr><td>和歌山県</td><td>1,101円</td><td>2026年10月3日</td><td>1,045円</td></tr>
+        <tr><td>鳥取県</td><td>1,090円</td><td>2026年10月3日</td><td>1,030円</td></tr>
+        <tr><td>島根県</td><td>1,092円</td><td>2026年10月10日</td><td>1,033円</td></tr>
+        <tr><td>岡山県</td><td>1,104円</td><td>2026年10月2日</td><td>1,047円</td></tr>
+        <tr><td>広島県</td><td>1,141円</td><td>2026年10月11日</td><td>1,085円</td></tr>
+        <tr><td>山口県</td><td>1,101円</td><td>2026年10月8日</td><td>1,043円</td></tr>
+        <tr><td>徳島県</td><td>1,103円</td><td>2026年11月1日</td><td>1,046円</td></tr>
+        <tr><td>香川県</td><td>1,092円</td><td>2026年10月1日</td><td>1,036円</td></tr>
+        <tr><td>愛媛県</td><td>1,093円</td><td>2026年11月1日</td><td>1,033円</td></tr>
+        <tr><td>高知県</td><td>1,086円</td><td>2026年10月29日</td><td>1,023円</td></tr>
+        <tr><td>福岡県</td><td>1,114円</td><td>2026年10月4日</td><td>1,057円</td></tr>
+        <tr><td>佐賀県</td><td>1,095円</td><td>2026年11月15日</td><td>1,030円</td></tr>
+        <tr><td>長崎県</td><td>1,087円</td><td>2026年11月2日</td><td>1,031円</td></tr>
+        <tr><td>熊本県</td><td>1,092円</td><td>2026年12月1日</td><td>1,034円</td></tr>
+        <tr><td>大分県</td><td>1,096円</td><td>2026年11月1日</td><td>1,035円</td></tr>
+        <tr><td>宮崎県</td><td>1,085円</td><td>2026年10月24日</td><td>1,023円</td></tr>
+        <tr><td>鹿児島県</td><td>1,090円</td><td>2026年10月25日</td><td>1,026円</td></tr>
+        <tr><td>沖縄県</td><td>1,086円</td><td>2026年12月2日</td><td>1,023円</td></tr>
+    </tbody>
+  </table>
+</div>
+<p class="src">厚生労働省「令和８年度地域別最低賃金全国一覧」。全国加重平均は1,177円（前年度1,121円）。令和6年度の額と発効日も収録しており、2024年11月1日以降の期間を判定できます。</p>
+
+<h2>よくある質問</h2>
+
+<h3>歩合給の「総労働時間」には何を入れますか</h3>
+<p>
+  歩合給を得るために働いた時間すべてです。<strong>所定労働時間に、時間外労働・休日労働の時間を足した時間</strong>を入れます（施行規則 第2条第1項第5号「出来高払制その他の請負制によつて労働した総労働時間数」）。
+  固定給は所定労働時間で割るので、歩合給のほうが長い時間で割ることになります（奈良労働局の例: 固定給は170時間、歩合給は200時間）。
+</p>
+
+<h3>手当は月給に入れますか</h3>
+<p>
+  毎月払われる手当（職務手当・資格手当など）は入れます。施行規則 第2条第2項で、時間によって定められた賃金以外は月によって定められた賃金とみなします。
+  <strong>精皆勤手当・通勤手当・家族手当</strong>と、時間外・休日・深夜の割増賃金、賞与など1か月を超える期間ごとの賃金、臨時の賃金は入れません。
+</p>
+
+<h3>タクシーの隔日勤務でも使えますか</h3>
+<p>
+  使えます。歩合給はその賃金締切期間に働いた総労働時間で、固定給は1か月平均所定労働時間で割る点は日勤と同じです。
+  拘束時間の基準は<a href="../taxi-kakujitsu-kousoku/">タクシー隔日勤務の拘束時間と休息期間のチェック</a>、日勤は<a href="../driver-kousoku-jikan/">トラック・タクシー運転者の拘束時間と休息期間のチェック</a>で判定できます。
+</p>
+
+<h3>派遣で働いている場合はどこの最低賃金ですか</h3>
+<p>
+  <strong>派遣先の事業場がある都道府県</strong>の地域別最低賃金です（最低賃金法 第13条）。派遣元の会社の所在地ではありません。
+</p>
+
+<h3>試用期間中は最低賃金より低くてもよいのですか</h3>
+<p>
+  使用者が<strong>都道府県労働局長の許可</strong>を受けたときに限り、試の使用期間中の人などについて減額した額で判定する特例があります（最低賃金法 第7条）。許可が無ければ通常の最低賃金です。このツールは特例を判定しません。
+</p>
+
+<h3>給料日の前に最低賃金が上がりました。どちらで比べますか</h3>
+<p>
+  発効日より前に働いた分は前の額、発効日からの分は新しい額です。賃金計算期間の途中に発効日があると、このツールは両方の額で判定を並べるので、発効日の前と後で労働時間と賃金を分けて、それぞれ確かめてください。
+  厚生労働省の比較チェックも「改正日（発効年月日）をまたがる期間は比較できません」としています。
+</p>
+
+<h2>出典</h2>
+<ul class="src">
+  <li>最低賃金法（昭和34年法律第137号）第4条・第7条・第13条・第40条
+    <a href="https://laws.e-gov.go.jp/law/334AC0000000137" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>最低賃金法施行規則（昭和34年労働省令第16号）第1条・第2条
+    <a href="https://laws.e-gov.go.jp/law/334M50002000016" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>厚生労働省「令和８年度地域別最低賃金全国一覧」
+    <a href="https://www.mhlw.go.jp/content/11200000/001753404.pdf" rel="nofollow noopener" target="_blank">PDF</a>・「平成14年度から令和８年度までの地域別最低賃金改定状況」
+    <a href="https://www.mhlw.go.jp/content/11200000/001756130.xlsx" rel="nofollow noopener" target="_blank">Excel</a>（「<a href="https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/koyou_roudou/roudoukijun/minimumichiran/index.html" rel="nofollow noopener" target="_blank">地域別最低賃金の全国一覧</a>」のページから）</li>
+  <li>厚生労働省 最低賃金特設サイト「<a href="https://saiteichingin.mhlw.go.jp/point/page_point_check.html" rel="nofollow noopener" target="_blank">最低賃金のチェック方法は？</a>」「<a href="https://saiteichingin.mhlw.go.jp/point/page_point_targetwages.html" rel="nofollow noopener" target="_blank">対象となる賃金は？</a>」</li>
+  <li>奈良労働局「タクシー運転者の最低賃金」
+    <a href="https://jsite.mhlw.go.jp/nara-roudoukyoku/var/rev0/0108/7037/takusisaitin.pdf" rel="nofollow noopener" target="_blank">PDF</a>・徳島労働局「<a href="https://jsite.mhlw.go.jp/tokushima-roudoukyoku/newpage_00549.html" rel="nofollow noopener" target="_blank">最低賃金額以上かどうかの確認方法</a>」（計算例）</li>
+  <li>条文は e-Gov 法令API で取得した現行版を逐語で確認し、未施行の改正が無いことを確かめています。最低賃金額と発効日は厚生労働省の Excel から作り、PDF の全国一覧と47都道府県すべて一致することをテストで確かめています。
+    導出は<a href="./calc.js">計算コード</a>のコメントに、境界値の検証は<a href="./calc.test.mjs">テスト</a>に残してあります</li>
+</ul>
+<p class="src">最終確認日: 2026年11月24日</p>
+
+</main>
+
+<footer class="wrap">
+  <a href="../../">トップ</a>
+  <a href="../../privacy.html">プライバシーポリシー</a>
+  <a href="../../contact.html">お問い合わせ</a>
+  <p>&copy; 2026 くらしの計算室</p>
+</footer>
+
+<script type="module">
+import { calculate, fmt2, fmtHours, FY_LABEL, LABEL } from "./calc.js";
+
+const FIELDS = ["monthly", "monthlyHours", "annualDays", "dayHours", "daily", "hourly", "piece", "pieceHours"];
+const NOV = { start: "2026-11-01", end: "2026-11-30" };
+const PRESETS = {
+  naraMix: { pref: 13, ...NOV, monthly: 85000, monthlyHours: 170, piece: 48000, pieceHours: 200 },
+  toku1: { pref: 36, ...NOV, monthly: 185000, annualDays: 258, dayHours: 8 },
+  kyoto: { pref: 26, ...NOV, monthly: 184000, monthlyHours: 160 },
+  clear: {},
+};
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const yen = (n) => Number(n).toLocaleString("ja-JP");
+const jp = (iso) => { const [y, m, d] = iso.split("-").map(Number); return `${y}年${m}月${d}日`; };
+
+function render() {
+  const input = { pref: $("pref").value, start: $("start").value, end: $("end").value };
+  for (const f of FIELDS) input[f] = $(f).value;
+  const res = calculate(input);
+
+  if (!res.ok) {
+    $("headline").innerHTML = "— <small>円</small>";
+    $("summary").textContent = res.errors[0];
+    $("detail").hidden = true;
+    $("checks").innerHTML = "";
+    return;
+  }
+  $("detail").hidden = false;
+  const totalStr = fmt2(res.total);
+  $("headline").innerHTML = `${totalStr} <small>円</small>`;
+
+  const c0 = res.comparisons;
+  if (!res.straddle) {
+    const c = c0[0];
+    $("summary").innerHTML = c.ok
+      ? `${esc(res.pref.name)}の最低賃金 <strong>${yen(c.yen)}円</strong>（${FY_LABEL[c.fy]}・${jp(c.from)}発効）<strong>以上</strong>です。`
+      : `${esc(res.pref.name)}の最低賃金 <strong>${yen(c.yen)}円</strong>（${FY_LABEL[c.fy]}・${jp(c.from)}発効）を<strong>1時間あたり ${fmt2(c.short, false)}円 下回っています</strong>。`;
+  } else {
+    const last = c0[c0.length - 1];
+    $("summary").innerHTML =
+      `期間の途中（${c0.slice(1).map((c) => jp(c.from)).join("・")}）で${esc(res.pref.name)}の最低賃金が ${c0.map((c) => yen(c.yen) + "円").join(" → ")} に変わります。` +
+      (res.allOk ? "どの額でも最低賃金<strong>以上</strong>です。"
+        : res.anyOk ? `<strong>新しい額 ${yen(last.yen)}円 を下回ります。</strong>発効日の前と後で分けて確かめてください。`
+        : "<strong>どの額も下回ります。</strong>");
+  }
+
+  const partLabel = { monthly: "月給", daily: "日給", hourly: "時給", piece: "歩合給" };
+  const hoursNote = { monthly: "（所定）", daily: "（所定）", piece: "（総労働）" };
+  const hoursLabel = (p) => p.kind === "hourly" ? "—" :
+    `${fmtHours(p.hours)}時間` + (p.hoursFrom === "annual" ? "（年間÷12）" : hoursNote[p.kind]);
+  $("parts").innerHTML = res.parts.map((p) =>
+    `<tr><td>${partLabel[p.kind]}</td><td>${yen(p.yen)}円</td><td>${hoursLabel(p)}</td><td>${fmt2(p.perHour)}円</td></tr>`).join("") +
+    (res.parts.length > 1 ? `<tr><td><strong>合計</strong></td><td></td><td></td><td><strong>${totalStr}円</strong></td></tr>` : "");
+
+  const needKind = c0[0].need.kind;
+  $("needHead").textContent = `届く${partLabel[needKind]}`;
+  $("compare").innerHTML = c0.map((c) =>
+    `<tr><td>${yen(c.yen)}円（${FY_LABEL[c.fy]}）</td><td>${jp(c.from)}</td>` +
+    `<td>${c.ok ? '<span class="tag ok">以上</span>' : '<span class="tag ng">下回る</span>'}</td>` +
+    `<td>${c.ok ? "—" : fmt2(c.short, false) + "円"}</td>` +
+    `<td>${yen(c.need.yen)}円${c.need.more ? `（あと${yen(c.need.more)}円）` : ""}</td></tr>`).join("");
+
+  const checks = [];
+  const piece = res.parts.find((p) => p.kind === "piece");
+  const monthly = res.parts.find((p) => p.kind === "monthly");
+  if (c0.some((c) => !c.ok)) {
+    const c = c0.find((x) => !x.ok);
+    checks.push({ status: "ng", title: `最低賃金 ${yen(c.yen)}円に届くには、${partLabel[needKind]}が ${yen(c.need.yen)}円 以上要ります`,
+      detail: `ほかの賃金はそのままとして、施行規則 第2条の式を逆に解いた額です（円未満は切り上げ）。割増賃金や、不足分を払うときの「差額に対する割増分」は含みません。` });
+  } else {
+    checks.push({ status: "ok", title: "地域別最低賃金を下回っていません",
+      detail: "特定（産業別）最低賃金が適用される業種なら、そちらの額でも確かめてください。" });
+  }
+  if (res.straddle)
+    checks.push({ status: "info", title: `${jp(c0[1].from)}に最低賃金が変わる期間です`,
+      detail: "発効日より前に働いた分は前の額、発効日からの分は新しい額で判定します。期間を発効日の前と後に分け、それぞれの労働時間と賃金で計算し直してください。" });
+  if (piece)
+    checks.push({ status: "info", title: "歩合給は、時間外・休日を含む総労働時間で割っています",
+      detail: "施行規則 第2条第1項第5号。歩合給の額には時間外・深夜の割増賃金を入れません。歩合給に割増賃金が混ざっていて区分できない制度では、時間額に換算できない、と労働局は説明しています。" });
+  if (monthly && monthly.hoursFrom === "annual")
+    checks.push({ status: "info", title: `1か月平均所定労働時間は ${fmtHours(monthly.hours)}時間 で計算しました`,
+      detail: "年間所定労働日数 × 1日の所定労働時間 ÷ 12（施行規則 第2条第1項第3号の「一年間における一月平均所定労働時間数」）。" });
+  for (const n of res.notes) {
+    if (n.key === "monthlyHoursBoth")
+      checks.push({ status: "info", title: "1か月平均所定労働時間の入力を使いました",
+        detail: `年間所定労働日数と1日の所定労働時間から出すと ${fmtHours(n.calc)}時間 で、入力と違います。月給の時間額には入力した1か月平均を使っています。` });
+    if (n.key === "longPeriod")
+      checks.push({ status: "info", title: "期間が1か月より長くなっています",
+        detail: "歩合給は賃金締切期間ごとに、その期間の総額をその期間の総労働時間で割ります（施行規則 第2条第1項第5号）。締め日ごとに分けて確かめてください。" });
+  }
+  checks.push({ status: "info", title: "精皆勤手当・通勤手当・家族手当と割増賃金・賞与は入れていませんか",
+    detail: "これらは最低賃金と比べる額に入りません（最低賃金法 第4条第3項・施行規則 第1条）。入っていると、実際より高く判定されます。" });
+
+  $("checks").innerHTML = checks.map((x) =>
+    `<li><p class="hd"><span class="tag ${x.status}">${{ ok: "以上", ng: "不足", info: "参考" }[x.status]}</span>${esc(x.title)}</p>` +
+    `<p class="dt">${esc(x.detail)}</p></li>`).join("");
+}
+
+function applyPreset(p) {
+  if (p.pref) $("pref").value = String(p.pref);
+  if (p.start) $("start").value = p.start;
+  if (p.end) $("end").value = p.end;
+  for (const f of FIELDS) $(f).value = p[f] ?? "";
+  render();
+}
+
+for (const el of document.querySelectorAll(".card input, .card select")) {
+  el.addEventListener("input", render);
+  el.addEventListener("change", render);
+}
+for (const btn of document.querySelectorAll("[data-preset]")) {
+  btn.addEventListener("click", () => applyPreset(PRESETS[btn.dataset.preset]));
+}
+applyPreset(PRESETS.naraMix);
+</script>
+
+</body>
+</html>

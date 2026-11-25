@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>認定こども園の職員配置基準 計算 — 幼保連携型の必要な保育教諭等の数</title>
+<meta name="description" content="0〜5歳の園児の数と学級数を入れると、幼保連携型認定こども園の基準（第5条）の比率・学級数を下るときの置き換え・園長が専任でないときの＋1・常時2人と、国の端数処理で、教育・保育に直接従事する職員の必要数を出します。新基準と経過措置を並べて表示します。">
+<link rel="canonical" href="https://keisanshitsu.github.io/tools/nintei-kodomoen-staff-ratio/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="くらしの計算室">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="認定こども園の職員配置基準 計算 — 幼保連携型の必要な保育教諭等の数">
+<meta property="og:description" content="0〜5歳の園児の数と学級数から、幼保連携型認定こども園の基準と国の端数処理で、教育・保育に直接従事する職員の必要数を計算。3歳15:1・4歳以上25:1の新基準と経過措置を並べて表示します。">
+<meta property="og:url" content="https://keisanshitsu.github.io/tools/nintei-kodomoen-staff-ratio/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "認定こども園（幼保連携型）の職員配置基準の計算",
+  "description": "年齢別の園児の数と学級数から、幼保連携型認定こども園の学級の編制、職員、設備及び運営に関する基準 第5条と、こども家庭庁の公定価格FAQが示す端数処理で、園児の教育・保育に直接従事する職員の必要数を計算します。",
+  "url": "https://keisanshitsu.github.io/tools/nintei-kodomoen-staff-ratio/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (web browser)",
+  "inLanguage": "ja",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "くらしの計算室",
+    "url": "https://keisanshitsu.github.io/"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1b19; --muted:#6b6862;
+    --line:#e5e2dc; --card:#fff; --accent:#0f6cbd; --accent-soft:#eef5fc;
+    --ok:#1f7a45; --ok-soft:#eaf6ef; --ng:#b3261e; --ng-soft:#fdeeed;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#17181a; --fg:#e9e8e5; --muted:#a3a09a;
+           --line:#2e3033; --card:#1f2123; --accent:#6cb6f5; --accent-soft:#1b2733;
+           --ok:#5fd08a; --ok-soft:#16261d; --ng:#ff8a80; --ng-soft:#2a1a19; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  header{border-bottom:1px solid var(--line);padding:16px 0}
+  .site{font-size:.85rem;color:var(--muted);text-decoration:none}
+  h1{font-size:1.35rem;margin:28px 0 6px;line-height:1.5}
+  .sub{color:var(--muted);font-size:.92rem;margin:0 0 28px}
+  h2{font-size:1.05rem;margin:36px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
+  h3{font-size:.95rem;margin:22px 0 6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+  input,select{width:100%;padding:9px 10px;font-size:1rem;color:var(--fg);
+    background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--fg);padding:9px 14px}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .ages{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media (max-width:420px){ .ages{grid-template-columns:repeat(2,1fr)} }
+  .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:16px}
+  .hint{font-size:.78rem;color:var(--muted);margin:8px 0 0}
+  .result{margin-top:20px;border:1px solid var(--accent);background:var(--accent-soft);
+    border-radius:12px;padding:18px}
+  .big{font-size:2rem;font-weight:700;color:var(--accent);line-height:1.2;margin:2px 0 0}
+  .big small{font-size:1rem;font-weight:600;margin-left:2px}
+  .sub2{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+  .checks{list-style:none;padding:0;margin:14px 0 0}
+  .checks li{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin-bottom:8px}
+  .checks .hd{font-size:.9rem;font-weight:600;margin:0}
+  .checks .dt{font-size:.82rem;color:var(--muted);margin:3px 0 0}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;border-radius:5px;
+    padding:1px 7px;margin-right:7px;vertical-align:2px}
+  .tag.ok{background:var(--ok-soft);color:var(--ok)}
+  .tag.ng{background:var(--ng-soft);color:var(--ng)}
+  .tag.info{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+  .tablewrap{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;white-space:nowrap}
+  th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:600}
+  .cap{font-size:.85rem;font-weight:600;margin:18px 0 0}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:14px 16px;border-radius:0 8px 8px 0;font-size:.88rem;margin:24px 0}
+  .law{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;margin:14px 0;font-size:.86rem}
+  .law p{margin:0 0 6px;font-size:.86rem}
+  .law p:last-child{margin-bottom:0}
+  .formula{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:10px 14px;margin:12px 0;font-size:.9rem;overflow-x:auto;white-space:nowrap}
+  p,li{font-size:.94rem}
+  ul{padding-left:1.2em}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src li{font-size:.85rem;overflow-wrap:anywhere}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:20px 0 40px;
+    color:var(--muted);font-size:.85rem}
+  footer a{color:var(--muted);margin-right:14px}
+  a{color:var(--accent)}
+  @media (max-width:400px){
+    .big{font-size:1.7rem}
+  }
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><a class="site" href="../../">← くらしの計算室</a></div></header>
+
+<main class="wrap">
+
+<h1>認定こども園（幼保連携型）の職員配置基準の計算</h1>
+<p class="sub">
+  0〜5歳の園児の数と学級数を入れると、<strong>幼保連携型認定こども園の学級の編制、職員、設備及び運営に関する基準 第5条</strong>で、園児の教育・保育に直接従事する職員（保育教諭等）の必要数を出します。
+  年齢別の比率に加えて、<strong>学級数を下るときの置き換え・園長が専任でないときの＋1人・常時2人</strong>まで当てはめ、端数は<strong>こども家庭庁が示す国の算式</strong>（年齢別に小数点第1位まで切り捨て→合計を四捨五入）で処理します。
+  2024年4月からの基準（3歳児15:1・4歳以上児25:1）と、経過措置の旧基準（20:1・30:1）を並べて表示します。
+</p>
+
+<div class="card">
+  <div class="ages">
+    <div><label for="age0">0歳児（人）</label><input id="age0" type="number" inputmode="numeric" min="0" max="1000" step="1" value=""></div>
+    <div><label for="age1">1歳児（人）</label><input id="age1" type="number" inputmode="numeric" min="0" max="1000" step="1" value=""></div>
+    <div><label for="age2">2歳児（人）</label><input id="age2" type="number" inputmode="numeric" min="0" max="1000" step="1" value=""></div>
+    <div><label for="age3">3歳児（人）</label><input id="age3" type="number" inputmode="numeric" min="0" max="1000" step="1" value=""></div>
+    <div><label for="age4">4歳児（人）</label><input id="age4" type="number" inputmode="numeric" min="0" max="1000" step="1" value=""></div>
+    <div><label for="age5">5歳児（人）</label><input id="age5" type="number" inputmode="numeric" min="0" max="1000" step="1" value=""></div>
+  </div>
+  <p class="hint">1号・2号・3号を合わせた園全体の人数です。年齢は年度の初日の前日（3月31日）の満年齢で数え、年度の途中で満3歳になって入園した1号の子（満3歳児）は3歳児に入れます。</p>
+  <div class="opts">
+    <div>
+      <label for="classes">満3歳以上の学級の数（任意）</label>
+      <input id="classes" type="number" inputmode="numeric" min="0" max="100" step="1" value="" placeholder="空欄なら学年ごとの最少">
+    </div>
+    <div>
+      <label for="classLimit">1学級の園児数（空欄のときの仮定）</label>
+      <select id="classLimit">
+        <option value="new" selected>30人以下（2026年4月からの原則）</option>
+        <option value="old">35人以下（既存の園・2032年3月31日まで）</option>
+      </select>
+    </div>
+    <div>
+      <label for="principal">園長</label>
+      <select id="principal">
+        <option value="full" selected>専任</option>
+        <option value="not">専任でない（原則＋1人）</option>
+      </select>
+    </div>
+    <div>
+      <label for="age3Rule">3歳児の基準</label>
+      <select id="age3Rule">
+        <option value="new" selected>15人に1人（2024年4月から）</option>
+        <option value="old">20人に1人（経過措置・2028年3月31日まで）</option>
+      </select>
+    </div>
+    <div>
+      <label for="age4Rule">4歳以上児の基準</label>
+      <select id="age4Rule">
+        <option value="new" selected>25人に1人（2024年4月から）</option>
+        <option value="old">30人に1人（経過措置・当分の間）</option>
+      </select>
+    </div>
+    <div>
+      <label for="staff">配置している職員の数（人・任意）</label>
+      <input id="staff" type="number" inputmode="decimal" min="0" max="1000" step="0.1" value="" placeholder="例: 13">
+    </div>
+  </div>
+  <div class="actions">
+    <button type="button" data-preset="sakai1">堺市の例（定員120人）</button>
+    <button type="button" data-preset="sakai2">堺市の例2（旧基準）</button>
+    <button type="button" data-preset="small">学級数で増える例</button>
+    <button type="button" data-preset="clear">すべて消す</button>
+  </div>
+</div>
+
+<div class="result" aria-live="polite">
+  <div>教育・保育に直接従事する職員の必要数（最低基準）</div>
+  <p class="big" id="headline">— <small>人</small></p>
+  <p class="sub2" id="summary">年齢ごとの園児の数を入力してください。</p>
+
+  <p class="cap">年齢区分ごとの計算（国の算式）</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>区分</th><th>園児の数</th><th>比率</th><th>人数÷比率</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <p class="cap">基準ごとの比較</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>使う基準</th><th>合計</th><th>必要数</th></tr></thead>
+      <tbody id="compare"></tbody>
+    </table>
+  </div>
+
+  <ul class="checks" id="checks"></ul>
+</div>
+
+<div class="note">
+  <strong>この結果は概算です。</strong>
+  国が定める幼保連携型認定こども園の最低基準に、こども家庭庁の公定価格FAQが示す端数処理を当てはめた人数です。
+  基準は国の命令に従って<strong>都道府県・指定都市・中核市の条例</strong>で定められており、自治体によっては国より手厚い基準や独自の運用があります。
+  公定価格の加配（2・3号の利用定員90人以下の1人、主幹保育教諭等の専任化の代替、3歳児配置改善加算など）の要件も、この最低基準とは別です。
+  <strong>幼稚園型・保育所型・地方裁量型の認定こども園は別の基準</strong>で、このツールは扱いません。保育所は<a href="../childcare-staff-ratio/">保育士の配置基準の計算</a>、小規模保育は<a href="../small-childcare-staff-ratio/">小規模保育の配置基準の計算</a>で計算できます。
+  短時間勤務の職員の数え方（常勤換算）や、時間帯ごとの配置も自治体の運用によります。
+  <strong>実際の配置が基準を満たすかは、所在地の都道府県・市の認定こども園の担当課や、指導監査の担当などの専門家にご確認ください。</strong>
+</div>
+
+<h2>この計算の根拠</h2>
+
+<h3>年齢別の比率と常時2人（第5条第3項）</h3>
+<div class="law">
+  <p>幼保連携型認定こども園に置く園児の教育及び保育（満三歳未満の園児については、その保育。以下同じ。）に直接従事する職員の数は、次の表の上欄に掲げる園児の区分に応じ、それぞれ同表の下欄に定める員数以上とする。ただし、当該職員の数は、常時二人を下ってはならない。</p>
+  <p>一　満四歳以上の園児　おおむね二十五人につき一人／二　満三歳以上満四歳未満の園児　おおむね十五人につき一人／三　満一歳以上満三歳未満の園児　おおむね六人につき一人／四　満一歳未満の園児　おおむね三人につき一人</p>
+  <p>備考二　この表に定める員数は、同表の上欄の園児の区分ごとに下欄の園児数に応じ定める数を合算した数とする。</p>
+  <p>（幼保連携型認定こども園の学級の編制、職員、設備及び運営に関する基準 第5条第3項）</p>
+</div>
+<p>
+  0歳児は3人に1人、1・2歳児は6人に1人、3歳児は15人に1人、4・5歳児は25人に1人です。保育所の基準（児童福祉施設の設備及び運営に関する基準 第33条）と同じ比率で、1号・2号・3号を分けずに園全体の人数で数えます。
+  ここでいう職員は、副園長・教頭（幼稚園教諭の免許状と保育士登録の両方がある人）、主幹保育教諭・指導保育教諭・主務保育教諭・保育教諭・助保育教諭・講師で、園児の教育・保育に直接従事する人です（同 備考一）。
+</p>
+
+<h3>学級数を下るときは学級数にする（備考三）と学級の編制（第4条）</h3>
+<div class="law">
+  <p>三　この表の第一号及び第二号に係る員数が学級数を下るときは、当該学級数に相当する数を当該員数とする。（第5条第3項の表 備考三）</p>
+  <p>満三歳以上の園児については、教育課程に基づく教育を行うため、学級を編制するものとする。２　一学級の園児数は、三十人以下を原則とする。３　学級は、学年の初めの日の前日において同じ年齢にある園児で編制することを原則とする。（第4条）</p>
+  <p>幼保連携型認定こども園には、各学級ごとに担当する専任の主幹保育教諭、指導保育教諭、主務保育教諭又は保育教諭…を一人以上置かなければならない。（第5条第1項）</p>
+</div>
+<p>
+  3歳児と4歳以上児の値の合計が学級数より小さいときは、学級数に置き換えます。各学級に専任の担任を置くためです。
+  このツールは<strong>丸める前の値（小数点第1位まで）</strong>を学級数と比べます。丸めてから比べると、丸めで学級数に届いた分だけ少なく出ることがあるためです。
+  学級数を空欄にすると、学年ごとに1学級30人以下で編制した場合の最少の学級数で計算します。
+  1学級30人は2026年4月からの基準で、その時点で現に存する園は<strong>令和十四年三月三十一日</strong>（2032年3月31日）までは従前の例（35人以下）によることができます（令和8年内閣府・文部科学省令第2号 附則第2項）。
+  特別の事情があるときは、学級数の3分の1の範囲内で、学級担任を専任の助保育教諭・講師で代えられます（第5条第2項）。
+</p>
+
+<h3>園長が専任でないとき（備考四）</h3>
+<div class="law">
+  <p>四　園長が専任でない場合は、原則としてこの表に定める員数を一人増加するものとする。</p>
+</div>
+<p>
+  表の員数（学級数への置き換えを含む）に1人を足してから、常時2人と比べます。
+</p>
+
+<h3>経過措置で旧基準も使える（令和6年内閣府・文部科学省令第1号 附則）</h3>
+<div class="law">
+  <p>園児の教育及び保育に直接従事する職員の配置の状況に鑑み、教育及び保育の提供に支障を及ぼすおそれがあるときは、令和十年三月三十一日までの間、新基準第五条第三項の規定（満三歳以上満四歳未満の園児の教育及び保育に直接従事する職員の数に関する基準に限る。）は、適用しない。この場合において、この命令による改正前の…第五条第三項の規定…は、この命令の施行の日以後においても、なおその効力を有する。（附則第3項）</p>
+  <p>満四歳以上の園児についても同じ形の規定があり、期間は「当分の間」です（附則第2項）。</p>
+</div>
+<p>
+  改正前の比率は、満3歳が「おおむね二十人につき一人」、満4歳以上が「おおむね三十人につき一人」でした。
+  つまり3歳児は<strong>2028年3月31日まで</strong>、4歳以上児は<strong>当分の間</strong>、職員の確保が難しいときは旧基準によることができます。どちらを使うかは園の状況と自治体の条例・運用によるので、両方の人数を並べて出します。
+</p>
+
+<h3>端数の処理（国の算式）</h3>
+<div class="formula">｛4歳以上児数 ÷ 25｝＋｛3歳児数 ÷ 15｝＋｛1・2歳児数 ÷ 6｝＋｛乳児数 ÷ 3｝　各｛ ｝は小数点第1位まで（第2位以下切り捨て）→ 合計の小数点以下を四捨五入</div>
+<div class="law">
+  <p>配置すべき教育・保育に従事する者の数の具体的な算定方法は、年齢別に、子どもの数を配置基準で除して小数点第1位まで求め（小数点第２位以下切捨て）、各々を合計した後に小数点以下を四捨五入した数になります。</p>
+  <p>※子どもの年齢は年度の初日の前日における満年齢／※認定こども園の場合は施設全体（１号～３号）の子どもの数を基に計算</p>
+  <p>（こども家庭庁「公定価格に関するFAQ（よくある質問）」第29版 No.8。FAQの算式は公定価格の基本分の比率 1/30・1/20 で書かれており、3歳児数に「1号認定こどもの場合満3歳児を含む」と注があります）</p>
+</div>
+<p>
+  省令は「おおむね」と書くだけで、端数の処理を定めていません。このツールは国が公定価格で示しているこの算式を、省令の比率（15・25）と経過措置の比率（20・30）に当てはめています。
+  <strong>1歳児と2歳児、4歳児と5歳児は、それぞれ人数を合わせてから割ります。</strong>別々に切り捨てると、少なく出ることがあります。
+</p>
+
+<h3>常時2人と、朝夕の特例（附則第5条）</h3>
+<div class="law">
+  <p>園児の登園又は降園の時間帯その他の園児が少数である時間帯において、第五条第三項本文の規定により必要となる園児の教育及び保育に直接従事する職員…の数が一人となる場合には、当分の間、同項の規定により置かなければならない職員のうち一人は、同項の表備考第一号の規定にかかわらず、都道府県知事が保育教諭と同等の知識及び経験を有すると認める者とすることができる。</p>
+</div>
+
+<h3>保育教諭等に代えられる職員と3分の1（備考五・附則第6条〜第9条）</h3>
+<div class="law">
+  <p>第五条第三項の表備考第五号及び前三条の規定により第五条第三項の表備考第一号に定める者を特定理学療法士等、小学校教諭等免許状所持者、都道府県知事が保育教諭と同等の知識及び経験を有すると認める者又は看護師等をもって代える場合においては、当該特定理学療法士等、小学校教諭等免許状所持者、都道府県知事が保育教諭と同等の知識及び経験を有すると認める者並びに看護師等の総数は、同項の規定により置かなければならない職員の数の三分の一を超えてはならない。（附則第9条）</p>
+</div>
+<p>
+  理学療法士・作業療法士などの特定理学療法士等は1人まで（備考五）、保健師・看護師・准看護師は1人まで（附則第8条）、当分の間は小学校教諭・養護教諭の免許状を持つ人（附則第6条）、8時間を超えて開所するときの上乗せ分は知事が認める人（附則第7条）で代えられます。
+  その合計は必要数の3分の1まで（12人なら4人まで＝保育教諭等が8人以上）です。結果にこの上限を出します。
+</p>
+
+<h3>条例との関係</h3>
+<p>
+  幼保連携型認定こども園の基準は、都道府県（指定都市・中核市にある園はその市）が条例で定めます。学級の編制と職員の員数は、国の命令の基準に<strong>従って</strong>定めることになっています（就学前の子どもに関する教育、保育等の総合的な提供の推進に関する法律 第13条第2項第1号・命令 第1条第1項第1号）。
+  幼保連携型以外の3類型は、同じ法律の第3条にもとづく都道府県の条例（国の基準は参酌）で決まるので、このツールの対象外です。
+</p>
+
+<h2>よくある質問</h2>
+
+<h3>1号・2号・3号は分けて計算しますか</h3>
+<p>
+  分けません。幼保連携型の基準は「満一歳未満」「満三歳以上満四歳未満」のように年齢で区分しており、国の公定価格FAQも「施設全体（１号～３号）の子どもの数を基に計算」としています。
+</p>
+
+<h3>堺市の計算例と同じ結果になりますか</h3>
+<p>
+  なります。堺市の「設備運営基準及び公定価格の職員配置について」の例（0歳8人・1歳18人・2歳20人・3歳24人・4歳25人・5歳25人）は 2.6＋6.3＋1.6＋2.0＝12.5 で <strong>13人</strong>です（学年ごとの3学級でも、3歳以上の値 3.6 は学級数を下りません）。
+  令和7年度の特例の資料の例（0歳8人・1歳20人・2歳22人・3歳22人・4歳24人・5歳24人、旧基準）は 2.6＋7.0＋1.1＋1.6＝12.3 で <strong>12人</strong>（保育教諭は12人中8人以上）です。上の「堺市の例」ボタンで確かめられます。
+</p>
+<p>
+  ただし例2は学級数に触れていません。12人になるのは満3歳以上が<strong>2学級以下</strong>のとき（当時の1学級35人以下なら70人を2学級にもできます）で、
+  <strong>学年ごとに3学級</strong>にすると、3歳以上の値 1.1＋1.6＝2.7 が学級数3を下るので3.0に置き換わり、12.6 で<strong>13人</strong>になります（備考三）。
+  ボタンの例2は2学級で入れてあります。学級数を3にすると変わるのを確かめられます。
+</p>
+
+<h3>年齢ごとに切り上げて足すのとは違うのですか</h3>
+<p>
+  違います。国の算式は、年齢区分ごとに<strong>小数点第1位まで切り捨て</strong>てから合計し、最後に<strong>四捨五入</strong>します。
+  堺市の例1を年齢区分ごとに切り上げると 3＋7＋2＋2＝14人になり、国の算式より1人多くなります。
+</p>
+
+<h3>クラスごと・時間帯ごとに何人いればよいですか</h3>
+<p>
+  この計算で出るのは<strong>園全体</strong>で必要な人数です（公定価格FAQ No.80 も、公定価格上の職員配置基準について「各年齢ごとの子どもの総数に対して各年齢ごとの職員配置基準を満たす必要があります」としています）。
+  朝夕など時間帯ごとの配置は、その時間にいる園児の数で同じ計算をして確かめる自治体があります。
+</p>
+
+<h3>自治体の基準が国より手厚い場合は</h3>
+<p>
+  自治体の条例・要綱の基準が優先されます（国の基準は最低基準です）。このツールの結果は「国の最低基準ならこの人数」という下限の目安として使ってください。
+</p>
+
+<h2>出典</h2>
+<ul class="src">
+  <li>幼保連携型認定こども園の学級の編制、職員、設備及び運営に関する基準（平成26年内閣府・文部科学省・厚生労働省令第1号）第1条・第4条・第5条・附則第5条〜第10条、令和6年内閣府・文部科学省令第1号 附則、令和8年内閣府・文部科学省令第2号 附則
+    <a href="https://laws.e-gov.go.jp/law/426M60000182001" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>就学前の子どもに関する教育、保育等の総合的な提供の推進に関する法律（平成18年法律第77号）第3条・第13条
+    <a href="https://laws.e-gov.go.jp/law/418AC0000000077" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>こども家庭庁「公定価格に関するFAQ（よくある質問）」第29版（令和8年3月31日時点）No.8・No.80
+    <a href="https://www.cao.go.jp/bunken-suishin/teianbosyu/doc/r07/tb_r7fu_98cfa_109.pdf" rel="nofollow noopener" target="_blank">PDF</a></li>
+  <li>堺市「設備運営基準及び公定価格の職員配置について」
+    <a href="https://www.city.sakai.lg.jp/kosodate/hughug/kosodatekankyo/sonota/jigyosya_jyoho/76442320240226173108860.files/1syokuinhaichi.pdf" rel="nofollow noopener" target="_blank">PDF</a>・
+    「幼保連携型認定こども園の職員配置に係る特例」
+    <a href="https://www.city.sakai.lg.jp/kosodate/hughug/kosodatekankyo/sonota/jigyosya_jyoho/76442320240226173108860.files/2haichitokureiyouhorenkei.pdf" rel="nofollow noopener" target="_blank">PDF</a>（計算例の照合に使用）</li>
+  <li>条文は e-Gov 法令API で取得した現行版（2026年4月1日施行の版）を逐語で確認し、未施行の版（2026年12月25日施行）でも第4条・第5条・附則が同じことを確かめています。
+    導出は<a href="./calc.js">計算コード</a>のコメントに、境界値の検証は<a href="./calc.test.mjs">テスト</a>に残してあります</li>
+</ul>
+<p class="src">最終確認日: 2026年11月25日</p>
+
+</main>
+
+<footer class="wrap">
+  <a href="../../">トップ</a>
+  <a href="../../privacy.html">プライバシーポリシー</a>
+  <a href="../../contact.html">お問い合わせ</a>
+  <p>&copy; 2026 くらしの計算室</p>
+</footer>
+
+<script type="module">
+import { calculate } from "./calc.js";
+
+const AGES = ["age0", "age1", "age2", "age3", "age4", "age5"];
+const PRESETS = {
+  sakai1: { ages: [8, 18, 20, 24, 25, 25], classes: "", classLimit: "new", age3Rule: "new", age4Rule: "new" },
+  sakai2: { ages: [8, 20, 22, 22, 24, 24], classes: "2", classLimit: "old", age3Rule: "old", age4Rule: "old" },
+  small: { ages: [3, 6, 6, 10, 10, 10], classes: "3", classLimit: "new", age3Rule: "new", age4Rule: "new" },
+  clear: { ages: ["", "", "", "", "", ""], classes: "", classLimit: "new", age3Rule: "new", age4Rule: "new" },
+};
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const t1 = (tenths) => (tenths / 10).toFixed(1);
+const RULE = { new: "新基準", old: "経過措置" };
+
+function render() {
+  const input = Object.fromEntries(AGES.map((a) => [a, $(a).value]));
+  const res = calculate({
+    ...input,
+    classes: $("classes").value,
+    classLimit: $("classLimit").value,
+    principal: $("principal").value,
+    age3Rule: $("age3Rule").value,
+    age4Rule: $("age4Rule").value,
+    staff: $("staff").value,
+  });
+
+  if (!res.ok) {
+    $("headline").innerHTML = '— <small>人</small>';
+    $("summary").textContent = res.errors[0];
+    $("rows").innerHTML = "";
+    $("compare").innerHTML = "";
+    $("checks").innerHTML = "";
+    return;
+  }
+
+  const s = res.selected;
+  const cl = res.classes;
+  $("headline").innerHTML = `${s.required} <small>人</small>`;
+  $("summary").textContent =
+    `園児${res.totalChildren}人（満3歳以上${res.upperChildren}人・${cl.count}学級${cl.assumed && cl.count ? "と仮定" : ""}）。` +
+    (s.raisedToClasses ? `3歳以上の値 ${t1(s.upperTenths)} を学級数 ${cl.count} に置き換え、` : "") +
+    `合計 ${t1(s.totalTenths)} を四捨五入して ${s.tableCount}人` +
+    (s.principalAdd ? `、園長が専任でないので＋1人` : "") +
+    (s.raisedToMin ? `、常時2人により ${s.required}人。` : "。") +
+    (res.staff ? ` 配置 ${res.staff.count}人は${res.staff.enough ? "基準を満たしています" : `${res.staff.shortfall}人 足りません`}。` : "");
+
+  const upper = s.raisedToClasses
+    ? `<tr><td>3歳以上の小計（備考三）</td><td>${res.upperChildren}人</td><td>${cl.count}学級</td><td>${t1(s.upperTenths)} → ${t1(s.upperUsedTenths)}</td></tr>`
+    : `<tr><td>3歳以上の小計（備考三）</td><td>${res.upperChildren}人</td><td>${cl.count}学級</td><td>${t1(s.upperTenths)}</td></tr>`;
+  $("rows").innerHTML = s.rows.map((r) =>
+    `<tr><td>${esc(r.label)}</td><td>${r.children}人</td><td>${r.ratio}人に1人</td><td>${t1(r.tenths)}</td></tr>`).join("") +
+    upper +
+    `<tr><td><strong>合計</strong></td><td>${res.totalChildren}人</td><td></td><td><strong>${t1(s.totalTenths)}</strong></td></tr>`;
+
+  const variants = [
+    ["新基準（3歳15:1・4歳以上25:1）", res.newRule],
+    ["経過措置（3歳20:1・4歳以上30:1）", res.oldRule],
+  ];
+  if (res.rule.age3 !== res.rule.age4) variants.push([`選択中（3歳${RULE[res.rule.age3]}・4歳以上${RULE[res.rule.age4]}）`, s]);
+  $("compare").innerHTML = variants.map(([name, v]) =>
+    `<tr><td>${esc(name)}</td><td>${t1(v.totalTenths)}</td><td>${v.required}人</td></tr>`).join("");
+
+  const checks = [];
+  if (res.staff) {
+    checks.push(res.staff.enough
+      ? { status: "ok", title: `配置 ${res.staff.count}人は必要な ${s.required}人以上です`,
+          detail: "国の最低基準と国の算式による判定です。自治体の上乗せ基準がある場合は、そちらでも確かめてください。" }
+      : { status: "ng", title: `配置 ${res.staff.count}人では ${res.staff.shortfall}人足りません`,
+          detail: `必要数は ${s.required}人です（${RULE[res.rule.age3]}の3歳児・${RULE[res.rule.age4]}の4歳以上児で計算）。` });
+  }
+  if (cl.assumed && cl.count) {
+    checks.push({ status: "info", title: `学級数を入れていないので、${cl.count}学級として計算しました`,
+      detail: `学年ごとに1学級${cl.limit}人以下で編制した場合の最少の学級数です（第4条の原則）。実際の学級数を入れると、その数で計算します。` });
+  }
+  if (s.raisedToClasses) {
+    checks.push({ status: "info", title: `3歳以上の値 ${t1(s.upperTenths)} が学級数 ${cl.count} を下るので、${cl.count} に置き換えました`,
+      detail: "第5条第3項の表 備考三。各学級に専任の担任（主幹保育教諭・指導保育教諭・主務保育教諭・保育教諭）を1人以上置くためです（第5条第1項）。" });
+  }
+  if (cl.overLimit) {
+    checks.push({ status: "ng", title: `満3歳以上${res.upperChildren}人を${cl.count}学級にすると、平均でも1学級${cl.limit}人を超えます`,
+      detail: "1学級の園児数は30人以下が原則です（第4条第2項。2026年4月1日に現に存する園は2032年3月31日まで35人以下でよい）。" });
+  } else if (cl.belowByAge) {
+    checks.push({ status: "info", title: `学年ごとに編制する原則なら、最少 ${cl.byAge}学級になります`,
+      detail: "学級は同じ年齢の園児で編制するのが原則です（第4条第3項）。異年齢で編制している場合はこのままでかまいません。" });
+  }
+  if (res.newRule.required !== res.oldRule.required) {
+    checks.push({ status: "info", title: `新基準と経過措置で ${res.newRule.required - res.oldRule.required}人変わります`,
+      detail: "経過措置は「教育及び保育の提供に支障を及ぼすおそれがあるとき」に使えるもので、国の命令では3歳児は2028年3月31日まで、4歳以上児は当分の間です。自治体の条例でも確かめてください。" });
+  }
+  if (s.principalAdd) {
+    checks.push({ status: "info", title: "園長が専任でないので、表の員数に1人を加えています",
+      detail: "第5条第3項の表 備考四（原則）。表の員数に1人を足してから、常時2人と比べています。" });
+  }
+  if (s.raisedToMin) {
+    checks.push({ status: "info", title: `算式では ${s.tableCount + s.principalAdd}人ですが、常時2人を下ることはできません`,
+      detail: "第5条第3項ただし書。当分の間、登園・降園の時間帯など園児が少なく必要な職員が1人となる場合は、2人のうち1人を知事が保育教諭と同等と認める人にできます（附則第5条）。" });
+  }
+  checks.push({ status: "info", title: `看護師等・特定理学療法士等などで代えられるのは合計 ${s.substituteMax}人まで（保育教諭等は ${s.qualifiedMin}人以上）`,
+    detail: "附則第9条: 必要数の3分の1を超えてはならない。特定理学療法士等と看護師等はそれぞれ1人まで（備考五・附則第8条）。" });
+  if (cl.count >= 3) {
+    checks.push({ status: "info", title: `学級担任を助保育教諭・講師で代えられるのは ${cl.assistantMax}学級まで`,
+      detail: "特別の事情があるとき、学級数の3分の1の範囲内（第5条第2項）。" });
+  }
+  checks.push({ status: "info", title: "1・2歳児と4・5歳児は人数を合わせてから割っています",
+    detail: "国の算式どおりです。年齢ごとに別々に切り捨てると、合計が少なく出ることがあります。" });
+  $("checks").innerHTML = checks.map((x) =>
+    `<li><p class="hd"><span class="tag ${x.status}">${{ ok: "足りる", ng: "要確認", info: "参考" }[x.status]}</span>${esc(x.title)}</p>` +
+    `<p class="dt">${esc(x.detail)}</p></li>`).join("");
+}
+
+function applyPreset(p) {
+  AGES.forEach((a, i) => { $(a).value = p.ages[i]; });
+  $("classes").value = p.classes;
+  $("classLimit").value = p.classLimit;
+  $("age3Rule").value = p.age3Rule;
+  $("age4Rule").value = p.age4Rule;
+  render();
+}
+
+for (const el of document.querySelectorAll(".card input, .card select")) {
+  el.addEventListener("input", render);
+  el.addEventListener("change", render);
+}
+for (const btn of document.querySelectorAll("[data-preset]")) {
+  btn.addEventListener("click", () => applyPreset(PRESETS[btn.dataset.preset]));
+}
+applyPreset(PRESETS.sakai1);
+</script>
+
+</body>
+</html>

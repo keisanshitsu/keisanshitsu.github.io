@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>デイサービスの人員配置基準 計算 — 通所介護の介護職員・生活相談員の勤務延時間数</title>
+<meta name="description" content="単位ごとの利用者の数と提供時間を入れると、通所介護・地域密着型通所介護の基準（第93条・第20条）と厚生労働省の通知の式（（利用者数−15）÷5＋1）×平均提供時間数で、介護職員の確保すべき勤務延時間数と生活相談員の勤務延時間数を出します。常時1人・定員10人以下の特例・配置の判定にも対応。">
+<link rel="canonical" href="https://keisanshitsu.github.io/tools/day-service-staff-ratio/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="くらしの計算室">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="デイサービスの人員配置基準 計算 — 通所介護の介護職員・生活相談員の勤務延時間数">
+<meta property="og:description" content="利用者の数と提供時間から、通所介護の介護職員の確保すべき勤務延時間数（平均提供時間数の式）と生活相談員の勤務延時間数を計算。地域密着型の定員10人以下の特例にも対応します。">
+<meta property="og:url" content="https://keisanshitsu.github.io/tools/day-service-staff-ratio/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "通所介護（デイサービス）の人員配置基準の計算",
+  "description": "単位ごとの利用者の数と提供時間から、指定居宅サービス等の事業の人員、設備及び運営に関する基準 第93条・指定地域密着型サービスの事業の人員、設備及び運営に関する基準 第20条と厚生労働省の通知（老企第25号）の式で、介護職員の確保すべき勤務延時間数と生活相談員の勤務延時間数を計算します。",
+  "url": "https://keisanshitsu.github.io/tools/day-service-staff-ratio/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (web browser)",
+  "inLanguage": "ja",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "くらしの計算室",
+    "url": "https://keisanshitsu.github.io/"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1b19; --muted:#6b6862;
+    --line:#e5e2dc; --card:#fff; --accent:#0f6cbd; --accent-soft:#eef5fc;
+    --ok:#1f7a45; --ok-soft:#eaf6ef; --ng:#b3261e; --ng-soft:#fdeeed;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#17181a; --fg:#e9e8e5; --muted:#a3a09a;
+           --line:#2e3033; --card:#1f2123; --accent:#6cb6f5; --accent-soft:#1b2733;
+           --ok:#5fd08a; --ok-soft:#16261d; --ng:#ff8a80; --ng-soft:#2a1a19; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  header{border-bottom:1px solid var(--line);padding:16px 0}
+  .site{font-size:.85rem;color:var(--muted);text-decoration:none}
+  h1{font-size:1.35rem;margin:28px 0 6px;line-height:1.5}
+  .sub{color:var(--muted);font-size:.92rem;margin:0 0 28px}
+  h2{font-size:1.05rem;margin:36px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
+  h3{font-size:.95rem;margin:22px 0 6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+  input,select{width:100%;padding:9px 10px;font-size:1rem;color:var(--fg);
+    background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);color:var(--fg);padding:9px 14px}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+  fieldset{border:1px solid var(--line);border-radius:10px;padding:10px 12px 12px;margin:14px 0 0;min-width:0}
+  legend{font-size:.85rem;font-weight:600;padding:0 4px}
+  .times{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .grp{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+  .hint{font-size:.78rem;color:var(--muted);margin:8px 0 0}
+  .result{margin-top:20px;border:1px solid var(--accent);background:var(--accent-soft);
+    border-radius:12px;padding:18px}
+  .big{font-size:2rem;font-weight:700;color:var(--accent);line-height:1.2;margin:2px 0 0}
+  .big small{font-size:1rem;font-weight:600;margin-left:2px}
+  .sub2{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+  .checks{list-style:none;padding:0;margin:14px 0 0}
+  .checks li{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin-bottom:8px}
+  .checks .hd{font-size:.9rem;font-weight:600;margin:0}
+  .checks .dt{font-size:.82rem;color:var(--muted);margin:3px 0 0}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;border-radius:5px;
+    padding:1px 7px;margin-right:7px;vertical-align:2px}
+  .tag.ok{background:var(--ok-soft);color:var(--ok)}
+  .tag.ng{background:var(--ng-soft);color:var(--ng)}
+  .tag.info{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+  .tablewrap{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;white-space:nowrap}
+  th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:600}
+  .cap{font-size:.85rem;font-weight:600;margin:18px 0 0}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:14px 16px;border-radius:0 8px 8px 0;font-size:.88rem;margin:24px 0}
+  .law{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:12px 14px;margin:14px 0;font-size:.86rem}
+  .law p{margin:0 0 6px;font-size:.86rem}
+  .law p:last-child{margin-bottom:0}
+  .formula{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:10px 14px;margin:12px 0;font-size:.9rem;overflow-x:auto;white-space:nowrap}
+  p,li{font-size:.94rem}
+  ul{padding-left:1.2em}
+  .src{font-size:.85rem;color:var(--muted)}
+  .src li{font-size:.85rem;overflow-wrap:anywhere}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:20px 0 40px;
+    color:var(--muted);font-size:.85rem}
+  footer a{color:var(--muted);margin-right:14px}
+  a{color:var(--accent)}
+  @media (max-width:400px){
+    .big{font-size:1.7rem}
+  }
+</style>
+</head>
+<body>
+
+<header><div class="wrap"><a class="site" href="../../">← くらしの計算室</a></div></header>
+
+<main class="wrap">
+
+<h1>通所介護（デイサービス）の人員配置基準の計算</h1>
+<p class="sub">
+  単位ごとの利用者の数と提供時間を入れると、<strong>指定居宅サービス等の事業の人員、設備及び運営に関する基準 第93条</strong>（地域密着型は<strong>第20条</strong>）と厚生労働省の通知の式で、
+  <strong>介護職員の確保すべき勤務延時間数</strong>と<strong>生活相談員の勤務延時間数</strong>を出します。
+  利用者15人までは平均提供時間数、16人以上は「（利用者数−15）÷5＋1」倍。常時1人、地域密着型で利用定員10人以下の特例、配置している時間で足りるかの判定にも対応します。
+</p>
+
+<div class="card">
+  <div class="opts">
+    <div>
+      <label for="capacity">事業所の利用定員（人）</label>
+      <input id="capacity" type="number" inputmode="numeric" min="1" max="300" step="1" value="">
+    </div>
+    <div>
+      <label for="counselor">生活相談員の勤務延時間（時間・任意）</label>
+      <input id="counselor" type="number" inputmode="decimal" min="0" max="200" step="0.25" value="" placeholder="例: 8">
+    </div>
+  </div>
+  <p class="hint">利用定員は同時にサービスを受けられる利用者の上限です。19人以上なら通所介護、18人以下なら地域密着型通所介護として計算します。</p>
+
+  <fieldset id="unit1">
+    <legend>単位1</legend>
+    <div class="times">
+      <div><label for="u1start">提供開始</label><input id="u1start" type="time" step="300" value=""></div>
+      <div><label for="u1end">提供終了</label><input id="u1end" type="time" step="300" value=""></div>
+    </div>
+    <div class="grp">
+      <div><label for="u1h1">提供時間（時間）</label><input id="u1h1" type="number" inputmode="decimal" min="0" max="24" step="0.25" value=""></div>
+      <div><label for="u1c1">その利用者の数（人）</label><input id="u1c1" type="number" inputmode="numeric" min="0" max="300" step="1" value=""></div>
+    </div>
+    <div class="grp">
+      <div><label for="u1h2">提供時間（時間）</label><input id="u1h2" type="number" inputmode="decimal" min="0" max="24" step="0.25" value=""></div>
+      <div><label for="u1c2">その利用者の数（人）</label><input id="u1c2" type="number" inputmode="numeric" min="0" max="300" step="1" value=""></div>
+    </div>
+    <div class="grp">
+      <div><label for="u1care">介護職員の勤務延時間（時間・任意）</label><input id="u1care" type="number" inputmode="decimal" min="0" max="200" step="0.25" value=""></div>
+    </div>
+  </fieldset>
+
+  <fieldset id="unit2">
+    <legend>単位2（任意）</legend>
+    <div class="times">
+      <div><label for="u2start">提供開始</label><input id="u2start" type="time" step="300" value=""></div>
+      <div><label for="u2end">提供終了</label><input id="u2end" type="time" step="300" value=""></div>
+    </div>
+    <div class="grp">
+      <div><label for="u2h1">提供時間（時間）</label><input id="u2h1" type="number" inputmode="decimal" min="0" max="24" step="0.25" value=""></div>
+      <div><label for="u2c1">その利用者の数（人）</label><input id="u2c1" type="number" inputmode="numeric" min="0" max="300" step="1" value=""></div>
+    </div>
+    <div class="grp">
+      <div><label for="u2h2">提供時間（時間）</label><input id="u2h2" type="number" inputmode="decimal" min="0" max="24" step="0.25" value=""></div>
+      <div><label for="u2c2">その利用者の数（人）</label><input id="u2c2" type="number" inputmode="numeric" min="0" max="300" step="1" value=""></div>
+    </div>
+    <div class="grp">
+      <div><label for="u2care">介護職員の勤務延時間（時間・任意）</label><input id="u2care" type="number" inputmode="decimal" min="0" max="200" step="0.25" value=""></div>
+    </div>
+  </fieldset>
+  <p class="hint">
+    提供時間は利用者ごとの通所介護計画の時間です（7時間15分なら 7.25）。時間の違う利用者が同じ単位にいるときは2行に分けます。
+    要支援の利用者（総合事業の通所型サービス）を同じ事業所で一体的に受け入れているときは、その人数も含めます。
+    午前と午後で別の利用者を受け入れるときは、別の単位として入れます。
+  </p>
+  <div class="actions">
+    <button type="button" data-preset="notice">通知の例（18人・5時間）</button>
+    <button type="button" data-preset="two">午前・午後の2単位</button>
+    <button type="button" data-preset="mixed">時間の違う利用者</button>
+    <button type="button" data-preset="small">定員10人の地域密着型</button>
+    <button type="button" data-preset="clear">すべて消す</button>
+  </div>
+</div>
+
+<div class="result" aria-live="polite">
+  <div id="headLabel">介護職員の確保すべき勤務延時間数（単位1）</div>
+  <p class="big" id="headline">— <small>時間</small></p>
+  <p class="sub2" id="summary">利用定員と、単位の時刻・利用者を入力してください。</p>
+
+  <p class="cap">単位ごとの計算</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>単位</th><th>時間帯</th><th>利用者</th><th>平均提供時間数</th><th>掛ける数</th><th>確保すべき時間</th><th>常時1人に要る時間</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <ul class="checks" id="checks"></ul>
+</div>
+
+<div class="note">
+  <strong>この結果は概算です。</strong>
+  国の厚生労働省令の条文と、厚生労働省の解釈通知（老企第25号）の計算式による時間数です。
+  実際の基準は、省令に従って<strong>都道府県・市町村の条例</strong>で定められています（員数は省令に「従い定める」事項です。介護保険法 第74条第3項・第78条の4第3項）。
+  常勤換算・兼務・延長サービスの配置、看護職員の確保の方法、個別機能訓練加算などの加算と人員基準欠如の減算の要件は、このツールでは判定しません。
+  療養通所介護・認知症対応型通所介護・共生型通所介護は別の基準です。入所の施設は<a href="../care-staff-ratio/">介護施設の人員配置基準の計算</a>、夜勤は<a href="../night-shift-staff-ratio/">夜勤職員の配置基準の計算</a>で計算できます。
+  <strong>実際の配置が基準を満たすかは、指定権者（都道府県・市町村の介護保険担当課）や社会保険労務士などの専門家にご確認ください。</strong>
+</div>
+
+<h2>この計算の根拠</h2>
+
+<h3>介護職員（第93条第1項第3号）</h3>
+<div class="law">
+  <p>三　介護職員　指定通所介護の単位ごとに、当該指定通所介護を提供している時間帯に介護職員（専ら当該指定通所介護の提供に当たる者に限る。）が勤務している時間数の合計数を当該指定通所介護を提供している時間数で除して得た数が利用者（…）の数が十五人までの場合にあっては一以上、十五人を超える場合にあっては十五人を超える部分の数を五で除して得た数に一を加えた数以上確保されるために必要と認められる数</p>
+  <p>（指定居宅サービス等の事業の人員、設備及び運営に関する基準 第93条第1項第3号。地域密着型は指定地域密着型サービスの事業の人員、設備及び運営に関する基準 第20条第1項第3号で同じ文言）</p>
+</div>
+<p>
+  利用者の括弧書きは、総合事業の通所型サービス（旧介護予防通所介護に相当するもの）の指定も受けて同じ事業所で一体的に運営しているときは、その利用者も合わせて数える、という意味です。
+  「利用者の数」は単位ごとの実人員で、午前と午後で別の利用者を受け入れるときは、それぞれの単位の人数で計算します（合算しません）。
+</p>
+
+<h3>「提供している時間数」は平均提供時間数（通知）</h3>
+<div class="formula">利用者15人まで：確保すべき勤務延時間数 ＝ 平均提供時間数　／　16人以上：（（利用者数 − 15）÷ 5 ＋ 1）× 平均提供時間数</div>
+<div class="law">
+  <p>なお、ここでいう提供時間数とは、当該単位における平均提供時間数（利用者ごとの提供時間数の合計を利用者数で除して得た数）とする。</p>
+  <p>例えば、利用者数18人、提供時間数を５時間とした場合、（18－15）÷５＋１＝1.6となり、５時間の勤務時間数を1.6名分確保すればよいことから、従業員の員数にかかわらず、５×1.6＝８時間の勤務延時間数分の人員配置が必要となる。</p>
+  <p>（厚生労働省「指定居宅サービス等及び指定介護予防サービス等に関する基準について」平成11年9月17日 老企第25号 第三の六の1(1)⑤）</p>
+</div>
+<p>
+  省令は「提供している時間数で除して得た数」と書くだけで、その時間数を何で測るかは通知が決めています。
+  16人目から1人ふえるごとに 0.2 ずつ増えます（16人 1.2・17人 1.4・18人 1.6・19人 1.8・20人 2.0）。
+  計算は端数を丸めずに行い、表示だけを1分単位で切り上げています。
+</p>
+
+<h3>常時1人（第93条第2項）</h3>
+<div class="law">
+  <p>指定通所介護事業者は、指定通所介護の単位ごとに、前項第三号の介護職員を、常時一人以上当該指定通所介護に従事させなければならない。</p>
+  <p>計算式により算出した確保すべき勤務延時間数が、当該事業所におけるサービス提供開始時刻から終了時刻までの時間数に満たない場合であっても、常時１名以上が確保されるよう配置を行う必要がある（老企第25号 第三の六の1(1)⑤）</p>
+</div>
+<p>
+  どの時刻にも1人いるためには、介護職員の勤務延時間が<strong>少なくとも単位の提供時間帯（開始〜終了）の長さ</strong>は要ります。結果の「常時1人に要る時間」は、式の値とこの長さの大きいほうです。
+  ただし時間の合計が足りていても、勤務の重なり方によっては誰もいない時間ができます。どの時刻にも1人いるかは勤務表で確かめてください。
+</p>
+
+<h3>生活相談員（第93条第1項第1号）</h3>
+<div class="law">
+  <p>一　生活相談員　指定通所介護の提供日ごとに、当該指定通所介護を提供している時間帯に生活相談員（専ら当該指定通所介護の提供に当たる者に限る。）が勤務している時間数の合計数を当該指定通所介護を提供している時間帯の時間数で除して得た数が一以上確保されるために必要と認められる数</p>
+  <p>ここでいう提供時間数とは、当該事業所におけるサービス提供開始時刻から終了時刻まで（サービスが提供されていない時間帯を除く。）とする。（老企第25号 第三の六の1(1)④）</p>
+</div>
+<p>
+  生活相談員は単位の数にかかわらず事業所で1つの時間数です。単位の時間帯を重ねて、重なりは1回だけ、どの単位も提供していないすき間は除いて数えます。
+  9:00〜12:00 と 13:00〜18:00 の2単位なら8時間、9:00〜14:00 と 13:00〜18:00 なら9時間です。
+  通知は、サービス担当者会議や地域ケア会議に出席する時間、利用者宅を訪問して相談・援助する時間なども、相談・援助に支障がない範囲で生活相談員の勤務延時間数に含められるとしています。
+</p>
+
+<h3>看護職員・機能訓練指導員・常勤（第93条第1項第2号・第4号・第6項）</h3>
+<div class="law">
+  <p>二　看護師又は准看護師（以下この章において「看護職員」という。）　指定通所介護の単位ごとに、専ら当該指定通所介護の提供に当たる看護職員が一以上確保されるために必要と認められる数</p>
+  <p>四　機能訓練指導員　一以上</p>
+  <p>６　第一項の生活相談員又は介護職員のうち一人以上は、常勤でなければならない。</p>
+</div>
+<p>
+  看護職員は時間数の式がありません。通知は、提供時間帯を通じて専従する必要はないが、提供時間帯を通じて事業所と密接かつ適切な連携を図ること、病院・診療所・訪問看護ステーションとの連携で確保する方法もあることを示しています。
+</p>
+
+<h3>地域密着型で利用定員10人以下（第20条第2項）</h3>
+<div class="law">
+  <p>当該指定地域密着型通所介護事業所の利用定員（当該指定地域密着型通所介護事業所において同時に指定地域密着型通所介護の提供を受けることができる利用者の数の上限をいう。…）が十人以下である場合にあっては、前項の規定にかかわらず、看護職員及び介護職員の員数を、指定地域密着型通所介護の単位ごとに、当該指定地域密着型通所介護を提供している時間帯に看護職員又は介護職員（いずれも専ら当該指定地域密着型通所介護の提供に当たる者に限る。）が勤務している時間数の合計数を提供単位時間数で除して得た数が一以上確保されるために必要と認められる数とすることができる。</p>
+</div>
+<p>
+  看護職員と介護職員を分けずに、合わせた勤務延時間が平均提供時間数以上あればよい、という特例です（常時1人と常勤1人も「看護職員又は介護職員」で数えます。第20条第3項・第7項）。
+  10人以下かどうかは<strong>利用定員</strong>で決まり、その日の利用者が10人以下でも利用定員が11人以上なら使えません。
+  平成27年の通知は、当時この特例を置いていた第93条第2項の場合も平均提供時間数で計算すると明記しています（地域密着型に移った後の通知の文言は、このツールでは確かめていません）。
+</p>
+
+<h3>通所介護と地域密着型通所介護の境（利用定員19人）</h3>
+<div class="law">
+  <p>法第八条第七項の厚生労働省令で定める数は、十九人とする。（介護保険法施行規則 第10条の2）</p>
+</div>
+<p>
+  通所介護は利用定員が19人以上のもの（介護保険法 第8条第7項）、地域密着型通所介護は19人未満のもの（同 第17項）です。介護職員の式はどちらも同じで、違うのは利用定員10人以下の特例が地域密着型にだけあることです。
+</p>
+
+<h2>よくある質問</h2>
+
+<h3>通知の別表の数字と同じになりますか</h3>
+<p>
+  なります。通知の別表2（介護職員等の勤務時間数の具体例）は、利用者15人までは平均提供時間数そのもの（3.0〜9.0時間）、16人で1.2倍（平均5時間なら6.0時間）、18人で1.6倍（8.0時間）、20人で2.0倍（10.0時間）です。テストで5〜20人×3〜9時間の56通りを確かめています。
+</p>
+
+<h3>15人と16人で何が変わりますか</h3>
+<p>
+  15人までは平均提供時間数（例: 7時間）の1人分で足ります。16人になると 1.2 倍の8時間24分になり、以後1人ふえるごとに平均提供時間数の0.2人分ずつ増えます。
+</p>
+
+<h3>利用者ごとに提供時間が違うときは</h3>
+<p>
+  利用者ごとの提供時間を合計して人数で割った平均提供時間数を使います。たとえば7時間の利用者12人と5時間の利用者6人なら、平均は（84＋30）÷18＝6時間20分で、18人なので 1.6 倍の10時間08分です。
+  ただし単位の提供時間帯が9:00〜16:00（7時間）なら、常時1人のために少なくとも7時間は要ります。
+</p>
+
+<h3>看護職員は何時間いればよいですか</h3>
+<p>
+  省令は単位ごとに「一以上確保されるために必要と認められる数」とだけ定め、時間数の式はありません。提供時間帯を通じていなくてもよいが密接に連携すること、病院等との連携でも確保できることが通知に書かれています。具体的な運用は指定権者に確かめてください。
+</p>
+
+<h2>出典</h2>
+<ul class="src">
+  <li>指定居宅サービス等の事業の人員、設備及び運営に関する基準（平成11年厚生省令第37号）第93条
+    <a href="https://laws.e-gov.go.jp/law/411M50000100037" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>指定地域密着型サービスの事業の人員、設備及び運営に関する基準（平成18年厚生労働省令第34号）第20条
+    <a href="https://laws.e-gov.go.jp/law/418M60000100034" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>介護保険法（平成9年法律第123号）第8条第7項・第17項・第74条・第78条の4
+    <a href="https://laws.e-gov.go.jp/law/409AC0000000123" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>介護保険法施行規則（平成11年厚生省令第36号）第10条の2
+    <a href="https://laws.e-gov.go.jp/law/411M50000100036" rel="nofollow noopener" target="_blank">e-Gov 法令検索</a></li>
+  <li>厚生労働省「指定居宅サービス等及び指定介護予防サービス等に関する基準について」（平成11年9月17日 老企第25号）第三の六の1。平成27年改正の新旧対照表（改正後の欄）
+    <a href="https://www.mhlw.go.jp/file/06-Seisakujouhou-12300000-Roukenkyoku/0000080875.pdf" rel="nofollow noopener" target="_blank">厚生労働省 PDF</a></li>
+  <li>現行の通知の写しと別表2: 堺市
+    <a href="https://www.city.sakai.lg.jp/kenko/fukushikaigo/koreishafukushi/jigyo/jigyosha/jigyokankei/horei.files/kyosa_kaisyaku25.pdf" rel="nofollow noopener" target="_blank">PDF</a>・
+    久留米市「令和７年度 集団指導資料（指定通所介護事業所・指定地域密着型通所介護事業所）」
+    <a href="https://www.city.kurume.fukuoka.jp/1500soshiki/9045kaigo/3010oshirase/files/R7tuusyokaigobun1.pdf" rel="nofollow noopener" target="_blank">PDF</a>（現行も同じ式であることの確認に使用）</li>
+  <li>条文は e-Gov 法令API で取得した現行版（省令2本は2025年4月1日施行の版）を逐語で確認し、どちらにも未施行の版が無いことを確かめています。介護保険法は未施行の7版でも第74条・第78条の4の第1〜3項が同じです。
+    導出は<a href="./calc.js">計算コード</a>のコメントに、境界値の検証は<a href="./calc.test.mjs">テスト</a>に残してあります</li>
+</ul>
+<p class="src">最終確認日: 2026年11月26日</p>
+
+</main>
+
+<footer class="wrap">
+  <a href="../../">トップ</a>
+  <a href="../../privacy.html">プライバシーポリシー</a>
+  <a href="../../contact.html">お問い合わせ</a>
+  <p>&copy; 2026 くらしの計算室</p>
+</footer>
+
+<script type="module">
+import { calculate, fmtMin } from "./calc.js";
+
+const PRESETS = {
+  notice: { capacity: "30", u1: ["09:00", "14:00", "5", "18", "", "", ""], u2: ["", "", "", "", "", "", ""], counselor: "" },
+  two: { capacity: "20", u1: ["09:00", "12:00", "3", "20", "", "", ""], u2: ["13:00", "18:00", "5", "16", "", "", ""], counselor: "8" },
+  mixed: { capacity: "25", u1: ["09:00", "16:00", "7", "12", "5", "6", "10"], u2: ["", "", "", "", "", "", ""], counselor: "" },
+  small: { capacity: "10", u1: ["09:30", "16:45", "7.25", "10", "", "", "7.25"], u2: ["", "", "", "", "", "", ""], counselor: "" },
+  clear: { capacity: "", u1: ["", "", "", "", "", "", ""], u2: ["", "", "", "", "", "", ""], counselor: "" },
+};
+const FIELDS = ["start", "end", "h1", "c1", "h2", "c2", "care"];
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const hhmm = (m) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`;
+const coef = (t) => (t / 10).toFixed(1);
+
+function readUnit(n) {
+  const v = (f) => $(`u${n}${f}`).value;
+  return {
+    start: v("start"), end: v("end"), care: v("care"),
+    groups: [{ hours: v("h1"), count: v("c1") }, { hours: v("h2"), count: v("c2") }],
+  };
+}
+
+function render() {
+  const res = calculate({ capacity: $("capacity").value, units: [readUnit(1), readUnit(2)], counselor: $("counselor").value });
+  if (!res.ok) {
+    $("headLabel").textContent = "介護職員の確保すべき勤務延時間数（単位1）";
+    $("headline").innerHTML = '— <small>時間</small>';
+    $("summary").textContent = res.errors[0];
+    $("rows").innerHTML = "";
+    $("checks").innerHTML = "";
+    return;
+  }
+  const u1 = res.units[0];
+  const staffWord = res.small ? "看護職員と介護職員を合わせた" : "介護職員の";
+  $("headLabel").textContent = `${res.small ? "看護職員＋介護職員" : "介護職員"}の確保すべき勤務延時間数（単位${u1.index}）`;
+  const rq = u1.requiredCeil;
+  $("headline").innerHTML = `${Math.floor(rq / 60)}<small>時間</small>${String(rq % 60).padStart(2, "0")}<small>分</small>`;
+  $("summary").textContent =
+    `${res.service === "chiiki" ? "地域密着型通所介護" : "通所介護"}（利用定員${res.capacity}人・${res.article}）。` +
+    `単位${u1.index}は利用者${u1.users}人・平均提供時間数 ${fmtMin(u1.avgCeil)}${u1.avg.num % u1.avg.den ? "（切り上げ）" : ""}。` +
+    (u1.users <= 15 ? "15人までなので平均提供時間数の1人分。" : `（${u1.users}−15）÷5＋1＝${coef(u1.coefTenths)} 倍。`) +
+    (u1.spanGoverns ? ` 常時1人のため、少なくとも提供時間帯の ${fmtMin(u1.span)} は要ります。` : "");
+
+  $("rows").innerHTML = res.units.map((u) =>
+    `<tr><td>単位${u.index}</td><td>${hhmm(u.start)}〜${hhmm(u.end)}</td><td>${u.users}人</td>` +
+    `<td>${fmtMin(u.avgCeil)}</td><td>${coef(u.coefTenths)}</td><td><strong>${fmtMin(u.requiredCeil)}</strong></td><td>${fmtMin(u.atLeast)}</td></tr>`).join("");
+
+  const checks = [];
+  for (const u of res.units) {
+    if (!u.staff) continue;
+    const s = u.staff;
+    if (s.enoughFormula && s.coversSpan) {
+      checks.push({ status: "ok", title: `単位${u.index}: ${staffWord}勤務延時間 ${fmtMin(s.minutes)} は確保すべき時間以上です`,
+        detail: `確保すべき ${fmtMin(u.requiredCeil)}・提供時間帯 ${fmtMin(u.span)}。どの時刻にも1人いるか（常時1人）は勤務表で確かめてください。` });
+    } else if (!s.enoughFormula) {
+      checks.push({ status: "ng", title: `単位${u.index}: ${staffWord}勤務延時間 ${fmtMin(s.minutes)} では ${fmtMin(s.shortFormula)} 足りません`,
+        detail: `確保すべき勤務延時間数は ${fmtMin(u.requiredCeil)} です（${u.users <= 15 ? "平均提供時間数" : `平均提供時間数×${coef(u.coefTenths)}`}）。` });
+    } else {
+      checks.push({ status: "ng", title: `単位${u.index}: 式の時間は満たしますが、提供時間帯 ${fmtMin(u.span)} より短いので常時1人になりません`,
+        detail: `勤務延時間 ${fmtMin(s.minutes)}。常時1人以上（${res.service === "chiiki" ? "第20条第3項" : "第93条第2項"}）には、少なくとも提供時間帯の長さが要ります。` });
+    }
+  }
+  const c = res.counselor;
+  if (c.minutes !== null) {
+    checks.push(c.enough
+      ? { status: "ok", title: `生活相談員の勤務延時間 ${fmtMin(c.minutes)} は提供時間数 ${fmtMin(c.required)} 以上です`,
+          detail: "提供日ごとの判定です。会議や利用者宅への訪問の時間も、相談・援助に支障がない範囲で含められます（通知）。" }
+      : { status: "ng", title: `生活相談員の勤務延時間 ${fmtMin(c.minutes)} では ${fmtMin(c.required - c.minutes)} 足りません`,
+          detail: `事業所の提供時間数（開始〜終了・すき間を除く）は ${fmtMin(c.required)} です（第1項第1号）。` });
+  } else {
+    checks.push({ status: "info", title: `生活相談員の勤務延時間は ${fmtMin(c.required)} 以上要ります`,
+      detail: res.overlapping
+        ? "単位の時間帯が重なっているので、重なりは1回だけ数えています（事業所の開始〜終了・すき間を除く）。"
+        : (res.units.length > 1 ? "単位の時間帯を合わせ、どの単位も提供していないすき間は除いています。" : "単位の数にかかわらず、事業所の提供時間数（開始〜終了）です。") });
+  }
+  if (res.small) {
+    checks.push({ status: "info", title: "利用定員10人以下なので、看護職員と介護職員を合わせて計算しています",
+      detail: "第20条第2項の特例。常時1人・常勤1人も「看護職員又は介護職員」で数えます。使わない場合は看護職員が単位ごとに1以上要ります。" });
+  } else {
+    checks.push({ status: "info", title: "看護職員は単位ごとに1以上（時間数の式はありません）",
+      detail: "提供時間帯を通じて専従する必要はないが、密接かつ適切な連携が要ります。病院・診療所・訪問看護ステーションとの連携で確保する方法もあります（通知）。" });
+  }
+  if (res.service === "chiiki" && !res.small && res.units.some((u) => u.users <= 10)) {
+    checks.push({ status: "info", title: "その日の利用者が10人以下でも、利用定員が11人以上なら特例は使えません",
+      detail: "第20条第2項は利用定員（同時に受けられる利用者の上限）で決まります。" });
+  }
+  checks.push({ status: "info", title: `${res.small ? "生活相談員、看護職員又は介護職員" : "生活相談員又は介護職員"}のうち1人以上は常勤、機能訓練指導員は1以上`,
+    detail: `${res.service === "chiiki" ? "第20条第7項・第1項第4号" : "第93条第6項・第1項第4号"}。機能訓練指導員は事業所の他の職務と兼ねられます。` });
+  $("checks").innerHTML = checks.map((x) =>
+    `<li><p class="hd"><span class="tag ${x.status}">${{ ok: "足りる", ng: "要確認", info: "参考" }[x.status]}</span>${esc(x.title)}</p>` +
+    `<p class="dt">${esc(x.detail)}</p></li>`).join("");
+}
+
+function applyPreset(p) {
+  $("capacity").value = p.capacity;
+  $("counselor").value = p.counselor;
+  FIELDS.forEach((f, i) => { $(`u1${f}`).value = p.u1[i]; $(`u2${f}`).value = p.u2[i]; });
+  render();
+}
+
+for (const el of document.querySelectorAll(".card input")) {
+  el.addEventListener("input", render);
+  el.addEventListener("change", render);
+}
+for (const btn of document.querySelectorAll("[data-preset]")) {
+  btn.addEventListener("click", () => applyPreset(PRESETS[btn.dataset.preset]));
+}
+applyPreset(PRESETS.notice);
+</script>
+
+</body>
+</html>

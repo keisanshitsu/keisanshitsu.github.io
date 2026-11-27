@@ -485,6 +485,33 @@ let publishStatus = "対象外";
         `本番は 404 を返す（2026-09-15 に実際に起きた壊れ方）。` +
         `push してから published_on を書くこと`);
     publishStatus = missing.length ? `不整合 ${missing.length}件` : `整合（${claimed.length}本）`;
+
+    // 逆向き（2026-11-27 追加）: origin/main に届いているのに tools[] に published_on が無いツール。
+    // 11/26 は T030 を push した直後にセッション上限で止まり、tools[]・台帳・決定ログが1行も書かれなかった。
+    // 翌朝の verify は exit 0 だった——3.9 は published_on を持つツールしか見ず、3.13（台帳の網羅）も
+    // tools[] に載ったツールしか見ないので、載っていないツールは両方を素通りする。
+    // 公開日の流れ（docs だけを先に push し、本番の確認と IndexNow の後に記録をコミットする）を止めないよう、
+    // 対象は origin/main に既にあるものだけにする。push の前の verify では誤検出しない。
+    // 誤りの向き: origin/main が古ければ見逃す側（ただし翌日の fetch 後には止まる）。
+    const toolsRoot = join(SITE, "tools");
+    const recorded = new Set(
+      (pipeline.tools ?? []).filter((t) => t?.published_on)
+        .map((t) => String(t.path ?? `docs/tools/${t.slug}/`).replace(/\/+$/, "")));
+    const unrecorded = [];
+    if (existsSync(toolsRoot)) {
+      for (const d of readdirSync(toolsRoot, { withFileTypes: true })) {
+        if (!d.isDirectory()) continue;
+        const dir = `docs/tools/${d.name}`;
+        if (recorded.has(dir)) continue;
+        if (git(["cat-file", "-e", `origin/main:${dir}/index.html`]).status === 0) unrecorded.push(dir);
+      }
+    }
+    if (unrecorded.length)
+      err(rel,
+        `origin/main に公開済みなのに tools[] に published_on が無いツールがある: ${unrecorded.join(" / ")}。` +
+        `記録が公開に追いついておらず、台帳の網羅（3.13）もこのツールを見ていない` +
+        `（2026-11-26 に実際に起きた壊れ方）。tools[] と facts_to_recheck に記録すること`);
+    if (unrecorded.length) publishStatus += ` ／ 未記録 ${unrecorded.length}件`;
   }
 }
 
